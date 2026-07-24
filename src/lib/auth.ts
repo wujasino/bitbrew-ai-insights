@@ -33,6 +33,25 @@ export async function isAuthenticated(): Promise<boolean> {
   return user !== null;
 }
 
+/**
+ * Whether the current session still needs a TOTP challenge before it's
+ * fully trusted (AAL2). True for a verified-but-unchallenged factor
+ * regardless of which login path created the session (password, Google, a
+ * stale token) — this is the single place that closes the "sign in via
+ * Google skips 2FA" gap, so callers besides ProtectedRoute should route
+ * through it too rather than re-deriving AAL state themselves.
+ */
+export async function needsMfaChallenge(): Promise<{ required: boolean; factorId?: string }> {
+  const { data: mfaData, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (error || !mfaData) return { required: false };
+  if (mfaData.nextLevel !== 'aal2' || mfaData.currentLevel === 'aal2') return { required: false };
+
+  const { data: factors } = await supabase.auth.mfa.listFactors();
+  const totpFactor = factors?.totp?.find(f => f.status === 'verified');
+  if (!totpFactor) return { required: false };
+  return { required: true, factorId: totpFactor.id };
+}
+
 export async function logout() {
   await supabase.auth.signOut();
 }

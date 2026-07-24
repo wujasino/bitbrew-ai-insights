@@ -1,10 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
+import { needsMfaChallenge } from '@/lib/auth';
+import { MfaChallengeGate } from '@/components/MfaChallengeGate';
+
+type Phase = 'loading' | 'authenticated' | 'mfa-required' | 'unauthenticated' | 'error';
 
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [phase, setPhase] = useState<Phase>('loading');
+  const [mfaFactorId, setMfaFactorId] = useState('');
   const [error, setError] = useState<string | null>(null);
   const location = useLocation();
 
@@ -12,20 +16,33 @@ const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
     const checkSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        setIsAuthenticated(!!session);
+        if (!session) {
+          setPhase('unauthenticated');
+          return;
+        }
+
+        // Enforce AAL2 here — the one gate every protected route passes through,
+        // regardless of whether the session came from password login, Google,
+        // or a stale token, so a verified TOTP factor can't be skipped.
+        const mfa = await needsMfaChallenge();
+        if (mfa.required && mfa.factorId) {
+          setMfaFactorId(mfa.factorId);
+          setPhase('mfa-required');
+          return;
+        }
+
+        setPhase('authenticated');
         setError(null);
       } catch (err) {
         setError('Error checking session. Check the browser console.');
-        setIsAuthenticated(false);
-      } finally {
-        setIsLoading(false);
+        setPhase('error');
       }
     };
 
     checkSession();
   }, []);
 
-  if (isLoading) {
+  if (phase === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background text-sm text-muted-foreground">
         Loading...
@@ -33,7 +50,7 @@ const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
     );
   }
 
-  if (error) {
+  if (phase === 'error') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <div className="text-center max-w-md">
@@ -45,8 +62,12 @@ const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
     );
   }
 
-  if (!isAuthenticated) {
+  if (phase === 'unauthenticated') {
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  if (phase === 'mfa-required') {
+    return <MfaChallengeGate factorId={mfaFactorId} onVerified={() => setPhase('authenticated')} />;
   }
 
   return children;

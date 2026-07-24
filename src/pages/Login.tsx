@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useTranslation } from '@/lib/locale';
 import { Eye, EyeOff, ArrowRight, Zap, BarChart3, Shield, Loader2, ArrowLeft, Mail, KeyRound, CheckCircle2, Circle, Lock, Sparkles } from 'lucide-react';
-import { getAuthUser, loginUser } from '@/lib/auth';
+import { getAuthUser, loginUser, needsMfaChallenge } from '@/lib/auth';
 import { signInWithGoogle } from '@/lib/googleAuth';
 import { supabase } from '@/lib/supabase';
 import { FloatingPathsBackground } from '@/components/ui/floating-paths';
@@ -241,17 +241,13 @@ const Login = () => {
       }
 
       // Check if user has TOTP enrolled
-      const { data: mfaData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-      if (mfaData?.nextLevel === 'aal2' && mfaData.currentLevel !== 'aal2') {
-        const { data: factors } = await supabase.auth.mfa.listFactors();
-        const totpFactor = factors?.totp?.find(f => f.status === 'verified');
-        if (totpFactor) {
-          setTotpFactorId(totpFactor.id);
-          setTotpCode('');
-          setMode('totp');
-          setLoading(false);
-          return;
-        }
+      const mfa = await needsMfaChallenge();
+      if (mfa.required && mfa.factorId) {
+        setTotpFactorId(mfa.factorId);
+        setTotpCode('');
+        setMode('totp');
+        setLoading(false);
+        return;
       }
 
       navigate(from, { replace: true });
