@@ -27,7 +27,6 @@ sizes = {
     "android-chrome-512.png": 512,
     "android-chrome-192.png": 192,
     "apple-touch-icon.png": 180,
-    "presora-icon-96.png": 96,
     "favicon-64.png": 64,
     "favicon-32.png": 32,
     "favicon-16.png": 16,
@@ -49,3 +48,11 @@ images[16].save(
     append_images=[composite(s) for s in ico_sizes if s != 16],
 )
 print("wrote favicon.ico")
+
+# Email header mark: just the transparent cream mark, no tile — retina (2x) source
+# for a 64px display height, used bare (no background box) in email-templates/*.html
+email_h = 128
+email_scale = email_h / mark.height
+email_w = round(mark.width * email_scale)
+mark.resize((email_w, email_h), Image.LANCZOS).save(f"{PUBLIC}/presora-mark-email.png")
+print(f"wrote presora-mark-email.png ({email_w}x{email_h})")
