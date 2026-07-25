@@ -78,7 +78,7 @@ export default function GoogleCallback() {
       >
         <div className="rounded-2xl border border-[hsl(var(--glass-border))] bg-background/80 backdrop-blur-xl p-8 space-y-5">
           <Link to="/" className="inline-block">
-            <Wordmark className="text-xl block text-center" />
+            <Wordmark className="text-xl" />
           </Link>
 
           {status === 'loading' && (

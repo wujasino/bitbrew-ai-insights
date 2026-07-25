@@ -57,7 +57,7 @@ export default function AuthConfirm() {
 
           {/* Logo */}
           <Link to="/" className="inline-block">
-            <Wordmark className="text-xl block text-center" />
+            <Wordmark className="text-xl" />
           </Link>
 
           {status === 'loading' && (
