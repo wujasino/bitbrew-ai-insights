@@ -386,7 +386,7 @@ const Login = () => {
                     <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('email')}</Label>
                     <div className="relative">
                       <Mail className="w-4 h-4 text-muted-foreground/60 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                      <Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@company.com" required autoComplete="email" className="h-11 pl-10" />
+                      <Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" required autoComplete="email" className="h-11 pl-10" />
                     </div>
                   </div>
 
