@@ -57,9 +57,9 @@ export const CreditsUsageWidget = () => {
       {/* Credit usage meter */}
       <div className="flex-1 sm:min-w-[260px] rounded-xl border border-[hsl(var(--glass-border))] bg-card/60 px-4 py-3">
         <div className="flex items-center justify-between gap-3 mb-2">
-          <span className="text-sm text-muted-foreground">Wykorzystane kredyty</span>
+          <span className="text-sm text-muted-foreground">Credits used</span>
           <span className="text-sm font-medium text-foreground font-data whitespace-nowrap">
-            {used} / {unlimited ? '∞' : limit} kredytów
+            {used} / {unlimited ? '∞' : limit} credits
           </span>
         </div>
         <div className="h-2 rounded-full bg-muted overflow-hidden">
@@ -73,13 +73,13 @@ export const CreditsUsageWidget = () => {
       {/* Current plan + billing shortcut */}
       <div className="flex items-center justify-between gap-3 rounded-xl border border-[hsl(var(--glass-border))] bg-card/60 px-4 py-3 sm:min-w-[260px]">
         <span className="text-sm text-foreground">
-          Twój obecny plan: <span className="font-semibold">{planLabel}</span>
+          Current plan: <span className="font-semibold">{planLabel}</span>
         </span>
         <Link
           to="/settings?tab=billing"
           className="inline-flex items-center gap-1.5 rounded-lg border border-[hsl(var(--glass-border))] bg-background px-3 py-1.5 text-sm font-medium text-foreground hover:bg-accent transition-colors shrink-0"
         >
-          <Settings className="w-3.5 h-3.5 text-muted-foreground" /> Rozliczenia
+          <Settings className="w-3.5 h-3.5 text-muted-foreground" /> Billing
         </Link>
       </div>
     </div>
