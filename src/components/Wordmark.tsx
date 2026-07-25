@@ -1,14 +1,23 @@
+import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
 
-/** The Presora app icon — lavender "p" on an ink tile, the real uploaded mark. */
-const Mark = ({ className }: { className?: string }) => (
-  <img
-    src="/presora-icon-512.png"
-    alt=""
-    aria-hidden="true"
-    className={cn('rounded-[22%] shrink-0 object-contain', className)}
-  />
-);
+// The woven "p" mark comes in a dark-ink version (for light backgrounds) and a
+// cream version (for dark backgrounds) — same glyph, sized to match visually.
+const MARK_LIGHT = '/percelyze-logo.png';
+const MARK_DARK = '/presora-logo-cream-square.png';
+
+/** The Presora app icon — woven "p" mark, swapped for contrast with the active theme. */
+const Mark = ({ className }: { className?: string }) => {
+  const { resolvedTheme } = useTheme();
+  return (
+    <img
+      src={resolvedTheme === 'light' ? MARK_LIGHT : MARK_DARK}
+      alt=""
+      aria-hidden="true"
+      className={cn('rounded-[22%] shrink-0 object-contain', className)}
+    />
+  );
+};
 
 interface WordmarkProps {
   className?: string;
