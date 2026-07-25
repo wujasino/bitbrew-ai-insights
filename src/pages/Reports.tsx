@@ -18,17 +18,17 @@ interface Report {
 }
 
 const TIME_FILTERS = [
-  { key: '7', label: '7 dni', days: 7 },
-  { key: '30', label: '30 dni', days: 30 },
-  { key: '90', label: '90 dni', days: 90 },
-  { key: 'all', label: 'Wszystkie', days: 0 },
+  { key: '7', label: '7 days', days: 7 },
+  { key: '30', label: '30 days', days: 30 },
+  { key: '90', label: '90 days', days: 90 },
+  { key: 'all', label: 'All', days: 0 },
 ] as const;
 
 const scoreColor = (s: number) =>
   s >= 75 ? 'text-emerald-600 dark:text-emerald-400' : s >= 50 ? 'text-primary' : 'text-red-600 dark:text-red-400';
 
 const formatDate = (iso: string) =>
-  new Date(iso).toLocaleDateString('pl-PL', { day: '2-digit', month: 'short', year: 'numeric' });
+  new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 
 const Reports = () => {
   const navigate = useNavigate();
@@ -83,7 +83,7 @@ const Reports = () => {
     const a = document.createElement('a');
     const slug = r.brand_name.replace(/[^a-z0-9]+/gi, '-').toLowerCase();
     a.href = url;
-    a.download = `presora-raport-${slug}-${new Date(r.created_at).toISOString().slice(0, 10)}.json`;
+    a.download = `presora-report-${slug}-${new Date(r.created_at).toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -102,10 +102,10 @@ const Reports = () => {
           <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
             <FileText className="w-4.5 h-4.5 text-primary" />
           </div>
-          <h1 className="text-2xl sm:text-3xl font-display text-foreground">Raporty</h1>
+          <h1 className="text-2xl sm:text-3xl font-display text-foreground">Reports</h1>
         </div>
         <p className="text-sm text-muted-foreground mb-6 ml-12">
-          Historia Twoich analiz marki — filtruj, pobieraj i usuwaj.
+          Your brand analysis history — filter, download and delete.
         </p>
 
         {/* Controls */}
@@ -140,7 +140,7 @@ const Reports = () => {
                   : 'text-muted-foreground hover:text-foreground'
               )}
             >
-              <ArrowDown className="w-3.5 h-3.5" /> Najwyższy wynik
+              <ArrowDown className="w-3.5 h-3.5" /> Highest score
             </button>
             <button
               onClick={() => setSortDir('asc')}
@@ -151,7 +151,7 @@ const Reports = () => {
                   : 'text-muted-foreground hover:text-foreground'
               )}
             >
-              <ArrowUp className="w-3.5 h-3.5" /> Najniższy wynik
+              <ArrowUp className="w-3.5 h-3.5" /> Lowest score
             </button>
           </div>
         </div>
@@ -166,15 +166,15 @@ const Reports = () => {
             <div className="w-12 h-12 rounded-xl bg-muted/60 flex items-center justify-center mx-auto mb-4">
               <FileText className="w-5 h-5 text-muted-foreground" />
             </div>
-            <p className="text-sm font-medium text-foreground">Brak raportów w tym okresie</p>
+            <p className="text-sm font-medium text-foreground">No reports in this period</p>
             <p className="text-xs text-muted-foreground mt-1">
-              Uruchom analizę marki na stronie głównej, aby zobaczyć ją tutaj.
+              Run a brand analysis on the home page to see it here.
             </p>
             <button
               onClick={() => navigate('/dashboard')}
               className="mt-5 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
             >
-              Nowa analiza
+              New analysis
             </button>
           </div>
         ) : (
@@ -192,7 +192,7 @@ const Reports = () => {
                   <div className={cn('text-2xl font-display font-semibold tabular-nums leading-none', scoreColor(r.trust_score))}>
                     {r.trust_score}
                   </div>
-                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1">wynik</div>
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1">score</div>
                 </div>
 
                 {/* Brand + date — click opens the full report */}
@@ -210,34 +210,34 @@ const Reports = () => {
                 {/* Actions */}
                 {confirmId === r.id ? (
                   <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-xs text-muted-foreground hidden sm:inline">Usunąć?</span>
+                    <span className="text-xs text-muted-foreground hidden sm:inline">Delete?</span>
                     <button
                       onClick={() => deleteReport(r.id)}
                       className="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-red-500 text-white hover:bg-red-600 transition-colors"
                     >
-                      Tak, usuń
+                      Yes, delete
                     </button>
                     <button
                       onClick={() => setConfirmId(null)}
                       className="px-2.5 py-1.5 rounded-lg text-xs font-medium border border-[hsl(var(--glass-border))] text-foreground hover:bg-accent transition-colors"
                     >
-                      Anuluj
+                      Cancel
                     </button>
                   </div>
                 ) : (
                   <div className="flex items-center gap-1 shrink-0">
                     <button
                       onClick={() => downloadReport(r)}
-                      title="Pobierz raport"
-                      aria-label="Pobierz raport"
+                      title="Download report"
+                      aria-label="Download report"
                       className="w-9 h-9 flex items-center justify-center rounded-lg border border-[hsl(var(--glass-border))] text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
                     >
                       <Download className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => setConfirmId(r.id)}
-                      title="Usuń raport"
-                      aria-label="Usuń raport"
+                      title="Delete report"
+                      aria-label="Delete report"
                       className="w-9 h-9 flex items-center justify-center rounded-lg border border-[hsl(var(--glass-border))] text-muted-foreground hover:text-red-500 hover:border-red-500/30 hover:bg-red-500/5 transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />

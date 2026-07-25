@@ -15,7 +15,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 
-/* Ceny w USD */
+/* Prices in USD */
 const USD = {
   starter_monthly: '$39',
   starter_yearly: '$374',
@@ -38,8 +38,8 @@ const Pricing = () => {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
 
   const prices = USD;
-  const period_month = '/mies.';
-  const period_year  = '/rok';
+  const period_month = '/month';
+  const period_year  = '/year';
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => setIsLoggedIn(!!user));
@@ -47,8 +47,8 @@ const Pricing = () => {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get('success'))  setMessage('Płatność zakończona sukcesem! Twój plan został aktywowany.');
-    if (params.get('canceled')) setMessage('Płatność została anulowana.');
+    if (params.get('success'))  setMessage('Payment successful! Your plan has been activated.');
+    if (params.get('canceled')) setMessage('Payment was cancelled.');
   }, []);
 
   const confirmDowngrade = async () => {
@@ -63,7 +63,7 @@ const Pricing = () => {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setMessage(data?.error || 'Nie udało się anulować subskrypcji. Spróbuj ponownie.');
+        setMessage(data?.error || 'Could not cancel the subscription. Please try again.');
         return;
       }
       setShowDowngradeDialog(false);
@@ -107,7 +107,7 @@ const Pricing = () => {
       };
       const priceId = priceMap[planId]?.[billingCycle];
 
-      if (!priceId) { setMessage('Stripe nie jest skonfigurowany. Skontaktuj się z pomocą.'); return; }
+      if (!priceId) { setMessage('Stripe is not configured. Please contact support.'); return; }
 
       const response = await fetch('/.netlify/functions/create-checkout', {
         method: 'POST',
@@ -122,24 +122,24 @@ const Pricing = () => {
         let err = `HTTP ${response.status}`;
         try { const d = await response.json(); err = d.error || err; } catch { /* ignore */ }
         console.error('Checkout error:', err);
-        setMessage(`Błąd: ${err}`);
+        setMessage(`Error: ${err}`);
         return;
       }
 
       const data = await response.json();
-      if (!data?.url) { setMessage(data?.error || 'Nie udało się utworzyć sesji płatności.'); return; }
+      if (!data?.url) { setMessage(data?.error || 'Could not create payment session.'); return; }
       window.location.href = data.url;
     } catch {
-      setMessage('Błąd połączenia. Spróbuj ponownie.');
+      setMessage('Connection error. Please try again.');
     } finally {
       setLoading(null);
     }
   };
 
   const creditPacks = [
-    { id: 'credits_20',  label: '20 dodatkowych analiz',  price: prices.credits_20,  analyses: 20,  popular: false },
-    { id: 'credits_50',  label: '50 dodatkowych analiz',  price: prices.credits_50,  analyses: 50,  popular: true  },
-    { id: 'credits_120', label: '120 dodatkowych analiz', price: prices.credits_120, analyses: 120, popular: false },
+    { id: 'credits_20',  label: '20 extra analyses',  price: prices.credits_20,  analyses: 20,  popular: false },
+    { id: 'credits_50',  label: '50 extra analyses',  price: prices.credits_50,  analyses: 50,  popular: true  },
+    { id: 'credits_120', label: '120 extra analyses', price: prices.credits_120, analyses: 120, popular: false },
   ];
 
   const handleCreditsBuy = async (packId: string) => {
@@ -152,7 +152,7 @@ const Pricing = () => {
         credits_120: import.meta.env.VITE_STRIPE_CREDITS_120 ?? '',
       };
       const baseUrl = linkMap[packId];
-      if (!baseUrl) { setMessage('Brak skonfigurowanego linku Stripe dla tego pakietu.'); return; }
+      if (!baseUrl) { setMessage('Stripe link not configured for this credit pack.'); return; }
 
       const url = new URL(baseUrl);
       const { data: { user } } = await supabase.auth.getUser();
@@ -162,7 +162,7 @@ const Pricing = () => {
       }
       window.location.href = url.toString();
     } catch {
-      setMessage('Błąd połączenia. Spróbuj ponownie.');
+      setMessage('Connection error. Please try again.');
     } finally {
       setLoadingCredits(null);
     }
@@ -172,113 +172,113 @@ const Pricing = () => {
     {
       id: 'free',
       name: 'Free',
-      description: 'Zacznij od trzech darmowych analiz marki — bez karty.',
-      priceMonthly: 'Za darmo',
-      priceYearly: 'Za darmo',
+      description: 'Start with three free brand analyses, no credit card required.',
+      priceMonthly: 'Free',
+      priceYearly: 'Free',
       periodMonthly: '',
       periodYearly: '',
       isPopular: false,
-      buttonLabel: 'Zacznij za darmo',
+      buttonLabel: 'Start for free',
       features: [
-        { name: '3 darmowe analizy marki', isIncluded: true },
-        { name: 'Ogólny wynik widoczności w AI', isIncluded: true },
-        { name: 'Radar percepcji (5 wymiarów)', isIncluded: true },
-        { name: 'Werdykt AI — praktyczne podsumowanie', isIncluded: true },
-        { name: 'Trend sentymentu (30 dni)', isIncluded: false },
-        { name: 'Kontekst wiedzy o marce (RAG)', isIncluded: false },
-        { name: 'Porównanie z konkurencją', isIncluded: false },
+        { name: '3 free brand analyses', isIncluded: true },
+        { name: 'Overall AI Visibility Score', isIncluded: true },
+        { name: 'Perception radar (5 dimensions)', isIncluded: true },
+        { name: 'AI Verdict — actionable summary', isIncluded: true },
+        { name: 'Sentiment trend (30 days)', isIncluded: false },
+        { name: 'Brand knowledge context (RAG)', isIncluded: false },
+        { name: 'Competitor comparison', isIncluded: false },
       ],
     },
     {
       id: 'starter',
       name: 'Starter',
-      description: 'Dla twórców stawiających pierwsze kroki w widoczności w AI.',
+      description: 'For creators taking their first steps into AI visibility.',
       priceMonthly: prices.starter_monthly,
       priceYearly: prices.starter_yearly,
       periodMonthly: period_month,
       periodYearly: period_year,
       isPopular: false,
-      buttonLabel: 'Wybierz plan',
+      buttonLabel: 'Choose plan',
       features: [
-        { name: '5 analiz marki miesięcznie', isIncluded: true },
-        { name: '3 modele LLM (GPT-4o, Claude, Gemini)', isIncluded: true },
-        { name: 'Trend sentymentu (30 dni)', isIncluded: true },
-        { name: 'Werdykt AI — praktyczne podsumowanie', isIncluded: true },
-        { name: 'Kontekst wiedzy o marce (RAG)', isIncluded: false },
-        { name: 'Porównanie z konkurencją', isIncluded: false },
+        { name: '5 brand analyses per month', isIncluded: true },
+        { name: '3 LLM sources (GPT-4o, Claude, Gemini)', isIncluded: true },
+        { name: 'Sentiment trend (30 days)', isIncluded: true },
+        { name: 'AI Verdict — actionable summary', isIncluded: true },
+        { name: 'Brand knowledge context (RAG)', isIncluded: false },
+        { name: 'Competitor comparison', isIncluded: false },
       ],
     },
     {
       id: 'solo',
       name: 'Solo',
-      description: 'Dla niezależnych founderów i marketerów śledzących swoją markę.',
+      description: 'For indie founders and solo marketers tracking their brand.',
       priceMonthly: prices.solo_monthly,
       priceYearly: prices.solo_yearly,
       periodMonthly: period_month,
       periodYearly: period_year,
       isPopular: false,
-      buttonLabel: 'Wybierz plan',
+      buttonLabel: 'Choose plan',
       features: [
-        { name: '10 analiz marki miesięcznie', isIncluded: true },
-        { name: '3 modele LLM (GPT-4o, Claude, Gemini)', isIncluded: true },
-        { name: 'Trend sentymentu (30 dni)', isIncluded: true },
-        { name: 'Wykres źródeł', isIncluded: true },
-        { name: 'Kontekst wiedzy o marce (RAG)', isIncluded: true },
-        { name: 'Eksport CSV', isIncluded: true },
-        { name: 'Porównanie z konkurencją', isIncluded: false },
+        { name: '10 brand analyses per month', isIncluded: true },
+        { name: '3 LLM sources (GPT-4o, Claude, Gemini)', isIncluded: true },
+        { name: 'Sentiment trend (30 days)', isIncluded: true },
+        { name: 'Source breakdown chart', isIncluded: true },
+        { name: 'Brand knowledge context (RAG)', isIncluded: true },
+        { name: 'CSV export', isIncluded: true },
+        { name: 'Competitor comparison', isIncluded: false },
       ],
     },
     {
       id: 'growth',
       name: 'Business',
-      description: 'Dla rosnących zespołów, które potrzebują głębszej analizy konkurencji.',
+      description: 'For growing teams who need deeper competitive insights.',
       priceMonthly: prices.growth_monthly,
       priceYearly: prices.growth_yearly,
       periodMonthly: period_month,
       periodYearly: period_year,
       isPopular: true,
-      buttonLabel: 'Wybierz plan',
+      buttonLabel: 'Choose plan',
       features: [
-        { name: '50 analiz marki miesięcznie', isIncluded: true },
-        { name: 'Wszystkie 6 modeli + Perplexity', isIncluded: true },
-        { name: 'Pełna tabela źródeł z poziomem pewności', isIncluded: true },
-        { name: 'Porównanie z konkurencją', isIncluded: true },
-        { name: 'Roczna historia i cotygodniowy digest', isIncluded: true },
-        { name: 'Dostęp do API', isIncluded: true },
-        { name: 'Priorytetowe wsparcie e-mail', isIncluded: true },
+        { name: '50 brand analyses per month', isIncluded: true },
+        { name: 'All 6 LLM sources + Perplexity', isIncluded: true },
+        { name: 'Full source table with confidence', isIncluded: true },
+        { name: 'Competitor comparison', isIncluded: true },
+        { name: '1-year history & weekly digest', isIncluded: true },
+        { name: 'API access', isIncluded: true },
+        { name: 'Priority email support', isIncluded: true },
       ],
     },
     {
       id: 'enterprise',
       name: 'Agency',
-      description: 'Plan skrojony dla zespołów potrzebujących pełnej kontroli widoczności w AI.',
-      priceMonthly: 'od $220',
-      priceYearly: 'od $220',
-      periodMonthly: '/mies.',
-      periodYearly: '/mies.',
+      description: 'A tailored plan for teams that need full AI visibility control.',
+      priceMonthly: 'from $220',
+      priceYearly: 'from $220',
+      periodMonthly: '/mo',
+      periodYearly: '/mo',
       isPopular: false,
-      buttonLabel: 'Skontaktuj się',
+      buttonLabel: 'Contact Sales',
       features: [
-        { name: 'Nielimitowane analizy', isIncluded: true },
-        { name: 'Własne źródła LLM + modele prywatne', isIncluded: true },
-        { name: 'Monitoring w czasie rzeczywistym i alerty', isIncluded: true },
-        { name: 'Nielimitowana historia + webhooki', isIncluded: true },
-        { name: 'Integracja ze Slack i Teams', isIncluded: true },
-        { name: 'Dedykowany opiekun konta', isIncluded: true },
-        { name: 'Panel white-label', isIncluded: true },
-        { name: 'Gwarancja SLA (99,9%)', isIncluded: true },
+        { name: 'Unlimited analyses', isIncluded: true },
+        { name: 'Custom LLM sources + private models', isIncluded: true },
+        { name: 'Real-time monitoring & alerts', isIncluded: true },
+        { name: 'Unlimited history + webhooks', isIncluded: true },
+        { name: 'Slack & Teams integration', isIncluded: true },
+        { name: 'Dedicated account manager', isIncluded: true },
+        { name: 'White-label dashboard', isIncluded: true },
+        { name: 'SLA guarantee (99.9%)', isIncluded: true },
       ],
     },
   ];
 
   const faqItems = [
-    { q: 'Czy mogę anulować w dowolnym momencie?',             a: 'Tak — anuluj w dowolnej chwili i zachowaj dostęp do końca okresu rozliczeniowego.' },
-    { q: 'Co się stanie, gdy przekroczę limit?', a: 'Po osiągnięciu limitu planu możesz od razu przejść wyżej lub dokupić dodatkowe kredyty na analizy.' },
-    { q: 'Czy mogę później zmienić plan?',          a: 'Oczywiście — zmieniaj plany w dowolnym momencie bez utraty danych.' },
-    { q: 'Czy otrzymam fakturę VAT?',      a: 'Tak — każda płatność automatycznie generuje fakturę VAT wysyłaną na Twój e-mail. Firmy z UE mogą podać numer VAT przy płatności, aby otrzymać fakturę B2B.' },
-    { q: 'Jak przetwarzacie dane mojej firmy?', a: 'Kontekst marki, który wgrywasz, pozostaje w Twojej prywatnej przestrzeni. Nigdy nie trenujemy modeli AI na Twoich danych ani nie udostępniamy ich stronom trzecim poza dostawcami AI niezbędnymi do wykonania analizy. Działamy w pełni zgodnie z RODO.' },
-    { q: 'Czy mogę zmienić plan w trakcie okresu rozliczeniowego?', a: 'Tak — podwyższenie planu działa natychmiast i jest rozliczane proporcjonalnie. Obniżenie wchodzi w życie na koniec bieżącego okresu, więc zawsze dostajesz to, za co zapłaciłeś.' },
-    { q: 'Potrzebujesz pomocy w wyborze planu?',         a: 'Nasz zespół jest dostępny e-mailowo i pomoże dobrać najlepszą opcję dla Twojej marki.' },
+    { q: 'Can I cancel anytime?',             a: 'Yes — cancel at any time and keep access until the end of your billing period.' },
+    { q: 'What happens if I exceed my limit?', a: 'If you hit your plan limit, you can upgrade instantly or purchase additional analysis credits.' },
+    { q: 'Can I change plans later?',          a: 'Absolutely — switch plans anytime without losing your existing data.' },
+    { q: 'Will I receive a VAT invoice?',      a: 'Yes — every payment automatically generates a VAT invoice sent to your email. EU companies can enter their VAT number at checkout to receive a B2B invoice.' },
+    { q: 'How do you handle my company data?', a: 'Brand context you upload stays in your private workspace. We never train AI models on your data and never share it with third parties beyond the AI providers required to run an analysis. We are fully GDPR compliant.' },
+    { q: 'Can I change plans mid-billing cycle?', a: 'Yes — upgrading takes effect immediately and is prorated. Downgrading applies at the end of the current billing period, so you always get what you paid for.' },
+    { q: 'Need help choosing a plan?',         a: 'Our team is available by email and happy to help you pick the best option for your brand.' },
   ];
 
   return (
@@ -291,30 +291,30 @@ const Pricing = () => {
               <div className="w-10 h-10 rounded-full bg-yellow-500/10 flex items-center justify-center shrink-0">
                 <AlertTriangle className="w-5 h-5 text-yellow-500" />
               </div>
-              <DialogTitle>Przejście na plan Free</DialogTitle>
+              <DialogTitle>Switch to Free plan</DialogTitle>
             </div>
             <DialogDescription className="text-sm text-muted-foreground leading-relaxed">
-              Czy na pewno chcesz przejść na plan Free?
+              Are you sure you want to switch to the Free plan?
               <ul className="mt-3 space-y-1.5 text-sm">
                 {[
-                  'Stracisz dostęp do zaawansowanych modeli (Claude, Gemini i inne)',
-                  'Twój limit spadnie do 3 analiz miesięcznie',
-                  'Historia analiz i eksport CSV zostaną wyłączone',
+                  'You will lose access to advanced LLM sources (Claude, Gemini and more)',
+                  'Your limit will drop to 3 analyses per month',
+                  'Analysis history and CSV export will be disabled',
                 ].map(bullet => (
                   <li key={bullet} className="flex items-start gap-2">
                     <span className="text-yellow-500 mt-0.5">*</span> {bullet}
                   </li>
                 ))}
               </ul>
-              <p className="mt-3 text-xs text-muted-foreground/70">Subskrypcja zostanie anulowana — dostęp trwa do końca bieżącego okresu rozliczeniowego.</p>
+              <p className="mt-3 text-xs text-muted-foreground/70">Your subscription will be cancelled — access continues until the end of the current billing period.</p>
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex gap-2 mt-2">
             <Button variant="outline" className="flex-1" disabled={downgrading} onClick={() => setShowDowngradeDialog(false)}>
-              Zostań na obecnym planie
+              Stay on current plan
             </Button>
             <Button variant="destructive" className="flex-1" disabled={downgrading} onClick={confirmDowngrade}>
-              {downgrading ? 'Anulowanie...' : 'Tak, przejdź na Free'}
+              {downgrading ? 'Cancelling...' : 'Yes, switch to Free'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -350,7 +350,7 @@ const Pricing = () => {
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                {cycle === 'monthly' ? 'Miesięcznie' : 'Rocznie'}
+                {cycle === 'monthly' ? 'Monthly' : 'Yearly'}
                 {cycle === 'yearly' && (
                   <span className="ml-1.5 text-[10px] font-semibold text-primary">−20%</span>
                 )}
@@ -382,18 +382,18 @@ const Pricing = () => {
           <div className="text-center mb-8">
             <div className="inline-flex items-center gap-2 mb-2">
               <Clock className="w-5 h-5 text-primary" />
-              <h2 className="text-2xl font-display text-foreground">Ile to zajmuje innym</h2>
+              <h2 className="text-2xl font-display text-foreground">How long this takes everyone else</h2>
             </div>
             <p className="text-sm text-muted-foreground max-w-xl mx-auto">
-              Sprawdzenie, jak modele AI opisują Twoją markę, po staremu zajmuje dni lub tygodnie. Presora robi to, zanim zdążysz mrugnąć.
+              Checking how AI models describe your brand the old way takes days or weeks. Presora does it before you can blink.
             </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { method: 'Ręczne odpytywanie modeli', time: '2–3 dni', note: 'Pytanie każdego modelu, prompt po promptcie, i samodzielne zliczanie odpowiedzi.' },
-              { method: 'Audyt w agencji marketingowej', time: '2–4 tygodnie', note: 'Brief, research i prezentacja — plus faktura na cztery cyfry.' },
-              { method: 'Tradycyjne narzędzia monitoringu', time: 'Godziny wdrożenia', note: 'Śledzą social media i wyszukiwarki — a nie to, co naprawdę mówi AI.' },
+              { method: 'Manually querying models', time: '2–3 days', note: 'Asking each model, prompt by prompt, and tallying the answers yourself.' },
+              { method: 'Marketing agency audit', time: '2–4 weeks', note: 'Brief, research and a presentation — plus a four-figure invoice.' },
+              { method: 'Traditional monitoring tools', time: 'Hours to set up', note: 'They track social media and search engines — not what AI actually says.' },
             ].map(item => (
               <div key={item.method} className="rounded-2xl border border-[hsl(var(--glass-border))] bg-background/70 p-5">
                 <p className="text-2xl font-display text-foreground">{item.time}</p>
@@ -403,11 +403,11 @@ const Pricing = () => {
             ))}
             {/* Presora — the payoff */}
             <div className="rounded-2xl border border-primary/30 bg-primary/[0.06] p-5 flex flex-col">
-              <p className="text-2xl font-display text-primary">~15 sekund</p>
+              <p className="text-2xl font-display text-primary">~15 seconds</p>
               <p className="text-sm font-semibold text-foreground mt-2">Presora</p>
-              <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">Wszystkie modele odpytane równolegle, ocenione i zamienione w priorytetowy plan działania — automatycznie.</p>
+              <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">Every model queried in parallel, scored, and turned into a prioritized action plan — automatically.</p>
               <div className="mt-3 flex items-center gap-1.5 text-xs font-medium text-primary">
-                <Check className="w-3.5 h-3.5" /> Powtarzalne co miesiąc
+                <Check className="w-3.5 h-3.5" /> Repeatable every month
               </div>
             </div>
           </div>
@@ -421,7 +421,7 @@ const Pricing = () => {
           viewport={{ once: true }}
         >
           <h2 className="text-2xl font-display text-foreground text-center mb-8">
-            Często zadawane pytania
+            Frequently asked questions
           </h2>
           <Accordion
             type="single"
@@ -451,9 +451,9 @@ const Pricing = () => {
           <div className="text-center mb-8">
             <div className="inline-flex items-center gap-2 mb-2">
               <Zap className="w-5 h-5 text-primary" />
-              <h2 className="text-2xl font-display text-foreground">Potrzebujesz więcej analiz?</h2>
+              <h2 className="text-2xl font-display text-foreground">Need more analyses?</h2>
             </div>
-            <p className="text-sm text-muted-foreground">Doładuj konto jednorazowymi pakietami kredytów — bez zmiany planu.</p>
+            <p className="text-sm text-muted-foreground">Top up your account with one-time credit packs — no plan change required.</p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto">
@@ -468,13 +468,13 @@ const Pricing = () => {
               >
                 {pack.popular && (
                   <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-xs font-semibold px-3 py-1 bg-primary text-primary-foreground rounded-full whitespace-nowrap">
-                    Najlepsza wartość
+                    Best value
                   </span>
                 )}
                 <div>
                   <p className="text-3xl font-display text-foreground">{pack.price}</p>
                   <p className="text-sm text-muted-foreground mt-1">{pack.label}</p>
-                  <p className="text-[11px] text-muted-foreground/60 mt-2">Jednorazowe doładowanie</p>
+                  <p className="text-[11px] text-muted-foreground/60 mt-2">One-time credit top-up</p>
                 </div>
                 <Button
                   onClick={() => handleCreditsBuy(pack.id)}
@@ -482,7 +482,7 @@ const Pricing = () => {
                   variant={pack.popular ? 'default' : 'outline'}
                   className="w-full"
                 >
-                  {loadingCredits === pack.id ? 'Ładowanie...' : 'Kup pakiet'}
+                  {loadingCredits === pack.id ? 'Loading...' : 'Buy pack'}
                 </Button>
               </div>
             ))}
@@ -493,16 +493,16 @@ const Pricing = () => {
         <div className="mt-16">
           <div className="rounded-3xl border border-[hsl(var(--glass-border))] bg-card/60 p-8 text-center">
             <p className="text-sm uppercase tracking-[0.35em] text-primary mb-3">
-              Stworzone na erę AI
+              Built for the AI era
             </p>
             <h2 className="text-2xl font-display text-foreground max-w-2xl mx-auto">
-              Wyprzedzaj zmiany reputacji i wyszukiwania napędzane przez AI.
+              Stay ahead of AI-driven reputation and search shifts.
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8 text-left">
               {[
-                { title: 'Podejście GEO-first', desc: 'Zbudowane wokół Generative Engine Optimization — nowego standardu widoczności marki w erze AI.' },
-                { title: '3 wiodące modele AI', desc: 'Pokrycie ChatGPT, Claude i Gemini — asystentów, których Twoi klienci pytają o rekomendacje.' },
-                { title: 'Śledź w czasie', desc: 'Powtarzalne miesięczne audyty pokazują, czy Twoja optymalizacja realnie działa.' },
+                { title: 'GEO-first approach', desc: 'Built around Generative Engine Optimization — the new standard for brand visibility in the AI era.' },
+                { title: '3 leading AI models', desc: 'Coverage across ChatGPT, Claude and Gemini — the assistants your customers ask for recommendations.' },
+                { title: 'Track over time', desc: 'Repeatable monthly audits show whether your optimization is actually working.' },
               ].map(item => (
                 <div key={item.title} className="rounded-2xl border border-[hsl(var(--glass-border))] bg-background/60 p-5">
                   <p className="text-sm font-semibold text-foreground mb-1.5">{item.title}</p>
