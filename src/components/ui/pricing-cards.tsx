@@ -143,7 +143,7 @@ export const PricingCards: React.FC<PricingCardsProps> = ({
                   className={cn("w-full mt-4 rounded-xl", !plan.isPopular && !plan.isCurrent && "text-primary hover:text-primary")}
                   size="lg"
                 >
-                  {isLoading ? 'Ładowanie…' : (
+                  {isLoading ? 'Loading…' : (
                     <span className="inline-flex items-center gap-1.5">
                       {plan.isCurrent && <Check className="h-4 w-4" aria-hidden="true" />}
                       {plan.buttonLabel}
@@ -165,7 +165,7 @@ export const PricingCards: React.FC<PricingCardsProps> = ({
                 {prevName && (
                   <p className="mt-5 flex items-center gap-2 text-sm text-muted-foreground">
                     <Plus className="h-4 w-4 shrink-0" aria-hidden="true" />
-                    Wszystko z {prevName}
+                    Everything in {prevName}
                   </p>
                 )}
               </div>
@@ -184,7 +184,7 @@ export const PricingCards: React.FC<PricingCardsProps> = ({
               aria-expanded={showComparison}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-[hsl(var(--glass-border))] bg-card/60 text-sm font-medium text-foreground hover:bg-accent transition-colors"
             >
-              {showComparison ? 'Ukryj pełne porównanie' : 'Porównaj wszystkie funkcje'}
+              {showComparison ? 'Hide full comparison' : 'Compare all features'}
               <ChevronDown className={cn("h-4 w-4 transition-transform", showComparison && "rotate-180")} />
             </button>
           </div>
@@ -195,7 +195,7 @@ export const PricingCards: React.FC<PricingCardsProps> = ({
                 <thead>
                   <tr className="bg-muted/30">
                     <th scope="col" className="px-5 py-3 text-left text-sm font-semibold text-foreground/80 min-w-[180px]">
-                      Funkcja
+                      Feature
                     </th>
                     {plans.map((plan) => (
                       <th
