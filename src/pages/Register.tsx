@@ -326,7 +326,7 @@ const Register = () => {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@company.com"
+                  placeholder="you@example.com"
                   required
                   autoComplete="email"
                   className="h-11 pl-10"
