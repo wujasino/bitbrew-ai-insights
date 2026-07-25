@@ -112,45 +112,35 @@ const Landing = () => {
               Free analysis. No credit card required.
             </motion.p>
 
-            {/* ── Social proof bar ────────────────────────────────── */}
+            {/* ── Trust bar — real product facts, not invented usage stats ── */}
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.55 }}
               className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-x-8 gap-y-4"
             >
-              {/* Avatar stack */}
-              <div className="flex items-center gap-3">
-                <div className="flex -space-x-2.5">
-                  {['#f5a623', '#7c3aed', '#059669', '#0ea5e9', '#e11d48'].map((c, i) => (
-                    <div
-                      key={i}
-                      className="w-8 h-8 rounded-full border-2 border-background flex items-center justify-center text-[10px] font-semibold text-white shadow-sm"
-                      style={{ backgroundColor: c }}
-                    >
-                      {['NW', 'VC', 'HD', 'AX', 'Qb'][i]}
-                    </div>
-                  ))}
+              {/* Models queried */}
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+                  <Sparkles className="w-4 h-4 text-primary" />
                 </div>
                 <div className="text-left">
-                  <div className="text-sm font-semibold text-foreground leading-tight">2,400+ brands</div>
-                  <div className="text-[11px] text-muted-foreground leading-tight">analyzed this month</div>
+                  <div className="text-sm font-semibold text-foreground leading-tight">3 AI models</div>
+                  <div className="text-[11px] text-muted-foreground leading-tight">GPT-4o, Claude & Gemini queried per scan</div>
                 </div>
               </div>
 
               {/* Divider */}
               <div className="hidden sm:block w-px h-9 bg-[hsl(var(--glass-border))]" />
 
-              {/* Rating */}
+              {/* Turnaround time */}
               <div className="flex items-center gap-2.5">
-                <div className="flex gap-0.5">
-                  {[0, 1, 2, 3, 4].map((i) => (
-                    <Star key={i} className="w-4 h-4 fill-primary text-primary" />
-                  ))}
+                <div className="w-9 h-9 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+                  <Clock className="w-4 h-4 text-primary" />
                 </div>
                 <div className="text-left">
-                  <div className="text-sm font-semibold text-foreground leading-tight">4.9 / 5 rating</div>
-                  <div className="text-[11px] text-muted-foreground leading-tight">from 180+ marketing teams</div>
+                  <div className="text-sm font-semibold text-foreground leading-tight">~15 seconds</div>
+                  <div className="text-[11px] text-muted-foreground leading-tight">to get your AI visibility score</div>
                 </div>
               </div>
             </motion.div>

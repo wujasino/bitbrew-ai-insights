@@ -309,7 +309,7 @@ const Login = () => {
         className="hidden lg:flex lg:w-[46%] xl:w-[42%] flex-col justify-between p-10 border-r border-[hsl(var(--glass-border))] bg-card/30"
       >
         <Link to="/" className="flex items-center w-fit">
-          <Wordmark className="text-xl" />
+          <Wordmark className="text-3xl" />
         </Link>
 
         <div className="space-y-8">
@@ -319,7 +319,7 @@ const Login = () => {
               <span className="text-primary">sees your brand</span>
             </h2>
             <p className="mt-3 text-sm text-muted-foreground leading-relaxed max-w-xs">
-              Hundreds of brands use Presora to monitor and improve their visibility in AI models.
+              See exactly how ChatGPT, Claude and Gemini talk about your brand — and what to fix to get recommended more often.
             </p>
           </div>
 
@@ -333,19 +333,6 @@ const Login = () => {
               </li>
             ))}
           </ul>
-
-          <div className="flex items-center gap-3 pt-2">
-            <div className="flex -space-x-2">
-              {['A', 'K', 'M', 'P'].map((l) => (
-                <div key={l} className="w-7 h-7 rounded-full bg-primary/20 border-2 border-background flex items-center justify-center text-[10px] font-semibold text-primary">
-                  {l}
-                </div>
-              ))}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              <span className="text-foreground font-medium">200+</span> brands already monitoring AI
-            </p>
-          </div>
         </div>
 
         <p className="text-[11px] text-muted-foreground/50">© {new Date().getFullYear()} Presora</p>
@@ -357,7 +344,7 @@ const Login = () => {
           {/* Top bar: mobile logo + back button */}
           <div className="flex items-center justify-between mb-6 lg:mb-4">
             <Link to="/" className="lg:hidden flex items-center">
-              <Wordmark className="text-lg" />
+              <Wordmark className="text-xl" />
             </Link>
             <Link
               to="/"

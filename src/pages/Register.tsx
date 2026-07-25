@@ -232,7 +232,7 @@ const Register = () => {
         className="hidden lg:flex lg:w-[46%] xl:w-[42%] flex-col justify-between p-10 border-r border-[hsl(var(--glass-border))] bg-card/30"
       >
         <Link to="/" className="flex items-center w-fit">
-          <Wordmark className="text-xl" />
+          <Wordmark className="text-3xl" />
         </Link>
 
         <div className="space-y-8">
@@ -245,7 +245,7 @@ const Register = () => {
               <span className="text-primary">no credit card needed</span>
             </h2>
             <p className="mt-3 text-sm text-muted-foreground leading-relaxed max-w-xs">
-              Join hundreds of brands that already know how AI models describe and recommend them.
+              Get your AI visibility score in about 15 seconds — see how ChatGPT, Claude and Gemini describe your brand.
             </p>
           </div>
 
@@ -281,7 +281,7 @@ const Register = () => {
           {/* Top bar: mobile logo + back button */}
           <div className="flex items-center justify-between mb-2">
             <Link to="/" className="lg:hidden flex items-center">
-              <Wordmark className="text-lg" />
+              <Wordmark className="text-xl" />
             </Link>
             <Link
               to="/"

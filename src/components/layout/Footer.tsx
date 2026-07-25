@@ -17,7 +17,7 @@ export const Footer = () => {
           {/* Brand column — wider on lg */}
           <div className="col-span-2 sm:col-span-4 lg:col-span-2 flex flex-col gap-5">
             <Link to="/" className="flex items-center gap-2.5 w-fit">
-              <Wordmark className="text-xl" />
+              <Wordmark className="text-3xl" />
             </Link>
             <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
               The AI visibility platform for brands that want to be found.
