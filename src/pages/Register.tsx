@@ -245,7 +245,7 @@ const Register = () => {
               <span className="text-primary">no credit card needed</span>
             </h2>
             <p className="mt-3 text-sm text-muted-foreground leading-relaxed max-w-xs">
-              Join hundreds of brands that already know how AI models describe and recommend them.
+              Get your AI visibility score in about 15 seconds — see how ChatGPT, Claude and Gemini describe your brand.
             </p>
           </div>
 
