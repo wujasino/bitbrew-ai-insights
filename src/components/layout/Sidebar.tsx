@@ -87,14 +87,14 @@ export const Sidebar = ({ collapsed = false, mobileOpen = false, onMobileClose }
         'md:translate-x-0'
       )}>
         {/* Logo */}
-        <div className={cn('flex items-center p-4 pb-4', effectiveCollapsed ? 'justify-center' : 'justify-start')}>
+        <div className={cn('flex items-center pb-4', effectiveCollapsed ? 'justify-center px-2 pt-4' : 'justify-start p-4')}>
           {!effectiveCollapsed ? (
             <Link to="/dashboard" onClick={handleNavigate} className="flex items-center">
-              <Wordmark className="text-lg" />
+              <Wordmark className="text-2xl" />
             </Link>
           ) : (
             <Link to="/dashboard" onClick={handleNavigate} aria-label="Presora">
-              <Wordmark iconOnly className="h-6 w-6" />
+              <Wordmark iconOnly className="h-8 w-8" />
             </Link>
           )}
         </div>
