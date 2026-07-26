@@ -1,4 +1,4 @@
-import { useTheme } from 'next-themes';
+import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 
 // The woven "p" mark comes in a dark-ink version (for light backgrounds) and a
@@ -6,12 +6,29 @@ import { cn } from '@/lib/utils';
 const MARK_LIGHT = '/percelyze-logo.png';
 const MARK_DARK = '/presora-logo-cream-square.png';
 
+/**
+ * Reads contrast need straight off the <html> element's `.dark` class instead
+ * of next-themes' resolvedTheme — pages like the landing page force light by
+ * toggling that class directly (see useForceLightTheme), which next-themes'
+ * own state doesn't see, so resolvedTheme would report stale/wrong contrast.
+ */
+const useIsDark = () => {
+  const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains('dark'));
+  useEffect(() => {
+    const root = document.documentElement;
+    const observer = new MutationObserver(() => setIsDark(root.classList.contains('dark')));
+    observer.observe(root, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
+  return isDark;
+};
+
 /** The Presora app icon — woven "p" mark, swapped for contrast with the active theme. */
 const Mark = ({ className }: { className?: string }) => {
-  const { resolvedTheme } = useTheme();
+  const isDark = useIsDark();
   return (
     <img
-      src={resolvedTheme === 'light' ? MARK_LIGHT : MARK_DARK}
+      src={isDark ? MARK_DARK : MARK_LIGHT}
       alt=""
       aria-hidden="true"
       className={cn('rounded-[22%] shrink-0 object-contain', className)}
