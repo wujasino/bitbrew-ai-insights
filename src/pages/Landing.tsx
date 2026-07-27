@@ -80,7 +80,10 @@ const Landing = () => {
               </span>
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-display text-foreground mb-5 leading-[1.1]">
                 Understand your brand's{' '}
-                <span className="bg-gradient-to-r from-[#6C57E3] via-[#8B79F6] to-[#6C57E3] dark:from-[#8B79F6] dark:via-[#D6CCFF] dark:to-[#8B79F6] bg-[length:200%] bg-clip-text text-transparent animate-shimmer">
+                <span
+                  className="italic bg-gradient-to-r from-[#6C57E3] via-[#8B79F6] to-[#6C57E3] dark:from-[#8B79F6] dark:via-[#D6CCFF] dark:to-[#8B79F6] bg-[length:200%] bg-clip-text text-transparent animate-shimmer"
+                  style={{ fontFamily: "'Baskerville', 'Baskerville Old Face', 'Libre Baskerville', Georgia, serif" }}
+                >
                   AI presence
                 </span>
               </h1>
