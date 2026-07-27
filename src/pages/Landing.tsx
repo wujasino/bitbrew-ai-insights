@@ -79,13 +79,13 @@ const Landing = () => {
                 <Search className="w-3 h-3" /> For brands that want to be found
               </span>
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-display text-foreground mb-5 leading-[1.1]">
-                Be the brand{' '}
+                Understand your brand's{' '}
                 <span className="bg-gradient-to-r from-[#6C57E3] via-[#8B79F6] to-[#6C57E3] dark:from-[#8B79F6] dark:via-[#D6CCFF] dark:to-[#8B79F6] bg-[length:200%] bg-clip-text text-transparent animate-shimmer">
-                  AI recommends
+                  AI presence
                 </span>
               </h1>
               <p className="text-lg text-muted-foreground max-w-lg mx-auto mb-10">
-                See how ChatGPT, Claude and Gemini talk about your brand — and what to fix to get recommended more often.
+                Analyze your brand visibility, perception and competitive position across AI search — then get a clear, actionable plan to become the answer AI gives.
               </p>
             </motion.div>
 

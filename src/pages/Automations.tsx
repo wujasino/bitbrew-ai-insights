@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import {
   Bot, Send, Loader2, Target, Users, CalendarClock, Bell, Sparkles, Check, ArrowRight,
-  MessageSquare, Box,
+  MessageSquare, Box, HelpCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
@@ -37,6 +37,58 @@ const SUGGESTIONS = [
   'Alert me when my sentiment drops below 60',
   'Only query ChatGPT and Claude',
 ];
+
+const FREQUENCIES = ['daily', 'weekly', 'monthly'] as const;
+type Frequency = (typeof FREQUENCIES)[number];
+const FREQUENCY_LABEL: Record<Frequency, string> = { daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly' };
+
+/* Click-to-select scan frequency — a direct alternative to typing it in chat. */
+const FrequencySlider = ({
+  value, onChange, disabled,
+}: {
+  value: Frequency;
+  onChange: (f: Frequency) => void;
+  disabled: boolean;
+}) => {
+  const index = FREQUENCIES.indexOf(value);
+  return (
+    <div className="rounded-xl border border-border bg-card/40 p-4">
+      <div className="flex items-center justify-between mb-4">
+        <span className="text-sm text-foreground">
+          Scan frequency <span className="font-semibold">{FREQUENCY_LABEL[value]}</span>
+        </span>
+        <HelpCircle className="w-3.5 h-3.5 text-muted-foreground" aria-label="How often the automation scans for your brand" />
+      </div>
+
+      <div className="relative flex items-center justify-between px-1">
+        <div className="absolute left-1 right-1 top-1/2 -translate-y-1/2 h-px bg-border" />
+        {FREQUENCIES.map((f, i) => (
+          <button
+            key={f}
+            type="button"
+            disabled={disabled}
+            onClick={() => onChange(f)}
+            aria-label={FREQUENCY_LABEL[f]}
+            aria-pressed={i === index}
+            className="relative z-10 flex items-center justify-center w-5 h-5 disabled:opacity-50"
+          >
+            <span
+              className={cn(
+                'rounded-full transition-all',
+                i === index ? 'w-3.5 h-3.5 bg-primary ring-4 ring-primary/20' : 'w-2 h-2 bg-border hover:bg-muted-foreground/50'
+              )}
+            />
+          </button>
+        ))}
+      </div>
+
+      <div className="flex items-center justify-between mt-2 text-[11px] text-muted-foreground">
+        <span>Daily</span>
+        <span>Monthly</span>
+      </div>
+    </div>
+  );
+};
 
 /* Live snapshot of the saved monitoring config. */
 const ConfigCard = ({ config }: { config: MonitorConfig }) => {
@@ -129,6 +181,7 @@ const Automations = () => {
   const [loading, setLoading] = useState(false);
   const [applying, setApplying] = useState(false);
   const [error, setError] = useState('');
+  const [savingFrequency, setSavingFrequency] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   // Load the current saved config once on mount.
@@ -208,6 +261,39 @@ const Automations = () => {
     setMessages(prev => [...prev, { role: 'assistant', text: 'No problem — I discarded that proposal. Nothing was changed.' }]);
   };
 
+  const setFrequency = async (frequency: Frequency) => {
+    if (savingFrequency || frequency === config?.frequency) return;
+    setSavingFrequency(true);
+    setError('');
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Please sign in to save.');
+
+      const next = {
+        brand: config?.brand ?? null,
+        competitors: config?.competitors ?? [],
+        frequency,
+        models: config?.models ?? ['gpt-4o', 'claude', 'gemini'],
+        alert_metric: config?.alert_metric ?? null,
+        alert_threshold: config?.alert_threshold ?? null,
+        enabled: config?.enabled ?? true,
+      };
+
+      const { data, error: upsertError } = await supabase
+        .from('brand_monitors')
+        .upsert({ user_id: session.user.id, ...next }, { onConflict: 'user_id' })
+        .select('brand, competitors, frequency, models, alert_metric, alert_threshold, enabled')
+        .single();
+      if (upsertError) throw upsertError;
+
+      setConfig(data as MonitorConfig);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not save.');
+    } finally {
+      setSavingFrequency(false);
+    }
+  };
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading, pending]);
@@ -252,6 +338,10 @@ const Automations = () => {
         </Suspense>
       ) : (
         <>
+          <div className="mb-4">
+            <FrequencySlider value={config?.frequency ?? 'weekly'} onChange={setFrequency} disabled={savingFrequency} />
+          </div>
+
           {config && <div className="mb-4"><ConfigCard config={config} /></div>}
 
           {/* Conversation */}

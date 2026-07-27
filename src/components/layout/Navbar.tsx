@@ -203,6 +203,7 @@ export const Navbar = () => {
                 {/* Home with dropdown */}
                 <NavigationMenuItem>
                   <NavigationMenuTrigger
+                    onClick={() => navigate('/')}
                     className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
                       location.pathname === '/'
                         ? 'text-primary bg-primary/10 font-medium'
