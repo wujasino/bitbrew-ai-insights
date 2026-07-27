@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Settings } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 
@@ -53,16 +53,16 @@ export const CreditsUsageWidget = () => {
   const planLabel = plan.charAt(0).toUpperCase() + plan.slice(1);
 
   return (
-    <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+    <div className="w-full max-w-[280px] rounded-xl border border-[hsl(var(--glass-border))] bg-card/60 divide-y divide-[hsl(var(--glass-border))] text-xs">
       {/* Credit usage meter */}
-      <div className="flex-1 sm:min-w-[260px] rounded-xl border border-[hsl(var(--glass-border))] bg-card/60 px-4 py-3">
-        <div className="flex items-center justify-between gap-3 mb-2">
-          <span className="text-sm text-muted-foreground">Credits used</span>
-          <span className="text-sm font-medium text-foreground font-data whitespace-nowrap">
-            {used} / {unlimited ? '∞' : limit} credits
+      <div className="px-3 py-2.5">
+        <div className="flex items-center justify-between gap-3 mb-1.5">
+          <span className="text-muted-foreground">Credits used</span>
+          <span className="font-medium text-foreground font-data whitespace-nowrap">
+            {used} / {unlimited ? '∞' : limit}{!unlimited && ` (${pct}%)`}
           </span>
         </div>
-        <div className="h-2 rounded-full bg-muted overflow-hidden">
+        <div className="h-1 rounded-full bg-muted overflow-hidden">
           <div
             className={cn('h-full rounded-full transition-[width]', pct >= 90 ? 'bg-red-500' : 'bg-primary')}
             style={{ width: `${unlimited ? 100 : pct}%` }}
@@ -71,17 +71,15 @@ export const CreditsUsageWidget = () => {
       </div>
 
       {/* Current plan + billing shortcut */}
-      <div className="flex items-center justify-between gap-3 rounded-xl border border-[hsl(var(--glass-border))] bg-card/60 px-4 py-3 sm:min-w-[260px]">
-        <span className="text-sm text-foreground">
-          Current plan: <span className="font-semibold">{planLabel}</span>
+      <Link
+        to="/settings?tab=billing"
+        className="flex items-center justify-between gap-3 px-3 py-2.5 hover:bg-accent/50 transition-colors rounded-b-xl"
+      >
+        <span className="text-muted-foreground">
+          Plan · <span className="text-foreground font-medium">{planLabel}</span>
         </span>
-        <Link
-          to="/settings?tab=billing"
-          className="inline-flex items-center gap-1.5 rounded-lg border border-[hsl(var(--glass-border))] bg-background px-3 py-1.5 text-sm font-medium text-foreground hover:bg-accent transition-colors shrink-0"
-        >
-          <Settings className="w-3.5 h-3.5 text-muted-foreground" /> Billing
-        </Link>
-      </div>
+        <ChevronRight className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+      </Link>
     </div>
   );
 };
