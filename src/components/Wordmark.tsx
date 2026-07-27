@@ -53,7 +53,7 @@ export const Wordmark = ({ className, iconOnly }: WordmarkProps) => {
   return (
     <span className={cn('inline-flex items-center gap-2 font-wordmark font-bold tracking-tight text-foreground lowercase', className)}>
       <Mark className="h-[2.2em] w-[2.2em]" />
-      <span className="text-2xl leading-none" style={{ fontFamily: "'Algerian', 'Impact', fantasy" }}>presora</span>
+      <span className="text-2xl leading-none" style={{ fontFamily: "'Ultra', 'Impact', serif" }}>presora</span>
     </span>
   );
 };

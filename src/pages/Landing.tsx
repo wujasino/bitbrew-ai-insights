@@ -82,7 +82,7 @@ const Landing = () => {
                 Understand your brand's{' '}
                 <span
                   className="italic bg-gradient-to-r from-[#6C57E3] via-[#8B79F6] to-[#6C57E3] dark:from-[#8B79F6] dark:via-[#D6CCFF] dark:to-[#8B79F6] bg-[length:200%] bg-clip-text text-transparent animate-shimmer"
-                  style={{ fontFamily: "'Baskerville', 'Baskerville Old Face', 'Libre Baskerville', Georgia, serif" }}
+                  style={{ fontFamily: "'Libre Baskerville', Georgia, serif" }}
                 >
                   AI presence
                 </span>
