@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import {
   Bot, Send, Loader2, Target, Users, CalendarClock, Bell, Sparkles, Check, ArrowRight,
-  MessageSquare, Box, HelpCircle,
+  MessageSquare, Box, HelpCircle, ChevronDown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
@@ -42,7 +42,8 @@ const FREQUENCIES = ['daily', 'weekly', 'monthly'] as const;
 type Frequency = (typeof FREQUENCIES)[number];
 const FREQUENCY_LABEL: Record<Frequency, string> = { daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly' };
 
-/* Click-to-select scan frequency — a direct alternative to typing it in chat. */
+/* Click-to-select scan frequency — a direct alternative to typing it in chat.
+   Collapsed by default; expand to reveal the slider. */
 const FrequencySlider = ({
   value, onChange, disabled,
 }: {
@@ -50,42 +51,54 @@ const FrequencySlider = ({
   onChange: (f: Frequency) => void;
   disabled: boolean;
 }) => {
+  const [open, setOpen] = useState(false);
   const index = FREQUENCIES.indexOf(value);
   return (
     <div className="rounded-xl border border-border bg-card/40 p-4">
-      <div className="flex items-center justify-between mb-4">
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        aria-expanded={open}
+        className="w-full flex items-center justify-between"
+      >
         <span className="text-sm text-foreground">
           Scan frequency <span className="font-semibold">{FREQUENCY_LABEL[value]}</span>
         </span>
-        <HelpCircle className="w-3.5 h-3.5 text-muted-foreground" aria-label="How often the automation scans for your brand" />
-      </div>
+        <span className="flex items-center gap-2">
+          <HelpCircle className="w-3.5 h-3.5 text-muted-foreground" aria-label="How often the automation scans for your brand" />
+          <ChevronDown className={cn('w-4 h-4 text-muted-foreground transition-transform', open && 'rotate-180')} />
+        </span>
+      </button>
 
-      <div className="relative flex items-center justify-between px-1">
-        <div className="absolute left-1 right-1 top-1/2 -translate-y-1/2 h-px bg-border" />
-        {FREQUENCIES.map((f, i) => (
-          <button
-            key={f}
-            type="button"
-            disabled={disabled}
-            onClick={() => onChange(f)}
-            aria-label={FREQUENCY_LABEL[f]}
-            aria-pressed={i === index}
-            className="relative z-10 flex items-center justify-center w-5 h-5 disabled:opacity-50"
-          >
-            <span
-              className={cn(
-                'rounded-full transition-all',
-                i === index ? 'w-3.5 h-3.5 bg-primary ring-4 ring-primary/20' : 'w-2 h-2 bg-border hover:bg-muted-foreground/50'
-              )}
-            />
-          </button>
-        ))}
-      </div>
-
-      <div className="flex items-center justify-between mt-2 text-[11px] text-muted-foreground">
-        <span>Daily</span>
-        <span>Monthly</span>
-      </div>
+      {open && (
+        <div className="mt-4">
+          <div className="relative flex items-center justify-between px-1">
+            <div className="absolute left-1 right-1 top-1/2 -translate-y-1/2 h-px bg-border" />
+            {FREQUENCIES.map((f, i) => (
+              <button
+                key={f}
+                type="button"
+                disabled={disabled}
+                onClick={() => onChange(f)}
+                aria-label={FREQUENCY_LABEL[f]}
+                aria-pressed={i === index}
+                className="relative z-10 flex items-center justify-center w-5 h-5 disabled:opacity-50"
+              >
+                <span
+                  className={cn(
+                    'rounded-full transition-all',
+                    i === index ? 'w-3.5 h-3.5 bg-primary ring-4 ring-primary/20' : 'w-2 h-2 bg-border hover:bg-muted-foreground/50'
+                  )}
+                />
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center justify-between mt-2 text-[11px] text-muted-foreground">
+            <span>Daily</span>
+            <span>Monthly</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
