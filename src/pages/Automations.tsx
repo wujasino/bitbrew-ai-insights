@@ -338,10 +338,6 @@ const Automations = () => {
         </Suspense>
       ) : (
         <>
-          <div className="mb-4">
-            <FrequencySlider value={config?.frequency ?? 'weekly'} onChange={setFrequency} disabled={savingFrequency} />
-          </div>
-
           {config && <div className="mb-4"><ConfigCard config={config} /></div>}
 
           {/* Conversation */}
@@ -417,6 +413,9 @@ const Automations = () => {
               >
                 <Send className="w-4 h-4" />
               </button>
+            </div>
+            <div className="mt-3">
+              <FrequencySlider value={config?.frequency ?? 'weekly'} onChange={setFrequency} disabled={savingFrequency} />
             </div>
           </div>
         </>
