@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import RequireScanHistory from "@/components/RequireScanHistory";
 import { applySeo } from "@/hooks/useSeo";
+import { useFaviconTheme } from "@/hooks/useFaviconTheme";
 
 // AppShell (sidebar, app navbar, AI chat) is only used on authenticated app routes —
 // code-split it so it stays out of the initial bundle served on landing/login/register.
@@ -53,6 +54,11 @@ const PageTitle = () => {
   return null;
 };
 
+const FaviconTheme = () => {
+  useFaviconTheme();
+  return null;
+};
+
 const PageLoader = () => (
   <div className="min-h-screen bg-background flex items-center justify-center">
     <div className="w-6 h-6 rounded-full border-2 border-primary border-t-transparent animate-spin" />
@@ -66,6 +72,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <PageTitle />
+        <FaviconTheme />
         <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/" element={<Landing />} />
