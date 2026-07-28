@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, CheckCircle2, Loader2 } from 'lucide-react';
+import { Send, CheckCircle2, Loader2, Mail, Zap, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -50,13 +50,13 @@ export function ContactForm() {
 
         <div className="space-y-4">
           {[
-            { icon: '📧', label: 'Email', value: 'contact.presora@gmail.com', href: 'mailto:contact.presora@gmail.com' },
-            { icon: '⚡', label: 'Response time', value: '< 24h', href: null },
-            { icon: '🌍', label: 'Languages', value: 'PL / EN', href: null },
+            { icon: Mail, label: 'Email', value: 'contact.presora@gmail.com', href: 'mailto:contact.presora@gmail.com' },
+            { icon: Zap, label: 'Response time', value: '< 24h', href: null },
+            { icon: Globe, label: 'Languages', value: 'PL / EN', href: null },
           ].map(item => (
             <div key={item.label} className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-lg shrink-0">
-                {item.icon}
+              <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 text-primary shrink-0">
+                <item.icon className="w-4 h-4" />
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">{item.label}</p>
@@ -74,7 +74,7 @@ export function ContactForm() {
       </div>
 
       {/* Right — form */}
-      <div className="glass-card p-6 rounded-2xl">
+      <div className="rounded-2xl border border-[hsl(var(--glass-border))] bg-card/60 backdrop-blur-sm shadow-lg shadow-primary/5 p-6">
         <AnimatePresence mode="wait">
           {status === 'success' ? (
             <motion.div
