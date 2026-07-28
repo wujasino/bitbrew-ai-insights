@@ -14,14 +14,16 @@ if (!globalThis.WebSocket) {
   globalThis.WebSocket = ws;
 }
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY
-);
+// Matches the fallback pattern used by the other functions — must resolve to
+// the same value newsletter.js used to sign the link, or every link 404s.
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
 // Same secret/scheme used to sign the link in newsletter.js's buildWelcomeEmail.
 const sign = (email) =>
-  crypto.createHash('sha256').update(`${email}:${process.env.SUPABASE_SERVICE_KEY}`).digest('hex');
+  crypto.createHash('sha256').update(`${email}:${SUPABASE_SERVICE_KEY}`).digest('hex');
 
 const escapeHtml = (s) =>
   String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));

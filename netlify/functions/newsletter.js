@@ -11,14 +11,17 @@ if (!globalThis.WebSocket) {
   globalThis.WebSocket = ws;
 }
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY
-);
+// Matches the fallback pattern used by the other functions (analyze.js,
+// chat.js, send-reset-otp.js) — the project's Netlify env has used both
+// naming conventions at different times.
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
 // Same secret/scheme verified by unsubscribe-newsletter.js.
 const signUnsubscribe = (email) =>
-  crypto.createHash('sha256').update(`${email}:${process.env.SUPABASE_SERVICE_KEY}`).digest('hex');
+  crypto.createHash('sha256').update(`${email}:${SUPABASE_SERVICE_KEY}`).digest('hex');
 
 // Inlined branded email — keeps the function self-contained (no filesystem reads).
 // Visual language matches the other transactional emails (src/email-templates/*.html).
