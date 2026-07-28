@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 
-// The "P" mark comes in a dark-ink version (for light backgrounds) and a
-// cream version (for dark backgrounds) — same glyph, sized to match visually.
+// The "P" mark comes in a black version (for light backgrounds) and a
+// white version (for dark backgrounds) — same glyph, sized to match visually.
 const MARK_LIGHT = '/presora-mark.png';
-const MARK_DARK = '/presora-mark-cream.png';
+const MARK_DARK = '/presora-mark-white.png';
 
 /**
  * Reads contrast need straight off the <html> element's `.dark` class instead
