@@ -50,7 +50,28 @@ export default function Settings() {
 
   const [notifBrewComplete, setNotifBrewComplete] = useState(true);
   const [notifNewsletter, setNotifNewsletter] = useState(false);
+  const [notifNewsletterSaving, setNotifNewsletterSaving] = useState(false);
   const [notifMarketing, setNotifMarketing] = useState(false);
+
+  const toggleNewsletter = async (next: boolean) => {
+    const previous = notifNewsletter;
+    setNotifNewsletter(next); // optimistic
+    setNotifNewsletterSaving(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('no session');
+      const res = await fetch('/.netlify/functions/newsletter-preference', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ subscribed: next }),
+      });
+      if (!res.ok) throw new Error('request failed');
+    } catch {
+      setNotifNewsletter(previous); // revert on failure
+    } finally {
+      setNotifNewsletterSaving(false);
+    }
+  };
 
   // Withdrawal form
   const [showWithdrawal, setShowWithdrawal] = useState(false);
@@ -148,6 +169,16 @@ export default function Settings() {
         setSubStatus(profile.subscription_status as typeof subStatus);
       }
       setCurrentPeriodEnd(profile?.current_period_end ?? null);
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        fetch('/.netlify/functions/newsletter-preference', {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        })
+          .then(res => res.ok ? res.json() : null)
+          .then(data => { if (data) setNotifNewsletter(data.subscribed); })
+          .catch(() => { /* leave default */ });
+      }
     });
   }, [navigate]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -678,9 +709,9 @@ export default function Settings() {
               {activeTab === 'notifications' && (
                 <div className="space-y-4">
                   {[
-                    { label: 'Brew complete', desc: 'Get notified when your brand analysis is ready', value: notifBrewComplete, set: setNotifBrewComplete },
-                    { label: 'Newsletter', desc: 'Receive our weekly digest', value: notifNewsletter, set: setNotifNewsletter },
-                    { label: 'Product updates', desc: 'News about new features and offers', value: notifMarketing, set: setNotifMarketing },
+                    { label: 'Brew complete', desc: 'Get notified when your brand analysis is ready', value: notifBrewComplete, set: setNotifBrewComplete, saving: false },
+                    { label: 'Newsletter', desc: 'Receive our weekly digest — turn off to unsubscribe', value: notifNewsletter, set: toggleNewsletter, saving: notifNewsletterSaving },
+                    { label: 'Product updates', desc: 'News about new features and offers', value: notifMarketing, set: setNotifMarketing, saving: false },
                   ].map((item) => (
                     <div key={item.label} className="flex items-start justify-between gap-4 p-4 rounded-xl border border-[hsl(var(--glass-border))] bg-muted/20">
                       <div>
@@ -689,7 +720,8 @@ export default function Settings() {
                       </div>
                       <button
                         onClick={() => item.set(!item.value)}
-                        className={cn('relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors', item.value ? 'bg-primary' : 'bg-muted')}
+                        disabled={item.saving}
+                        className={cn('relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors disabled:opacity-50 disabled:cursor-not-allowed', item.value ? 'bg-primary' : 'bg-muted')}
                       >
                         <span className={cn('pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-lg transition-transform', item.value ? 'translate-x-4' : 'translate-x-0')} />
                       </button>
