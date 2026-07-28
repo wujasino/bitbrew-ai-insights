@@ -208,11 +208,11 @@ const Landing = () => {
                 Why it matters
               </span>
               <h2 className="text-3xl sm:text-4xl font-display text-foreground leading-[1.15] mb-4">
-                AI gives one answer, not ten links.{' '}
-                <span className="text-primary">You're in it, or you're nowhere.</span>
+                AI gives one answer, not ten blue links.{' '}
+                <span className="text-primary">Miss it, and the customer never sees you.</span>
               </h2>
               <p className="text-lg text-muted-foreground leading-relaxed max-w-2xl mx-auto mb-8">
-                Search let customers choose from ten results. AI just picks one and moves on — and it picks from whatever it already knows best. Presora shows you exactly where you stand, with the raw model answers to prove it — no black box, no averaged-out score.
+                A search page let people pick from ten results. AI picks one — from whatever it already knows about your category. Presora shows you exactly where you stand, with the raw model answers behind every score.
               </p>
               <button
                 onClick={() => document.getElementById('hero-input')?.scrollIntoView({ behavior: 'smooth' })}
@@ -260,10 +260,10 @@ const Landing = () => {
               className="text-center mb-14"
             >
               <span className="inline-block px-3 py-1 text-xs badge rounded-lg mb-4 font-data uppercase tracking-wider">
-                Why it matters
+                What's inside
               </span>
               <h2 className="text-3xl sm:text-4xl font-display text-foreground">
-                Why it matters
+                What Presora actually does
               </h2>
             </motion.div>
 
@@ -471,11 +471,11 @@ const Landing = () => {
               <Sparkles className="w-3 h-3" /> Action, not just a report
             </span>
             <h2 className="text-3xl sm:text-4xl font-display text-foreground mb-3">
-              Most tools tell you you're invisible.<br />
-              <span className="text-primary">We tell you what to publish.</span>
+              Know you're invisible? That's step one.<br />
+              <span className="text-primary">Here's what to publish next.</span>
             </h2>
             <p className="text-sm text-muted-foreground max-w-xl mx-auto">
-              Every scan ends with a prioritized, plain-English action plan — the exact content, pages and mentions that move AI models to recommend you. No dashboards to decode.
+              Every scan ends with a ranked, plain-English action plan: the specific pages, comparisons and mentions that move AI models to recommend you.
             </p>
           </motion.div>
 
@@ -498,7 +498,7 @@ const Landing = () => {
               </p>
               <div className="rounded-xl border border-[hsl(var(--glass-border))] bg-muted/20 p-4 text-sm text-muted-foreground leading-relaxed">
                 AI names 5 competitors. Your brand isn't one of them.
-                <span className="block mt-2 text-foreground/80">Presora finds out <span className="text-primary font-medium">why</span> — and hands you the fix.</span>
+                <span className="block mt-2 text-foreground/80">Presora finds out <span className="text-primary font-medium">why</span>, and hands you the fix.</span>
               </div>
             </motion.div>
 
