@@ -1,7 +1,7 @@
 import { useNavigate, Link } from 'react-router-dom';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Zap, Eye, BarChart3, Shield, ChevronDown, HelpCircle, Mail, TrendingUp, ArrowRight, Globe, Star, Quote, ShieldCheck, Clock, Search, PenLine, Sparkles, MessageSquare } from 'lucide-react';
+import { Zap, Eye, BarChart3, Shield, ChevronDown, HelpCircle, Mail, TrendingUp, ArrowRight, Globe, Star, Quote, ShieldCheck, Clock, Search, PenLine, Sparkles, MessageSquare, Rocket, LineChart, Building2 } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
@@ -556,29 +556,29 @@ const Landing = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {[
               {
-                emoji: '🚀',
+                icon: Rocket,
                 title: 'Startups & Founders',
                 desc: 'Building your brand from scratch and want to know if AI mentions you at all — and what it says. Find out before your customers ask ChatGPT.',
                 tags: ['Brand awareness', 'Early traction', 'Competitor gap'],
-                color: 'from-violet-500/10 to-transparent',
-                border: 'border-violet-500/20',
+                iconBg: 'bg-violet-500/10 border-violet-500/20 text-violet-500',
+                border: 'border-violet-500/20 hover:border-violet-500/40',
               },
               {
-                emoji: '📊',
+                icon: LineChart,
                 title: 'Brand Managers',
                 desc: 'Already tracking brand in traditional media? Time to add the AI channel. Report to leadership how the brand performs in language models.',
                 tags: ['Sentiment tracking', 'Weekly digest', 'CSV export'],
-                color: 'from-primary/10 to-transparent',
-                border: 'border-primary/20',
+                iconBg: 'bg-primary/10 border-primary/20 text-primary',
+                border: 'border-primary/30 hover:border-primary/50',
                 featured: true,
               },
               {
-                emoji: '🏢',
+                icon: Building2,
                 title: 'Marketing Agencies',
                 desc: 'Offer clients a new service: AI visibility audit. Generate white-label reports and compare client brands against competitors.',
                 tags: ['Multi-brand', 'API access', 'Competitor compare'],
-                color: 'from-emerald-500/10 to-transparent',
-                border: 'border-emerald-500/20',
+                iconBg: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500',
+                border: 'border-emerald-500/20 hover:border-emerald-500/40',
               },
             ].map((card, i) => (
               <motion.div
@@ -587,14 +587,16 @@ const Landing = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                className={`relative glass-card p-7 flex flex-col gap-4 bg-gradient-to-b ${card.color} border ${card.border} ${card.featured ? 'ring-1 ring-primary/30' : ''}`}
+                className={`relative rounded-2xl p-7 flex flex-col gap-4 bg-card/60 backdrop-blur-sm border shadow-lg shadow-primary/5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl ${card.border} ${card.featured ? 'ring-1 ring-primary/30' : ''}`}
               >
                 {card.featured && (
-                  <span className="absolute -top-3 left-6 px-3 py-1 rounded-full bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wider">
+                  <span className="absolute -top-3 left-6 px-3 py-1 rounded-full bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wider shadow-sm">
                     Most popular
                   </span>
                 )}
-                <div className="text-3xl">{card.emoji}</div>
+                <div className={`inline-flex items-center justify-center w-12 h-12 rounded-xl border ${card.iconBg}`}>
+                  <card.icon className="w-6 h-6" />
+                </div>
                 <div>
                   <h3 className="text-lg font-semibold text-foreground mb-2">{card.title}</h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">{card.desc}</p>
