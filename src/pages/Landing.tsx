@@ -35,18 +35,21 @@ const TESTIMONIALS = [
     name: 'Sarah Lindqvist',
     role: 'Head of Growth, Northwind SaaS',
     initials: 'SL',
+    iconBg: 'bg-violet-500/10 border-violet-500/20 text-violet-500',
   },
   {
     quote: 'Finally a number I can put in front of the board. Our AI visibility score went from 41 to 78 in a quarter — and I can prove exactly what moved it.',
     name: 'Marcus Bishop',
     role: 'CMO, Vellum Commerce',
     initials: 'MB',
+    iconBg: 'bg-primary/10 border-primary/20 text-primary',
   },
   {
     quote: 'We run AI audits for 12 client brands from one dashboard. The white-label reports alone paid for the whole subscription in the first month.',
     name: 'Priya Nandakumar',
     role: 'Founder, Halo Digital Agency',
     initials: 'PN',
+    iconBg: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500',
   },
 ];
 
@@ -758,13 +761,17 @@ const Landing = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                className="glass-card p-7 flex flex-col gap-5"
+                className="rounded-2xl border border-[hsl(var(--glass-border))] p-7 flex flex-col gap-5 bg-card/60 backdrop-blur-sm shadow-lg shadow-primary/5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl"
               >
-                <Quote className="w-7 h-7 text-primary/40" />
-                <div className="flex gap-0.5">
-                  {[0, 1, 2, 3, 4].map((s) => (
-                    <Star key={s} className="w-3.5 h-3.5 fill-primary text-primary" />
-                  ))}
+                <div className="flex items-center justify-between">
+                  <div className={`inline-flex items-center justify-center w-12 h-12 rounded-xl border ${t.iconBg}`}>
+                    <Quote className="w-6 h-6" />
+                  </div>
+                  <div className="flex gap-0.5">
+                    {[0, 1, 2, 3, 4].map((s) => (
+                      <Star key={s} className="w-3.5 h-3.5 fill-primary text-primary" />
+                    ))}
+                  </div>
                 </div>
                 <p className="text-sm text-foreground/90 leading-relaxed flex-1">“{t.quote}”</p>
                 <div className="flex items-center gap-3 pt-2 border-t border-[hsl(var(--glass-border))]">
