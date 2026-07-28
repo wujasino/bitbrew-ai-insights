@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import {
-  Bot, Send, Loader2, Target, Users, CalendarClock, Bell, Sparkles, Check, ArrowRight,
+  Bot, ArrowUp, Loader2, Target, Users, CalendarClock, Bell, Sparkles, Check, ArrowRight,
   MessageSquare, Box, HelpCircle, ChevronDown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -424,7 +424,7 @@ const Automations = () => {
                 className="flex items-center justify-center w-9 h-9 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-40"
                 aria-label="Send"
               >
-                <Send className="w-4 h-4" />
+                <ArrowUp className="w-4 h-4" />
               </button>
             </div>
             <div className="mt-3">

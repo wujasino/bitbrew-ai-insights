@@ -187,12 +187,9 @@ export const Navbar = () => {
               </PopoverContent>
             </Popover>
 
-            {/* Wordmark + what-it-does descriptor */}
+            {/* Wordmark */}
             <Link to="/" aria-label="Presora — AI brand visibility" className="flex items-center gap-2 shrink-0">
               <Wordmark className="text-lg" />
-              <span className="hidden sm:inline-flex items-center leading-none pl-2 border-l border-[hsl(var(--glass-border))] text-[10px] font-data uppercase tracking-[0.18em] text-muted-foreground">
-                AI Visibility
-              </span>
             </Link>
           </div>
 

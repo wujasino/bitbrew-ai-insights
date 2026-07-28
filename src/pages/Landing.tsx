@@ -1,7 +1,7 @@
 import { useNavigate, Link } from 'react-router-dom';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Zap, Eye, BarChart3, Shield, ChevronDown, HelpCircle, Mail, TrendingUp, ArrowRight, Globe, Star, Quote, ShieldCheck, Clock, Search, PenLine, Sparkles, MessageSquare } from 'lucide-react';
+import { Zap, Eye, BarChart3, Shield, ChevronDown, HelpCircle, Mail, TrendingUp, ArrowRight, Globe, Star, Quote, ShieldCheck, Clock, Search, PenLine, Sparkles, MessageSquare, Rocket, LineChart, Building2 } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
@@ -35,18 +35,21 @@ const TESTIMONIALS = [
     name: 'Sarah Lindqvist',
     role: 'Head of Growth, Northwind SaaS',
     initials: 'SL',
+    iconBg: 'bg-violet-500/10 border-violet-500/20 text-violet-500',
   },
   {
     quote: 'Finally a number I can put in front of the board. Our AI visibility score went from 41 to 78 in a quarter — and I can prove exactly what moved it.',
     name: 'Marcus Bishop',
     role: 'CMO, Vellum Commerce',
     initials: 'MB',
+    iconBg: 'bg-primary/10 border-primary/20 text-primary',
   },
   {
     quote: 'We run AI audits for 12 client brands from one dashboard. The white-label reports alone paid for the whole subscription in the first month.',
     name: 'Priya Nandakumar',
     role: 'Founder, Halo Digital Agency',
     initials: 'PN',
+    iconBg: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500',
   },
 ];
 
@@ -208,11 +211,11 @@ const Landing = () => {
                 Why it matters
               </span>
               <h2 className="text-3xl sm:text-4xl font-display text-foreground leading-[1.15] mb-4">
-                AI gives one answer, not ten links.{' '}
-                <span className="text-primary">You're in it, or you're nowhere.</span>
+                AI gives one answer, not ten blue links.{' '}
+                <span className="text-primary">Miss it, and the customer never sees you.</span>
               </h2>
               <p className="text-lg text-muted-foreground leading-relaxed max-w-2xl mx-auto mb-8">
-                Search let customers choose from ten results. AI just picks one and moves on — and it picks from whatever it already knows best. Presora shows you exactly where you stand, with the raw model answers to prove it — no black box, no averaged-out score.
+                A search page let people pick from ten results. AI picks one — from whatever it already knows about your category. Presora shows you exactly where you stand, with the raw model answers behind every score.
               </p>
               <button
                 onClick={() => document.getElementById('hero-input')?.scrollIntoView({ behavior: 'smooth' })}
@@ -260,10 +263,10 @@ const Landing = () => {
               className="text-center mb-14"
             >
               <span className="inline-block px-3 py-1 text-xs badge rounded-lg mb-4 font-data uppercase tracking-wider">
-                Why it matters
+                What's inside
               </span>
               <h2 className="text-3xl sm:text-4xl font-display text-foreground">
-                Why it matters
+                What Presora actually does
               </h2>
             </motion.div>
 
@@ -471,11 +474,11 @@ const Landing = () => {
               <Sparkles className="w-3 h-3" /> Action, not just a report
             </span>
             <h2 className="text-3xl sm:text-4xl font-display text-foreground mb-3">
-              Most tools tell you you're invisible.<br />
-              <span className="text-primary">We tell you what to publish.</span>
+              Know you're invisible? That's step one.<br />
+              <span className="text-primary">Here's what to publish next.</span>
             </h2>
             <p className="text-sm text-muted-foreground max-w-xl mx-auto">
-              Every scan ends with a prioritized, plain-English action plan — the exact content, pages and mentions that move AI models to recommend you. No dashboards to decode.
+              Every scan ends with a ranked, plain-English action plan: the specific pages, comparisons and mentions that move AI models to recommend you.
             </p>
           </motion.div>
 
@@ -498,7 +501,7 @@ const Landing = () => {
               </p>
               <div className="rounded-xl border border-[hsl(var(--glass-border))] bg-muted/20 p-4 text-sm text-muted-foreground leading-relaxed">
                 AI names 5 competitors. Your brand isn't one of them.
-                <span className="block mt-2 text-foreground/80">Presora finds out <span className="text-primary font-medium">why</span> — and hands you the fix.</span>
+                <span className="block mt-2 text-foreground/80">Presora finds out <span className="text-primary font-medium">why</span>, and hands you the fix.</span>
               </div>
             </motion.div>
 
@@ -556,29 +559,29 @@ const Landing = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {[
               {
-                emoji: '🚀',
+                icon: Rocket,
                 title: 'Startups & Founders',
                 desc: 'Building your brand from scratch and want to know if AI mentions you at all — and what it says. Find out before your customers ask ChatGPT.',
                 tags: ['Brand awareness', 'Early traction', 'Competitor gap'],
-                color: 'from-violet-500/10 to-transparent',
-                border: 'border-violet-500/20',
+                iconBg: 'bg-violet-500/10 border-violet-500/20 text-violet-500',
+                border: 'border-violet-500/20 hover:border-violet-500/40',
               },
               {
-                emoji: '📊',
+                icon: LineChart,
                 title: 'Brand Managers',
                 desc: 'Already tracking brand in traditional media? Time to add the AI channel. Report to leadership how the brand performs in language models.',
                 tags: ['Sentiment tracking', 'Weekly digest', 'CSV export'],
-                color: 'from-primary/10 to-transparent',
-                border: 'border-primary/20',
+                iconBg: 'bg-primary/10 border-primary/20 text-primary',
+                border: 'border-primary/30 hover:border-primary/50',
                 featured: true,
               },
               {
-                emoji: '🏢',
+                icon: Building2,
                 title: 'Marketing Agencies',
                 desc: 'Offer clients a new service: AI visibility audit. Generate white-label reports and compare client brands against competitors.',
                 tags: ['Multi-brand', 'API access', 'Competitor compare'],
-                color: 'from-emerald-500/10 to-transparent',
-                border: 'border-emerald-500/20',
+                iconBg: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500',
+                border: 'border-emerald-500/20 hover:border-emerald-500/40',
               },
             ].map((card, i) => (
               <motion.div
@@ -587,14 +590,16 @@ const Landing = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                className={`relative glass-card p-7 flex flex-col gap-4 bg-gradient-to-b ${card.color} border ${card.border} ${card.featured ? 'ring-1 ring-primary/30' : ''}`}
+                className={`relative rounded-2xl p-7 flex flex-col gap-4 bg-card/60 backdrop-blur-sm border shadow-lg shadow-primary/5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl ${card.border} ${card.featured ? 'ring-1 ring-primary/30' : ''}`}
               >
                 {card.featured && (
-                  <span className="absolute -top-3 left-6 px-3 py-1 rounded-full bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wider">
+                  <span className="absolute -top-3 left-6 px-3 py-1 rounded-full bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wider shadow-sm">
                     Most popular
                   </span>
                 )}
-                <div className="text-3xl">{card.emoji}</div>
+                <div className={`inline-flex items-center justify-center w-12 h-12 rounded-xl border ${card.iconBg}`}>
+                  <card.icon className="w-6 h-6" />
+                </div>
                 <div>
                   <h3 className="text-lg font-semibold text-foreground mb-2">{card.title}</h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">{card.desc}</p>
@@ -756,13 +761,17 @@ const Landing = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                className="glass-card p-7 flex flex-col gap-5"
+                className="rounded-2xl border border-[hsl(var(--glass-border))] p-7 flex flex-col gap-5 bg-card/60 backdrop-blur-sm shadow-lg shadow-primary/5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl"
               >
-                <Quote className="w-7 h-7 text-primary/40" />
-                <div className="flex gap-0.5">
-                  {[0, 1, 2, 3, 4].map((s) => (
-                    <Star key={s} className="w-3.5 h-3.5 fill-primary text-primary" />
-                  ))}
+                <div className="flex items-center justify-between">
+                  <div className={`inline-flex items-center justify-center w-12 h-12 rounded-xl border ${t.iconBg}`}>
+                    <Quote className="w-6 h-6" />
+                  </div>
+                  <div className="flex gap-0.5">
+                    {[0, 1, 2, 3, 4].map((s) => (
+                      <Star key={s} className="w-3.5 h-3.5 fill-primary text-primary" />
+                    ))}
+                  </div>
                 </div>
                 <p className="text-sm text-foreground/90 leading-relaxed flex-1">“{t.quote}”</p>
                 <div className="flex items-center gap-3 pt-2 border-t border-[hsl(var(--glass-border))]">

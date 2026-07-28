@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 
-// The woven "p" mark comes in a dark-ink version (for light backgrounds) and a
-// cream version (for dark backgrounds) — same glyph, sized to match visually.
-const MARK_LIGHT = '/percelyze-logo.png';
-const MARK_DARK = '/presora-logo-cream-square.png';
+// The "P" mark comes in a black version (for light backgrounds) and a
+// white version (for dark backgrounds) — same glyph, sized to match visually.
+const MARK_LIGHT = '/presora-mark.png';
+const MARK_DARK = '/presora-mark-white.png';
 
 /**
  * Reads contrast need straight off the <html> element's `.dark` class instead
@@ -53,7 +53,7 @@ export const Wordmark = ({ className, iconOnly }: WordmarkProps) => {
   return (
     <span className={cn('inline-flex items-center gap-2 font-wordmark font-bold tracking-tight text-foreground lowercase', className)}>
       <Mark className="h-[2.2em] w-[2.2em]" />
-      <span className="text-2xl leading-none" style={{ fontFamily: "'Ultra', 'Impact', serif" }}>presora</span>
+      <span className="text-2xl leading-none tracking-wide" style={{ fontFamily: "'Bebas Neue', 'Impact', sans-serif" }}>presora</span>
     </span>
   );
 };
