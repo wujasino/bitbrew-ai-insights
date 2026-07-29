@@ -232,6 +232,12 @@
 
   /* ── Wordmark ───────────────────────────────────────────────── */
   .font-wordmark {
-    font-family: 'Poppins', 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: 'Satoshi', 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+  /* ── Landing page ───────────────────────────────────────────── */
+  .font-landing,
+  .font-landing .font-display {
+    font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
   }
 }

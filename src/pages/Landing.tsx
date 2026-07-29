@@ -58,7 +58,7 @@ const Landing = () => {
   useForceLightTheme();
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background font-landing">
       <Navbar />
 
       {/* ── Urgency strip ─────────────────────────────────────────── */}
