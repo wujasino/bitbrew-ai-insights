@@ -189,7 +189,7 @@ export const Navbar = () => {
 
             {/* Wordmark */}
             <Link to="/" aria-label="Presora — AI brand visibility" className="flex items-center gap-2 shrink-0">
-              <Wordmark className="text-lg" />
+              <Wordmark className="text-2xl" />
             </Link>
           </div>
 
