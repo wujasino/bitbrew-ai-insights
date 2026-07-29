@@ -8,7 +8,7 @@ ships to all users at once.
 
 Please report security issues privately. **Do not open a public GitHub issue.**
 
-- **Email:** security@presora.app
+- **Email:** contact.presora@gmail.com
 - **GitHub:** [private security advisory](https://github.com/wujasino/presora/security/advisories/new)
 
 Helpful things to include: affected endpoint or page, steps to reproduce, impact, and any
