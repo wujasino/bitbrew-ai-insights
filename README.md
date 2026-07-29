@@ -93,12 +93,6 @@ npx playwright test   # E2E
 
 Security policy and disclosure process: [SECURITY.md](SECURITY.md).
 
-## Screenshots
-
-<img width="1240" alt="Presora — brand analysis view" src="https://github.com/user-attachments/assets/e45238ef-7152-431c-853a-151ef7202f15" />
-<img width="1257" alt="Presora — report breakdown" src="https://github.com/user-attachments/assets/4cb08a9f-598a-4552-b469-a5f44e9ecc44" />
-<img width="1056" alt="Presora — dashboard" src="https://github.com/user-attachments/assets/c0675723-40ee-4cb7-8321-bf9020e7a10f" />
-
 ---
 
 ## About
