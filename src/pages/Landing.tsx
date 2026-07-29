@@ -71,7 +71,7 @@ const Landing = () => {
 
       {/* ── Hero + Why (shared animated background) ───────────────── */}
       <GradientMeshBg className="relative">
-        <section className="hero pt-24 sm:pt-32 pb-20 px-4">
+        <section className="hero pt-24 sm:pt-32 pb-10 px-4">
           <div className="max-w-2xl mx-auto text-center">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -124,7 +124,7 @@ const Landing = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.8 }}
               onClick={() => document.getElementById('why-section')?.scrollIntoView({ behavior: 'smooth' })}
-              className="mt-16 mx-auto flex flex-col items-center gap-1.5 text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+              className="mt-8 mx-auto flex flex-col items-center gap-1.5 text-muted-foreground/50 hover:text-muted-foreground transition-colors"
             >
               <span className="text-[10px] uppercase tracking-[0.25em]">Learn more</span>
               <motion.div animate={{ y: [0, 4, 0] }} transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}>
@@ -868,7 +868,7 @@ const Landing = () => {
 
 
       {/* ── FAQ ───────────────────────────────────────────────────── */}
-      <section id="faq" className="py-20 px-4">
+      <section id="faq" className="pt-20 pb-12 px-4">
         <div className="max-w-3xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
@@ -937,7 +937,7 @@ const Landing = () => {
       </section>
 
       {/* ── Newsletter ────────────────────────────────────────────── */}
-      <section className="py-8 px-4">
+      <section className="pt-4 pb-14 px-4">
         <div className="max-w-xl mx-auto">
           <NewsletterSignup
             onSubmit={async (email) => {
