@@ -240,4 +240,66 @@
   .font-landing .font-display {
     font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
   }
+
+  /* ── Landing page: neon dark theme ─────────────────────────────
+     Purple → azure → cyan accent on a near-black ground. Scoped to
+     .font-landing so it never bleeds into the app's dashboard theme. */
+  .font-landing {
+    --background: 248 60% 4%;
+    --foreground: 250 60% 96%;
+
+    --card: 245 48% 9%;
+    --card-foreground: 250 60% 96%;
+
+    --popover: 245 48% 9%;
+    --popover-foreground: 250 60% 96%;
+
+    --primary: 252 100% 68%;
+    --primary-foreground: 250 100% 98%;
+
+    --secondary: 245 38% 15%;
+    --secondary-foreground: 250 25% 85%;
+
+    --muted: 245 35% 13%;
+    --muted-foreground: 252 22% 68%;
+
+    --accent: 252 55% 20%;
+    --accent-foreground: 199 100% 80%;
+
+    --border: 252 90% 68% / 0.16;
+    --input: 245 35% 16%;
+    --ring: 199 90% 65%;
+
+    --glass: 245 48% 9% / 0.5;
+    --glass-border: 252 90% 68% / 0.16;
+    --glass-border-hover: 199 90% 65% / 0.4;
+  }
+
+  .font-landing .hero {
+    background: radial-gradient(120% 100% at 50% 0%, #120e30 0%, #060512 55%, #060512 100%);
+  }
+
+  .font-landing .badge {
+    background: rgba(124, 92, 255, 0.14);
+    border: 1px solid rgba(124, 92, 255, 0.35);
+    color: #9FD8FF;
+  }
+
+  .font-landing .cta-box {
+    background: linear-gradient(135deg, #120e30, #060512);
+  }
+
+  .font-landing .card {
+    background: linear-gradient(135deg, #120e30, #0a0820);
+    border-color: rgba(124, 92, 255, 0.18);
+  }
+
+  .font-landing .glass-card {
+    box-shadow: 0 20px 50px -15px rgba(124, 92, 255, 0.18);
+    background-image: linear-gradient(to bottom, rgba(124, 92, 255, 0.05), transparent);
+  }
+
+  .font-landing .glass-card-hover:hover {
+    box-shadow: 0 25px 60px -12px rgba(124, 92, 255, 0.28);
+  }
 }

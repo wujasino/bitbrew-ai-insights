@@ -12,7 +12,7 @@ import { NewsletterSignup } from '@/components/ui/newsletter-signup';
 import { GradientMeshBg } from '@/components/ui/gradient-mesh-bg';
 import { ContactForm } from '@/components/ui/contact-form';
 import { FAQ_EN } from '@/lib/faq';
-import { useForceLightTheme } from '@/hooks/useForceLightTheme';
+import { useForceDarkTheme } from '@/hooks/useForceDarkTheme';
 
 /* ── Integration logos (text-based, gray) ─────────────────────────── */
 const INTEGRATIONS = [
@@ -55,7 +55,7 @@ const TESTIMONIALS = [
 
 const Landing = () => {
   const navigate = useNavigate();
-  useForceLightTheme();
+  useForceDarkTheme();
 
   return (
     <div className="min-h-screen bg-background font-landing">
@@ -84,7 +84,7 @@ const Landing = () => {
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-display text-foreground mb-5 leading-[1.1]">
                 Understand your brand's{' '}
                 <span
-                  className="italic bg-gradient-to-r from-[#6C57E3] via-[#8B79F6] to-[#6C57E3] dark:from-[#8B79F6] dark:via-[#D6CCFF] dark:to-[#8B79F6] bg-[length:200%] bg-clip-text text-transparent animate-shimmer"
+                  className="italic bg-gradient-to-r from-[#7C5CFF] via-[#4F8CFF] to-[#22D3EE] bg-[length:200%] bg-clip-text text-transparent animate-shimmer [filter:drop-shadow(0_0_22px_rgba(124,92,255,0.45))]"
                   style={{ fontFamily: "'Libre Baskerville', Georgia, serif" }}
                 >
                   AI presence
@@ -219,7 +219,7 @@ const Landing = () => {
               </p>
               <button
                 onClick={() => document.getElementById('hero-input')?.scrollIntoView({ behavior: 'smooth' })}
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity shadow-lg shadow-primary/25"
               >
                 See how AI sees your brand
                 <ArrowRight className="w-4 h-4" />
@@ -797,7 +797,7 @@ const Landing = () => {
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <button
               onClick={() => document.getElementById('hero-input')?.scrollIntoView({ behavior: 'smooth' })}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity shadow-lg shadow-primary/25"
             >
               Start for free
               <ArrowRight className="w-4 h-4" />
