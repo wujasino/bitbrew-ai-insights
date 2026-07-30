@@ -108,7 +108,7 @@ export const TrialBanner = () => {
           transition={{ duration: 0.2 }}
           className="overflow-hidden"
         >
-          <div className="relative bg-gradient-to-r from-primary/90 via-primary to-violet-600 text-primary-foreground text-sm">
+          <div className="relative bg-gradient-to-r from-primary/90 via-primary to-indigo-600 text-primary-foreground text-sm">
             <div className="max-w-7xl mx-auto px-4 py-2.5 flex items-center justify-center gap-3 text-center">
               <Sparkles className="w-3.5 h-3.5 shrink-0 opacity-80" />
               <span className="leading-snug">{renderMessage()}</span>
