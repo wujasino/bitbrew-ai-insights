@@ -240,4 +240,9 @@
   .font-landing .font-display {
     font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
   }
+
+  /* Subtle full-page gradient so the light theme doesn't read flat white */
+  .font-landing {
+    background: linear-gradient(180deg, #F5F3FF 0%, #FFFFFF 22%, #FBFAFF 55%, #F6F4FE 100%);
+  }
 }
