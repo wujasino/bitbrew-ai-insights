@@ -142,7 +142,7 @@
 
   /* ── Hero section ───────────────────────────────────────────── */
   .hero {
-    background: linear-gradient(180deg, #F2EFFF 0%, #F8F8FA 100%);
+    background: linear-gradient(180deg, #F1F1F1 0%, #FAFAFA 100%);
   }
 
   .dark .hero {
@@ -151,9 +151,9 @@
 
   /* ── Badge ──────────────────────────────────────────────────── */
   .badge {
-    background: rgba(139, 121, 246, 0.12);
-    border: 1px solid rgba(139, 121, 246, 0.32);
-    color: #6C57E3;
+    background: rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(0, 0, 0, 0.18);
+    color: #171717;
   }
 
   .dark .badge {
@@ -164,7 +164,7 @@
 
   /* ── CTA box ────────────────────────────────────────────────── */
   .cta-box {
-    background: linear-gradient(135deg, #F2EFFF, #F8F8FA);
+    background: linear-gradient(135deg, #F1F1F1, #FAFAFA);
   }
 
   .dark .cta-box {
@@ -243,6 +243,17 @@
 
   /* Subtle full-page gradient so the light theme doesn't read flat white */
   .font-landing {
-    background: linear-gradient(180deg, #F5F3FF 0%, #FFFFFF 22%, #FBFAFF 55%, #F6F4FE 100%);
+    background: linear-gradient(180deg, #F2F2F2 0%, #FFFFFF 22%, #FAFAFA 55%, #F1F1F1 100%);
+  }
+
+  /* Accent: violet -> black, scoped so the rest of the app keeps its violet theme */
+  .font-landing {
+    --primary: 0 0% 9%;
+    --primary-foreground: 0 0% 100%;
+    --ring: 0 0% 9%;
+    --accent: 0 0% 92%;
+    --accent-foreground: 0 0% 9%;
+    --glass-border: 0 0% 9% / 0.14;
+    --glass-border-hover: 0 0% 9% / 0.35;
   }
 }
