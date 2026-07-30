@@ -35,7 +35,7 @@ const TESTIMONIALS = [
     name: 'Sarah Lindqvist',
     role: 'Head of Growth, Northwind SaaS',
     initials: 'SL',
-    iconBg: 'bg-violet-500/10 border-violet-500/20 text-violet-500',
+    iconBg: 'bg-neutral-900/10 border-neutral-900/20 text-neutral-900',
   },
   {
     quote: 'Finally a number I can put in front of the board. Our AI visibility score went from 41 to 78 in a quarter — and I can prove exactly what moved it.',
@@ -62,15 +62,15 @@ const Landing = () => {
       <Navbar />
 
       {/* ── Urgency strip ─────────────────────────────────────────── */}
-      <div className="w-full bg-primary/10 border-b border-primary/20 px-4 py-2.5 flex items-center justify-center gap-2 text-center">
-        <TrendingUp className="w-3.5 h-3.5 text-primary shrink-0" />
-        <p className="text-xs text-foreground/80">
+      <div className="w-full bg-[#111827] border-b border-[#334155] px-4 py-2.5 flex items-center justify-center gap-2 text-center">
+        <TrendingUp className="w-3.5 h-3.5 text-[#6366F1] shrink-0" />
+        <p className="text-xs text-[#F8FAFC]/90">
           AI models are already shaping brand reputations. Is yours represented accurately?
         </p>
       </div>
 
       {/* ── Hero + Why (shared animated background) ───────────────── */}
-      <GradientMeshBg className="relative">
+      <GradientMeshBg className="relative" variant="mono">
         <section className="hero pt-24 sm:pt-32 pb-10 px-4">
           <div className="max-w-2xl mx-auto text-center">
             <motion.div
@@ -84,7 +84,7 @@ const Landing = () => {
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-display text-foreground mb-5 leading-[1.1]">
                 Understand your brand's{' '}
                 <span
-                  className="italic bg-gradient-to-r from-[#6C57E3] via-[#8B79F6] to-[#6C57E3] dark:from-[#8B79F6] dark:via-[#D6CCFF] dark:to-[#8B79F6] bg-[length:200%] bg-clip-text text-transparent animate-shimmer"
+                  className="italic bg-gradient-to-r from-[#171717] via-[#6B6B6B] to-[#171717] dark:from-[#8B79F6] dark:via-[#D6CCFF] dark:to-[#8B79F6] bg-[length:200%] bg-clip-text text-transparent animate-shimmer"
                   style={{ fontFamily: "'Libre Baskerville', Georgia, serif" }}
                 >
                   AI presence
@@ -563,8 +563,8 @@ const Landing = () => {
                 title: 'Startups & Founders',
                 desc: 'Building your brand from scratch and want to know if AI mentions you at all — and what it says. Find out before your customers ask ChatGPT.',
                 tags: ['Brand awareness', 'Early traction', 'Competitor gap'],
-                iconBg: 'bg-violet-500/10 border-violet-500/20 text-violet-500',
-                border: 'border-violet-500/20 hover:border-violet-500/40',
+                iconBg: 'bg-neutral-900/10 border-neutral-900/20 text-neutral-900',
+                border: 'border-neutral-900/20 hover:border-neutral-900/40',
               },
               {
                 icon: LineChart,
