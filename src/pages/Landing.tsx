@@ -62,9 +62,9 @@ const Landing = () => {
       <Navbar />
 
       {/* ── Urgency strip ─────────────────────────────────────────── */}
-      <div className="w-full bg-primary/10 border-b border-primary/20 px-4 py-2.5 flex items-center justify-center gap-2 text-center">
-        <TrendingUp className="w-3.5 h-3.5 text-primary shrink-0" />
-        <p className="text-xs text-foreground/80">
+      <div className="w-full bg-[#111827] border-b border-[#334155] px-4 py-2.5 flex items-center justify-center gap-2 text-center">
+        <TrendingUp className="w-3.5 h-3.5 text-[#6366F1] shrink-0" />
+        <p className="text-xs text-[#F8FAFC]/90">
           AI models are already shaping brand reputations. Is yours represented accurately?
         </p>
       </div>
