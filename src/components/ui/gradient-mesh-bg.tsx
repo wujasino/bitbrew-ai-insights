@@ -17,27 +17,27 @@ export const GradientMeshBg = memo(function GradientMeshBg({
         className="absolute inset-0 pointer-events-none overflow-hidden"
         aria-hidden="true"
       >
-        {/* top-left purple orb */}
+        {/* top-left lavender orb */}
         <div
-          className="absolute -top-40 -left-40 w-[600px] h-[600px] rounded-full opacity-[0.18] dark:opacity-[0.28] blur-[120px]"
+          className="absolute -top-40 -left-40 w-[600px] h-[600px] rounded-full opacity-[0.18] dark:opacity-[0.12] blur-[120px]"
           style={{
-            background: "radial-gradient(circle, #9F8CFF 0%, #7C5CFF 60%, transparent 100%)",
+            background: "radial-gradient(circle, #D6CCFF 0%, #8B79F6 60%, transparent 100%)",
             animation: "orb1 18s ease-in-out infinite alternate",
           }}
         />
-        {/* center-right azure orb */}
+        {/* center-right violet orb */}
         <div
-          className="absolute top-0 right-[-10%] w-[500px] h-[500px] rounded-full opacity-[0.14] dark:opacity-[0.22] blur-[140px]"
+          className="absolute top-0 right-[-10%] w-[500px] h-[500px] rounded-full opacity-[0.14] dark:opacity-[0.10] blur-[140px]"
           style={{
-            background: "radial-gradient(circle, #4F8CFF 0%, #2F5CE0 60%, transparent 100%)",
+            background: "radial-gradient(circle, #a855f7 0%, #6366f1 60%, transparent 100%)",
             animation: "orb2 22s ease-in-out infinite alternate",
           }}
         />
-        {/* bottom-center cyan accent */}
+        {/* bottom-center teal accent */}
         <div
-          className="absolute bottom-[-80px] left-[30%] w-[480px] h-[380px] rounded-full opacity-[0.10] dark:opacity-[0.20] blur-[120px]"
+          className="absolute bottom-[-80px] left-[30%] w-[480px] h-[380px] rounded-full opacity-[0.10] dark:opacity-[0.08] blur-[120px]"
           style={{
-            background: "radial-gradient(circle, #22D3EE 0%, #0EA5E9 60%, transparent 100%)",
+            background: "radial-gradient(circle, #06b6d4 0%, #0ea5e9 60%, transparent 100%)",
             animation: "orb3 26s ease-in-out infinite alternate",
           }}
         />
