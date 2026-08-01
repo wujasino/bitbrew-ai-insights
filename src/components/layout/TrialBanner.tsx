@@ -19,8 +19,11 @@ type State =
 export const TrialBanner = () => {
   const [dismissed, setDismissed] = useState(() => !!sessionStorage.getItem(DISMISSED_KEY));
   const { data: sessionUser, isLoading: userLoading } = useSessionUser();
-  const { data: plan, isLoading: planLoading } = usePlan();
-  const { data: used = 0, isLoading: usedLoading } = useAnalysesUsedThisMonth();
+  // isPending, not isLoading — usePlan/useAnalysesUsedThisMonth are gated on
+  // the session being known, so isLoading can read false before that gate
+  // opens even though there's no real answer yet.
+  const { data: plan, isPending: planLoading } = usePlan();
+  const { data: used = 0, isPending: usedLoading } = useAnalysesUsedThisMonth();
 
   // These are all react-query cached, so this stays correct instead of
   // flashing back to a loading/guest state every time TrialBanner remounts.
