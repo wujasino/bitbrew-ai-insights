@@ -52,7 +52,7 @@ export function ContactForm() {
           {[
             { icon: Mail, label: 'Email', value: 'contact.presora@gmail.com', href: 'mailto:contact.presora@gmail.com' },
             { icon: Zap, label: 'Response time', value: '< 24h', href: null },
-            { icon: Globe, label: 'Languages', value: 'PL / EN', href: null },
+            { icon: Globe, label: 'Languages', value: 'EN', href: null },
           ].map(item => (
             <div key={item.label} className="flex items-center gap-3">
               <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 text-primary shrink-0">
