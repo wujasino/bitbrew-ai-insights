@@ -1,22 +1,14 @@
 import { useNavigate, Link, useLocation } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useTheme } from 'next-themes';
 import { LogOut, Settings, User, Code2, CreditCard, MessageSquare, Send, X, Bot, PanelLeftClose, PanelLeftOpen, Menu, Megaphone, Sun, Moon } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
 import { logout } from '@/lib/auth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import AvatarNotifications from '@/components/ui/avatar-notifications';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-
-const PLAN_LIMITS: Record<string, number> = {
-  Free: 3,
-  Starter: 5,
-  Solo: 30,
-  Growth: 120,
-  Enterprise: 9999,
-};
+import { PLAN_LIMITS, usePlan, useAnalysesUsedThisMonth, useSessionUser } from '@/hooks/useAccountInfo';
 
 const DropdownLink = ({ to, icon: Icon, label, onClick }: { to: string; icon: React.FC<{ className?: string }>; label: string; onClick?: () => void }) => (
   <Link
@@ -55,42 +47,12 @@ export const AppNavbar = ({ collapsed = false, onToggle, onMobileToggle, chatOpe
   const { pathname } = useLocation();
   const sectionTitle = SECTION_TITLES[pathname] ?? 'Presora';
   const [open, setOpen] = useState(false);
-  const [userEmail, setUserEmail] = useState<string | null>(null);
-  const [userName, setUserName] = useState<string | null>(null);
-  const [userAvatar, setUserAvatar] = useState<string | null>(null);
-  const [plan, setPlan] = useState('Free');
-  const [analysesUsed, setAnalysesUsed] = useState(0);
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) return;
-      const uid = session.user.id;
-      setUserEmail(session.user.email ?? null);
-      setUserName(session.user.user_metadata?.full_name ?? null);
-      setUserAvatar(session.user.user_metadata?.avatar_url ?? null);
-
-      supabase.from('profiles').select('plan').eq('id', uid).single().then(({ data }) => {
-        if (data?.plan) setPlan(data.plan.charAt(0).toUpperCase() + data.plan.slice(1));
-      });
-
-      const startOfMonth = new Date();
-      startOfMonth.setDate(1);
-      startOfMonth.setHours(0, 0, 0, 0);
-      supabase
-        .from('analyses')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', uid)
-        .gte('created_at', startOfMonth.toISOString())
-        .then(({ count }) => setAnalysesUsed(count ?? 0));
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
-      setUserEmail(session?.user.email ?? null);
-      setUserName(session?.user.user_metadata?.full_name ?? null);
-      setUserAvatar(session?.user.user_metadata?.avatar_url ?? null);
-    });
-    return () => subscription.unsubscribe();
-  }, []);
+  const { data: sessionUser } = useSessionUser();
+  const userEmail = sessionUser?.email ?? null;
+  const userName = sessionUser?.name ?? null;
+  const userAvatar = sessionUser?.avatar ?? null;
+  const { data: plan = 'Free' } = usePlan();
+  const { data: analysesUsed = 0 } = useAnalysesUsedThisMonth();
 
   const initials = userName
     ? userName.split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2)

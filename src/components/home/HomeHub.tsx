@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
+import { CreditsUsageWidget } from '@/components/CreditsUsageWidget';
 
 interface Analysis {
   id: string;
@@ -104,6 +105,15 @@ const HomeHub = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
+
+        {/* ── Header: title + credits/plan at a glance ────────────── */}
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-8">
+          <div>
+            <h1 className="text-2xl font-display text-foreground">Home</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">Your AI visibility, at a glance.</p>
+          </div>
+          <CreditsUsageWidget />
+        </div>
 
         {/* ── State: loading / empty / populated ──────────────────── */}
         {loading ? (

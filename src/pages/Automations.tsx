@@ -1,10 +1,14 @@
 import { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import {
   Bot, ArrowUp, Loader2, Target, Users, CalendarClock, Bell, Sparkles, Check, ArrowRight,
-  MessageSquare, Box, HelpCircle, ChevronDown,
+  MessageSquare, Box, ChevronDown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
+import {
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
+} from '@/components/ui/dropdown-menu';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 // Pulls in three.js — only fetched once the user actually opens Preview, not on every Automations visit.
 const AutomationGraph3D = lazy(() =>
@@ -43,65 +47,44 @@ type Frequency = (typeof FREQUENCIES)[number];
 const FREQUENCY_LABEL: Record<Frequency, string> = { daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly' };
 
 /* Click-to-select scan frequency — a direct alternative to typing it in chat.
-   Collapsed by default; expand to reveal the slider. */
-const FrequencySlider = ({
+   Lives inline at the start of the chat input bar as a compact icon trigger. */
+const FrequencyDropdown = ({
   value, onChange, disabled,
 }: {
   value: Frequency;
   onChange: (f: Frequency) => void;
   disabled: boolean;
-}) => {
-  const [open, setOpen] = useState(false);
-  const index = FREQUENCIES.indexOf(value);
-  return (
-    <div className="rounded-xl border border-border bg-card/40 p-4">
-      <button
-        type="button"
-        onClick={() => setOpen(o => !o)}
-        aria-expanded={open}
-        className="w-full flex items-center justify-between"
-      >
-        <span className="text-sm text-foreground">
-          Scan frequency <span className="font-semibold">{FREQUENCY_LABEL[value]}</span>
-        </span>
-        <span className="flex items-center gap-2">
-          <HelpCircle className="w-3.5 h-3.5 text-muted-foreground" aria-label="How often the automation scans for your brand" />
-          <ChevronDown className={cn('w-4 h-4 text-muted-foreground transition-transform', open && 'rotate-180')} />
-        </span>
-      </button>
-
-      {open && (
-        <div className="mt-4">
-          <div className="relative flex items-center justify-between px-1">
-            <div className="absolute left-1 right-1 top-1/2 -translate-y-1/2 h-px bg-border" />
-            {FREQUENCIES.map((f, i) => (
-              <button
-                key={f}
-                type="button"
-                disabled={disabled}
-                onClick={() => onChange(f)}
-                aria-label={FREQUENCY_LABEL[f]}
-                aria-pressed={i === index}
-                className="relative z-10 flex items-center justify-center w-5 h-5 disabled:opacity-50"
-              >
-                <span
-                  className={cn(
-                    'rounded-full transition-all',
-                    i === index ? 'w-3.5 h-3.5 bg-primary ring-4 ring-primary/20' : 'w-2 h-2 bg-border hover:bg-muted-foreground/50'
-                  )}
-                />
-              </button>
-            ))}
-          </div>
-          <div className="flex items-center justify-between mt-2 text-[11px] text-muted-foreground">
-            <span>Daily</span>
-            <span>Monthly</span>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
+}) => (
+  <DropdownMenu>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <DropdownMenuTrigger asChild>
+          <button
+            type="button"
+            disabled={disabled}
+            aria-label={`Scan frequency: ${FREQUENCY_LABEL[value]}`}
+            className="flex items-center justify-center shrink-0 w-9 h-9 rounded-lg border border-border bg-card/60 text-muted-foreground hover:bg-card hover:text-foreground transition-colors disabled:opacity-50"
+          >
+            <ChevronDown className="w-4 h-4" />
+          </button>
+        </DropdownMenuTrigger>
+      </TooltipTrigger>
+      <TooltipContent side="top">Scan frequency: {FREQUENCY_LABEL[value]}</TooltipContent>
+    </Tooltip>
+    <DropdownMenuContent align="start" className="w-40">
+      {FREQUENCIES.map(f => (
+        <DropdownMenuItem
+          key={f}
+          onClick={() => onChange(f)}
+          className="flex items-center justify-between"
+        >
+          {FREQUENCY_LABEL[f]}
+          {f === value && <Check className="w-3.5 h-3.5 text-primary" />}
+        </DropdownMenuItem>
+      ))}
+    </DropdownMenuContent>
+  </DropdownMenu>
+);
 
 /* Live snapshot of the saved monitoring config. */
 const ConfigCard = ({ config }: { config: MonitorConfig }) => {
@@ -410,6 +393,7 @@ const Automations = () => {
           {/* Input */}
           <div className="sticky bottom-0 pt-4 bg-gradient-to-t from-background via-background to-transparent">
             <div className="flex items-center gap-2 rounded-xl border border-border bg-background p-1.5 shadow-sm">
+              <FrequencyDropdown value={config?.frequency ?? 'weekly'} onChange={setFrequency} disabled={savingFrequency} />
               <input
                 className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground px-3 py-2 focus:outline-none disabled:opacity-50"
                 placeholder="e.g. track Tesla and Rivian daily"
@@ -426,9 +410,6 @@ const Automations = () => {
               >
                 <ArrowUp className="w-4 h-4" />
               </button>
-            </div>
-            <div className="mt-3">
-              <FrequencySlider value={config?.frequency ?? 'weekly'} onChange={setFrequency} disabled={savingFrequency} />
             </div>
           </div>
         </>

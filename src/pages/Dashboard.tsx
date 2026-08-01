@@ -13,7 +13,7 @@ import { ResultsBreakdown } from '@/components/ResultsBreakdown';
 import BrandKnowledgeForm from '@/components/BrandKnowledgeForm';
 import { useBrewing } from '@/hooks/useBrewing';
 import { useTTS, loadVoicePrefs } from '@/hooks/useTTS';
-import { supabase } from '@/lib/supabase';
+import { usePlan } from '@/hooks/useAccountInfo';
 import { cn } from '@/lib/utils';
 import { AnalysisResult } from '@/types/analysis';
 import { scoreBrand, type BrandScore } from '@/lib/brandScore';
@@ -329,8 +329,8 @@ const Dashboard = () => {
   const displayBrand = result?.brandName || brandFromUrl;
   const [inputValue, setInputValue] = useState(brandFromUrl);
   const [moderationError, setModerationError] = useState('');
-  const [plan, setPlan] = useState<string>('free');
-  const planTier = tierOf(plan);
+  const { data: plan = 'Free' } = usePlan();
+  const planTier = tierOf(plan.toLowerCase());
   const isIdle = !brandFromUrl && !analysisId;
 
   // Competitor comparison (deterministic client-side score — no API/credit cost)
@@ -364,20 +364,6 @@ const Dashboard = () => {
   };
   const canSeeCharts = planTier >= 1;
   const canSeeSources = planTier >= 2;
-
-  useEffect(() => {
-    const loadPlan = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const { data } = await supabase
-        .from('profiles')
-        .select('plan')
-        .eq('id', user.id)
-        .single();
-      if (data?.plan) setPlan(data.plan);
-    };
-    loadPlan();
-  }, []);
 
   useEffect(() => {
     if (analysisId) {
