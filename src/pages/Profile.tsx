@@ -24,6 +24,7 @@ const PLAN_LABELS: Record<string, string> = {
   solo: 'Solo',
   growth: 'Growth',
   enterprise: 'Enterprise Suite',
+  agency: 'Enterprise Suite', // some accounts have this stored instead of 'enterprise'
 };
 
 const PLAN_LIMITS: Record<string, number> = {
@@ -31,6 +32,7 @@ const PLAN_LIMITS: Record<string, number> = {
   solo: 50,
   growth: 100,
   enterprise: 500,
+  agency: 500,
 };
 
 const SUB_STATUS_KEY = { active: 'sub_status_active', paused: 'sub_status_paused', cancelled: 'sub_status_cancelled' } as const;

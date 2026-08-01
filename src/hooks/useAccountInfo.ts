@@ -9,6 +9,7 @@ export const PLAN_LIMITS: Record<string, number> = {
   Solo: 30,
   Growth: 120,
   Enterprise: 9999,
+  Agency: 9999, // some accounts have this stored instead of 'Enterprise' (same tier, matches the Pricing page's "Agency" tier)
 };
 
 export interface SessionUser {

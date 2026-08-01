@@ -24,9 +24,11 @@ const BADGE_ORIGIN = 'https://www.presora.app';
 
 const PLAN_TIER: Record<string, number> = {
   free: 0,
+  starter: 1,
   solo: 1,
   growth: 2,
   enterprise: 2,
+  agency: 2, // some accounts have this stored instead of 'enterprise' (same tier, matches the Pricing page's "Agency" tier)
 };
 const tierOf = (plan: string) => PLAN_TIER[plan] ?? 0;
 
