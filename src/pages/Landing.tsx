@@ -12,7 +12,7 @@ import { NewsletterSignup } from '@/components/ui/newsletter-signup';
 import { GradientMeshBg } from '@/components/ui/gradient-mesh-bg';
 import { ContactForm } from '@/components/ui/contact-form';
 import { FAQ_EN } from '@/lib/faq';
-import { useForceLightTheme } from '@/hooks/useForceLightTheme';
+import { useForceDarkTheme } from '@/hooks/useForceDarkTheme';
 
 /* ── Integration logos (text-based, gray) ─────────────────────────── */
 const INTEGRATIONS = [
@@ -35,7 +35,7 @@ const TESTIMONIALS = [
     name: 'Sarah Lindqvist',
     role: 'Head of Growth, Northwind SaaS',
     initials: 'SL',
-    iconBg: 'bg-neutral-900/10 border-neutral-900/20 text-neutral-900',
+    iconBg: 'bg-indigo-400/10 border-indigo-400/20 text-indigo-400',
   },
   {
     quote: 'Finally a number I can put in front of the board. Our AI visibility score went from 41 to 78 in a quarter — and I can prove exactly what moved it.',
@@ -55,7 +55,7 @@ const TESTIMONIALS = [
 
 const Landing = () => {
   const navigate = useNavigate();
-  useForceLightTheme();
+  useForceDarkTheme();
 
   return (
     <div className="min-h-screen bg-background font-landing">
@@ -70,7 +70,7 @@ const Landing = () => {
       </div>
 
       {/* ── Hero + Why (shared animated background) ───────────────── */}
-      <GradientMeshBg className="relative" variant="mono">
+      <GradientMeshBg className="relative" variant="indigo">
         <section className="hero pt-24 sm:pt-32 pb-10 px-4">
           <div className="max-w-2xl mx-auto text-center">
             <motion.div
@@ -84,7 +84,7 @@ const Landing = () => {
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-display text-foreground mb-5 leading-[1.1]">
                 Understand your brand's{' '}
                 <span
-                  className="italic bg-gradient-to-r from-[#171717] via-[#6B6B6B] to-[#171717] dark:from-[#8B79F6] dark:via-[#D6CCFF] dark:to-[#8B79F6] bg-[length:200%] bg-clip-text text-transparent animate-shimmer"
+                  className="italic bg-gradient-to-r from-[#818CF8] via-[#C7D2FE] to-[#818CF8] bg-[length:200%] bg-clip-text text-transparent animate-shimmer [filter:drop-shadow(0_0_20px_rgba(99,102,241,0.4))]"
                   style={{ fontFamily: "'Libre Baskerville', Georgia, serif" }}
                 >
                   AI presence
@@ -563,8 +563,8 @@ const Landing = () => {
                 title: 'Startups & Founders',
                 desc: 'Building your brand from scratch and want to know if AI mentions you at all — and what it says. Find out before your customers ask ChatGPT.',
                 tags: ['Brand awareness', 'Early traction', 'Competitor gap'],
-                iconBg: 'bg-neutral-900/10 border-neutral-900/20 text-neutral-900',
-                border: 'border-neutral-900/20 hover:border-neutral-900/40',
+                iconBg: 'bg-indigo-400/10 border-indigo-400/20 text-indigo-400',
+                border: 'border-indigo-400/20 hover:border-indigo-400/40',
               },
               {
                 icon: LineChart,

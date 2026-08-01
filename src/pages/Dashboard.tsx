@@ -153,7 +153,7 @@ const ScoreHero = ({ result, t }: { result: AnalysisResult; t: (k: string) => st
       {/* Gradient mesh background */}
       <div aria-hidden className="pointer-events-none absolute inset-0">
         <div className="absolute -top-16 -left-16 w-72 h-72 rounded-full bg-primary/10 blur-3xl" />
-        <div className="absolute top-4 right-8 w-56 h-56 rounded-full bg-violet-500/8 blur-3xl" />
+        <div className="absolute top-4 right-8 w-56 h-56 rounded-full bg-indigo-400/8 blur-3xl" />
         <div className="absolute -bottom-12 left-1/2 w-64 h-48 rounded-full bg-primary/6 blur-2xl" />
         <div
           className="absolute inset-0 opacity-[0.03]"

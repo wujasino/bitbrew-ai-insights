@@ -12,6 +12,11 @@ const ORB_COLORS = {
     orb2: "radial-gradient(circle, #BFBFBF 0%, #737373 60%, transparent 100%)",
     orb3: "radial-gradient(circle, #E5E5E5 0%, #A3A3A3 60%, transparent 100%)",
   },
+  indigo: {
+    orb1: "radial-gradient(circle, #818CF8 0%, #6366F1 60%, transparent 100%)",
+    orb2: "radial-gradient(circle, #6366F1 0%, #4F46E5 60%, transparent 100%)",
+    orb3: "radial-gradient(circle, #4F46E5 0%, #3730A3 60%, transparent 100%)",
+  },
 } as const;
 
 export const GradientMeshBg = memo(function GradientMeshBg({
@@ -23,7 +28,7 @@ export const GradientMeshBg = memo(function GradientMeshBg({
   children: React.ReactNode;
   className?: string;
   id?: string;
-  variant?: "default" | "mono";
+  variant?: "default" | "mono" | "indigo";
 }) {
   const colors = ORB_COLORS[variant];
   return (
