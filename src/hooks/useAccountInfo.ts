@@ -9,6 +9,7 @@ export const PLAN_LIMITS: Record<string, number> = {
   Solo: 30,
   Growth: 120,
   Enterprise: 9999,
+  Agency: 9999, // some accounts have this stored instead of 'Enterprise' (same tier, matches the Pricing page's "Agency" tier)
 };
 
 export interface SessionUser {
@@ -98,29 +99,3 @@ export const useAnalysesUsedThisMonth = () => {
   });
 };
 
-const fetchHasScanHistory = async (userId: string) => {
-  // Fail open on a query error — don't lock out a returning user with real
-  // history just because of a transient network blip.
-  const { count, error } = await supabase
-    .from('analyses')
-    .select('id', { count: 'exact', head: true })
-    .eq('user_id', userId);
-  return error ? true : (count ?? 0) > 0;
-};
-
-/**
- * Same caching + gating rationale as usePlan. Getting this one wrong is the
- * most visible: RequireScanHistory redirects /dashboard -> /brand-visibility
- * whenever this reads false, so a premature "signed out" read getting
- * cached here sent returning users with real history to the scan screen
- * every time they clicked Home, instead of the dashboard hub.
- */
-export const useHasScanHistory = () => {
-  const { data: sessionUser, isLoading: userLoading } = useSessionUser();
-  const userId = sessionUser?.id ?? null;
-  return useQuery({
-    queryKey: ['has-scan-history', userId],
-    queryFn: () => fetchHasScanHistory(userId as string),
-    enabled: !userLoading && !!userId,
-  });
-};

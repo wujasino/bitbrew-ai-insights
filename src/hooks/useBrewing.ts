@@ -64,7 +64,7 @@ export const GUEST_LIMIT = 3;
 export function useBrewing() {
   const { t } = useTranslation();
   const [progress, setProgress] = useState(0);
-  const [status, setStatus] = useState<'idle' | 'brewing' | 'completed'>('idle');
+  const [status, setStatus] = useState<'idle' | 'brewing' | 'loading' | 'completed'>('idle');
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [guestLimitReached, setGuestLimitReached] = useState(false);
 
@@ -369,8 +369,10 @@ export function useBrewing() {
   }, []);
 
   const loadStoredAnalysis = useCallback(async (id: string) => {
-    setStatus('brewing');
-    setProgress(50);
+    // 'loading', not 'brewing' — this is just a DB read of an existing
+    // report, not a live AI scan, so it shouldn't show the model-scanning
+    // animation built for the latter.
+    setStatus('loading');
     const { data, error } = await supabase
       .from('analyses')
       .select('*')

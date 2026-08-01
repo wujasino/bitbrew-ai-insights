@@ -5,7 +5,6 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import RequireScanHistory from "@/components/RequireScanHistory";
 import { applySeo } from "@/hooks/useSeo";
 import { useFaviconTheme } from "@/hooks/useFaviconTheme";
 
@@ -80,9 +79,7 @@ const App = () => (
               path="/dashboard"
               element={
                 <ProtectedRoute>
-                  <RequireScanHistory>
-                    <AppShell><Dashboard /></AppShell>
-                  </RequireScanHistory>
+                  <AppShell><Dashboard /></AppShell>
                 </ProtectedRoute>
               }
             />

@@ -24,9 +24,11 @@ const BADGE_ORIGIN = 'https://www.presora.app';
 
 const PLAN_TIER: Record<string, number> = {
   free: 0,
+  starter: 1,
   solo: 1,
   growth: 2,
   enterprise: 2,
+  agency: 2, // some accounts have this stored instead of 'enterprise' (same tier, matches the Pricing page's "Agency" tier)
 };
 const tierOf = (plan: string) => PLAN_TIER[plan] ?? 0;
 
@@ -393,8 +395,11 @@ const Dashboard = () => {
         }
       }
     } catch { /* network error — allow through */ }
+    // Setting the URL param is enough — the effect below reacts to
+    // brandFromUrl changes and calls startBrewing. Calling it here too
+    // used to double-fire it (two /analyze calls, two saved rows for one
+    // scan) whenever brandFromUrl actually changed as a result.
     setSearchParams({ brand: val });
-    startBrewing(val);
   };
 
   if (isIdle) {
@@ -458,7 +463,6 @@ const Dashboard = () => {
                       onClick={() => {
                         setInputValue(brand);
                         setSearchParams({ brand });
-                        startBrewing(brand);
                       }}
                       className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-[hsl(var(--glass-border))] bg-card/60 text-sm text-foreground hover:border-primary/40 hover:bg-primary/5 transition-colors"
                     >
@@ -503,7 +507,7 @@ const Dashboard = () => {
                 <span className="text-muted-foreground font-light">{t('auditSuffix')}</span>
               </h1>
               <p className="text-muted-foreground text-xs mt-1.5 font-data">
-                {status === 'completed' ? t('dashboard_monitoring') : t('brewingInProgress')}
+                {status === 'completed' ? t('dashboard_monitoring') : status === 'brewing' ? t('brewingInProgress') : ''}
               </p>
             </div>
 
@@ -597,9 +601,16 @@ const Dashboard = () => {
           )}
         </header>
 
-        {/* Brewing State */}
+        {/* Brewing State — live AI scan in progress */}
         {status === 'brewing' && (
           <BrewingProgress progress={progress} brandName={displayBrand} />
+        )}
+
+        {/* Loading State — fetching an already-saved report, not scanning */}
+        {status === 'loading' && (
+          <div className="flex items-center justify-center min-h-[70vh]">
+            <div className="w-6 h-6 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+          </div>
         )}
 
         {/* Results */}

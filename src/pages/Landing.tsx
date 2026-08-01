@@ -276,6 +276,8 @@ const Landing = () => {
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
+                whileHover={{ y: -6, scale: 1.015, transition: { type: 'spring', stiffness: 300, damping: 20 } }}
+                whileTap={{ scale: 0.985 }}
                 className="md:col-span-7 glass-card-hover rounded-2xl border border-[hsl(var(--glass-border))] p-8 flex flex-col justify-between bg-card/60 backdrop-blur-sm shadow-lg shadow-primary/5"
               >
                 <div>
@@ -298,6 +300,8 @@ const Landing = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: 0.1 }}
+                whileHover={{ y: -6, scale: 1.015, transition: { type: 'spring', stiffness: 300, damping: 20 } }}
+                whileTap={{ scale: 0.985 }}
                 className="md:col-span-5 glass-card-hover rounded-2xl border border-[hsl(var(--glass-border))] p-8 flex flex-col justify-between bg-card/60 backdrop-blur-sm shadow-lg shadow-primary/5"
               >
                 <div>
@@ -320,6 +324,8 @@ const Landing = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: 0.2 }}
+                whileHover={{ y: -6, scale: 1.015, transition: { type: 'spring', stiffness: 300, damping: 20 } }}
+                whileTap={{ scale: 0.985 }}
                 className="md:col-span-5 glass-card-hover rounded-2xl border border-[hsl(var(--glass-border))] p-8 flex flex-col justify-between bg-card/60 backdrop-blur-sm shadow-lg shadow-primary/5"
               >
                 <div>
@@ -343,6 +349,8 @@ const Landing = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: 0.3 }}
+                whileHover={{ y: -6, scale: 1.015, transition: { type: 'spring', stiffness: 300, damping: 20 } }}
+                whileTap={{ scale: 0.985 }}
                 className="md:col-span-7 glass-card-hover rounded-2xl border border-[hsl(var(--glass-border))] p-8 flex flex-col justify-between bg-card/60 backdrop-blur-sm shadow-lg shadow-primary/5"
               >
                 <div>
@@ -590,7 +598,9 @@ const Landing = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                className={`relative rounded-2xl p-7 flex flex-col gap-4 bg-card/60 backdrop-blur-sm border shadow-lg shadow-primary/5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl ${card.border} ${card.featured ? 'ring-1 ring-primary/30' : ''}`}
+                whileHover={{ y: -6, scale: 1.02, transition: { type: 'spring', stiffness: 300, damping: 20 } }}
+                whileTap={{ scale: 0.985 }}
+                className={`relative rounded-2xl p-7 flex flex-col gap-4 bg-card/60 backdrop-blur-sm border shadow-lg shadow-primary/5 ${card.border} ${card.featured ? 'ring-1 ring-primary/30' : ''}`}
               >
                 {card.featured && (
                   <span className="absolute -top-3 left-6 px-3 py-1 rounded-full bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wider shadow-sm">
@@ -761,7 +771,9 @@ const Landing = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                className="rounded-2xl border border-[hsl(var(--glass-border))] p-7 flex flex-col gap-5 bg-card/60 backdrop-blur-sm shadow-lg shadow-primary/5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl"
+                whileHover={{ y: -6, scale: 1.02, transition: { type: 'spring', stiffness: 300, damping: 20 } }}
+                whileTap={{ scale: 0.985 }}
+                className="rounded-2xl border border-[hsl(var(--glass-border))] p-7 flex flex-col gap-5 bg-card/60 backdrop-blur-sm shadow-lg shadow-primary/5"
               >
                 <div className="flex items-center justify-between">
                   <div className={`inline-flex items-center justify-center w-12 h-12 rounded-xl border ${t.iconBg}`}>
