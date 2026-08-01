@@ -507,7 +507,7 @@ const Dashboard = () => {
                 <span className="text-muted-foreground font-light">{t('auditSuffix')}</span>
               </h1>
               <p className="text-muted-foreground text-xs mt-1.5 font-data">
-                {status === 'completed' ? t('dashboard_monitoring') : t('brewingInProgress')}
+                {status === 'completed' ? t('dashboard_monitoring') : status === 'brewing' ? t('brewingInProgress') : ''}
               </p>
             </div>
 
@@ -601,9 +601,16 @@ const Dashboard = () => {
           )}
         </header>
 
-        {/* Brewing State */}
+        {/* Brewing State — live AI scan in progress */}
         {status === 'brewing' && (
           <BrewingProgress progress={progress} brandName={displayBrand} />
+        )}
+
+        {/* Loading State — fetching an already-saved report, not scanning */}
+        {status === 'loading' && (
+          <div className="flex items-center justify-center min-h-[70vh]">
+            <div className="w-6 h-6 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+          </div>
         )}
 
         {/* Results */}
