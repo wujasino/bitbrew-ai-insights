@@ -395,8 +395,11 @@ const Dashboard = () => {
         }
       }
     } catch { /* network error — allow through */ }
+    // Setting the URL param is enough — the effect below reacts to
+    // brandFromUrl changes and calls startBrewing. Calling it here too
+    // used to double-fire it (two /analyze calls, two saved rows for one
+    // scan) whenever brandFromUrl actually changed as a result.
     setSearchParams({ brand: val });
-    startBrewing(val);
   };
 
   if (isIdle) {
@@ -460,7 +463,6 @@ const Dashboard = () => {
                       onClick={() => {
                         setInputValue(brand);
                         setSearchParams({ brand });
-                        startBrewing(brand);
                       }}
                       className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-[hsl(var(--glass-border))] bg-card/60 text-sm text-foreground hover:border-primary/40 hover:bg-primary/5 transition-colors"
                     >
