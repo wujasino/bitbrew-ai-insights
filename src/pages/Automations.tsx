@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import {
   Bot, ArrowUp, Loader2, Target, Users, CalendarClock, Bell, Sparkles, Check, ArrowRight,
-  MessageSquare, Box, HelpCircle, ChevronDown,
+  MessageSquare, Box, ChevronDown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
@@ -47,7 +47,7 @@ type Frequency = (typeof FREQUENCIES)[number];
 const FREQUENCY_LABEL: Record<Frequency, string> = { daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly' };
 
 /* Click-to-select scan frequency — a direct alternative to typing it in chat.
-   Lives inline at the start of the chat input bar. */
+   Lives inline at the start of the chat input bar as a compact icon trigger. */
 const FrequencyDropdown = ({
   value, onChange, disabled,
 }: {
@@ -56,29 +56,21 @@ const FrequencyDropdown = ({
   disabled: boolean;
 }) => (
   <DropdownMenu>
-    <DropdownMenuTrigger asChild>
-      <button
-        type="button"
-        disabled={disabled}
-        className="flex items-center gap-2 shrink-0 rounded-lg border border-border bg-card/60 pl-3 pr-2 py-2 text-sm text-foreground hover:bg-card transition-colors disabled:opacity-50"
-      >
-        <span className="whitespace-nowrap">
-          Scan frequency <span className="font-semibold">{FREQUENCY_LABEL[value]}</span>
-        </span>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span
-              onClick={e => e.stopPropagation()}
-              className="inline-flex"
-            >
-              <HelpCircle className="w-3.5 h-3.5 text-muted-foreground" />
-            </span>
-          </TooltipTrigger>
-          <TooltipContent side="top">How often the automation scans for your brand</TooltipContent>
-        </Tooltip>
-        <ChevronDown className="w-4 h-4 text-muted-foreground" />
-      </button>
-    </DropdownMenuTrigger>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <DropdownMenuTrigger asChild>
+          <button
+            type="button"
+            disabled={disabled}
+            aria-label={`Scan frequency: ${FREQUENCY_LABEL[value]}`}
+            className="flex items-center justify-center shrink-0 w-9 h-9 rounded-lg border border-border bg-card/60 text-muted-foreground hover:bg-card hover:text-foreground transition-colors disabled:opacity-50"
+          >
+            <ChevronDown className="w-4 h-4" />
+          </button>
+        </DropdownMenuTrigger>
+      </TooltipTrigger>
+      <TooltipContent side="top">Scan frequency: {FREQUENCY_LABEL[value]}</TooltipContent>
+    </Tooltip>
     <DropdownMenuContent align="start" className="w-40">
       {FREQUENCIES.map(f => (
         <DropdownMenuItem
