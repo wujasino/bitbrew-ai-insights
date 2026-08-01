@@ -1,18 +1,9 @@
 import { Link, useLocation } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
 import { Home, Code2, Zap, FileText, Bot, Search } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { usePlan } from '@/hooks/useAccountInfo';
 import { Wordmark } from '@/components/Wordmark';
-
-/** Capitalized plan name for the sidebar badge, e.g. 'free' -> 'Free'. */
-const fetchPlan = async () => {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return 'Free';
-  const { data } = await supabase.from('profiles').select('plan').eq('id', session.user.id).single();
-  return data?.plan ? data.plan.charAt(0).toUpperCase() + data.plan.slice(1) : 'Free';
-};
 
 interface NavItemProps {
   to: string;
@@ -65,7 +56,7 @@ export const Sidebar = ({ collapsed = false, mobileOpen = false, onMobileClose }
   // Cached by react-query so the badge doesn't flash back to the 'Free'
   // default every time the sidebar remounts (each protected route wraps
   // its own AppShell/Sidebar instance instead of sharing one via <Outlet>).
-  const { data: plan = 'Free' } = useQuery({ queryKey: ['profile-plan'], queryFn: fetchPlan });
+  const { data: plan = 'Free' } = usePlan();
 
   // On mobile the sidebar is a full drawer — never render icon-only mode
   const effectiveCollapsed = isMobile ? false : collapsed;
