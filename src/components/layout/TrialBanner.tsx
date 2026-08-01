@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { X, Sparkles, ArrowRight } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
 import { motion, AnimatePresence } from 'framer-motion';
+import { usePlan, useAnalysesUsedThisMonth, useSessionUser } from '@/hooks/useAccountInfo';
 
 const DISMISSED_KEY = 'presora_trial_banner_dismissed';
 
@@ -17,51 +17,31 @@ type State =
   | { kind: 'paid' };
 
 export const TrialBanner = () => {
-  const [visible, setVisible] = useState(false);
-  const [state, setState] = useState<State>({ kind: 'loading' });
+  const [dismissed, setDismissed] = useState(() => !!sessionStorage.getItem(DISMISSED_KEY));
+  const { data: sessionUser, isLoading: userLoading } = useSessionUser();
+  const { data: plan, isLoading: planLoading } = usePlan();
+  const { data: used = 0, isLoading: usedLoading } = useAnalysesUsedThisMonth();
 
-  useEffect(() => {
-    if (sessionStorage.getItem(DISMISSED_KEY)) return;
+  // These are all react-query cached, so this stays correct instead of
+  // flashing back to a loading/guest state every time TrialBanner remounts.
+  let state: State;
+  if (userLoading) {
+    state = { kind: 'loading' };
+  } else if (!sessionUser?.email) {
+    state = { kind: 'guest' };
+  } else if (planLoading || usedLoading) {
+    state = { kind: 'loading' };
+  } else if (plan !== 'Free') {
+    state = { kind: 'paid' };
+  } else {
+    state = { kind: 'free', remaining: Math.max(FREE_MONTHLY_LIMIT - used, 0) };
+  }
 
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (!session) {
-        setState({ kind: 'guest' });
-        setVisible(true);
-        return;
-      }
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('plan')
-        .eq('id', session.user.id)
-        .single();
-
-      const userPlan = profile?.plan ?? 'free';
-      if (userPlan !== 'free') {
-        setState({ kind: 'paid' });
-        return;
-      }
-
-      /* Count analyses used this calendar month for the remaining counter */
-      const startOfMonth = new Date();
-      startOfMonth.setDate(1);
-      startOfMonth.setHours(0, 0, 0, 0);
-
-      const { count } = await supabase
-        .from('analyses')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', session.user.id)
-        .gte('created_at', startOfMonth.toISOString());
-
-      const used = count ?? 0;
-      setState({ kind: 'free', remaining: Math.max(FREE_MONTHLY_LIMIT - used, 0) });
-      setVisible(true);
-    });
-  }, []);
+  const visible = !dismissed && state.kind !== 'loading' && state.kind !== 'paid';
 
   const dismiss = () => {
     sessionStorage.setItem(DISMISSED_KEY, '1');
-    setVisible(false);
+    setDismissed(true);
   };
 
   const renderMessage = () => {
@@ -95,8 +75,6 @@ export const TrialBanner = () => {
         return null;
     }
   };
-
-  if (state.kind === 'loading' || state.kind === 'paid') return null;
 
   return (
     <AnimatePresence>

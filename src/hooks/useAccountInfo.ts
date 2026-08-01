@@ -81,3 +81,19 @@ export const useSessionUser = () => {
 
   return query;
 };
+
+const fetchHasScanHistory = async () => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+  // Fail open on a query error — don't lock out a returning user with real
+  // history just because of a transient network blip.
+  const { count, error } = await supabase
+    .from('analyses')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', user.id);
+  return error ? true : (count ?? 0) > 0;
+};
+
+/** Same caching rationale as usePlan — avoids re-showing a loading screen every time you revisit /dashboard. */
+export const useHasScanHistory = () =>
+  useQuery({ queryKey: ['has-scan-history'], queryFn: fetchHasScanHistory });

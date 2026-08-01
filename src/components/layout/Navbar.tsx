@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { LogOut, User, Settings, Code2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -14,8 +14,8 @@ import {
 } from '@/components/ui/navigation-menu';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Wordmark } from '@/components/Wordmark';
-import { supabase } from '@/lib/supabase';
 import { logout } from '@/lib/auth';
+import { useSessionUser } from '@/hooks/useAccountInfo';
 
 const authedLinks = [
   { to: '/dashboard', label: 'Dashboard' },
@@ -30,11 +30,11 @@ export const Navbar = () => {
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [avatarOpen, setAvatarOpen] = useState(false);
-  const [isAuthed, setIsAuthed] = useState(false);
-  const [authLoading, setAuthLoading] = useState(true);
-  const [userEmail, setUserEmail] = useState<string | null>(null);
-  const [userName, setUserName] = useState<string | null>(null);
-  const [userAvatar, setUserAvatar] = useState<string | null>(null);
+  const { data: sessionUser, isLoading: authLoading } = useSessionUser();
+  const userEmail = sessionUser?.email ?? null;
+  const userName = sessionUser?.name ?? null;
+  const userAvatar = sessionUser?.avatar ?? null;
+  const isAuthed = !!userEmail;
   const handleLogout = async () => {
     setAvatarOpen(false);
     try {
@@ -44,24 +44,6 @@ export const Navbar = () => {
       console.error('Logout failed', e);
     }
   };
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setIsAuthed(!!session);
-      setUserEmail(session?.user?.email ?? null);
-      setUserName(session?.user?.user_metadata?.full_name ?? null);
-      setUserAvatar(session?.user?.user_metadata?.avatar_url ?? null);
-      setAuthLoading(false);
-    });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsAuthed(!!session);
-      setUserEmail(session?.user?.email ?? null);
-      setUserName(session?.user?.user_metadata?.full_name ?? null);
-      setUserAvatar(session?.user?.user_metadata?.avatar_url ?? null);
-      setAuthLoading(false);
-    });
-    return () => subscription.unsubscribe();
-  }, []);
 
   const navLinks = isAuthed ? authedLinks : publicLinks;
 
