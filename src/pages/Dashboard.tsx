@@ -90,10 +90,12 @@ const ScoreHero = ({ result, t }: { result: AnalysisResult; t: (k: string) => st
   const delta = trend && trend.length >= 2 ? Math.round(trend[trend.length - 1].score - trend[trend.length - 2].score) : 0;
 
   // Strongest / weakest dimension
-  const dimensions = Object.entries(result.dimensions) as [string, number][];
-  const normalized = dimensions.map(([k, v]) => [k, v <= 1 ? v * 100 : v] as [string, number]);
-  const strongest = [...normalized].sort((a, b) => b[1] - a[1])[0];
-  const weakest = [...normalized].sort((a, b) => a[1] - b[1])[0];
+  const [strongest, weakest] = useMemo(() => {
+    const dimensions = Object.entries(result.dimensions) as [string, number][];
+    const normalized = dimensions.map(([k, v]) => [k, v <= 1 ? v * 100 : v] as [string, number]);
+    const sorted = [...normalized].sort((a, b) => b[1] - a[1]);
+    return [sorted[0], sorted[sorted.length - 1]];
+  }, [result.dimensions]);
 
   // Animated counter
   const [animScore, setAnimScore] = useState(0);

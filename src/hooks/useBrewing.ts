@@ -1,7 +1,6 @@
 import { useState, useCallback } from 'react';
 import { AnalysisResult, SourceResult } from '@/types/analysis';
 import { supabase } from '@/lib/supabase';
-import { useTranslation } from '@/lib/locale';
 
 type StoredDimensions = {
   authority: number;
@@ -62,7 +61,6 @@ const normalizeSentiment = (s: unknown): SourceResult['sentiment'] => {
 export const GUEST_LIMIT = 3;
 
 export function useBrewing() {
-  const { t } = useTranslation();
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState<'idle' | 'brewing' | 'loading' | 'completed'>('idle');
   const [result, setResult] = useState<AnalysisResult | null>(null);
@@ -360,7 +358,7 @@ export function useBrewing() {
         setStatus('completed');
       }, 300);
     }
-  }, [t]);
+  }, []);
 
   const reset = useCallback(() => {
     setStatus('idle');
@@ -404,9 +402,3 @@ export function useBrewing() {
 
   return { progress, status, result, startBrewing, reset, loadStoredAnalysis, guestLimitReached };
 }
-
-const mapSentimentLabel = (v: number): 'Positive' | 'Neutral' | 'Negative' => {
-  if (v >= 66) return 'Positive';
-  if (v <= 33) return 'Negative';
-  return 'Neutral';
-};

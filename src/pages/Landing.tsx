@@ -1,5 +1,4 @@
 import { useNavigate, Link } from 'react-router-dom';
-import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Zap, Eye, BarChart3, Shield, ChevronDown, HelpCircle, Mail, TrendingUp, ArrowRight, Globe, Star, Quote, ShieldCheck, Clock, Search, PenLine, Sparkles, MessageSquare, Rocket, LineChart, Building2 } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';

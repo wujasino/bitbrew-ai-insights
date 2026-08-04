@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Search, Bot, FileText, ArrowRight, ArrowUpRight, ArrowUp, ArrowDown,
-  Lock, Loader2, Sparkles, CalendarClock,
+  Lock, Sparkles, CalendarClock,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
