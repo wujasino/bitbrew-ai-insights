@@ -122,8 +122,6 @@ export function useBrewing() {
       setProgress(100);
 
       // Przygotuj fallbackowe dane dla wykresów, jeśli funkcja API ich nie zwróci
-      console.debug('analyze raw response:', data);
-
       const sentimentTrendData = (data.sentimentTrend && Array.isArray(data.sentimentTrend) && data.sentimentTrend.length >= 7)
         ? data.sentimentTrend
         : Array.from({ length: 7 }).map((_, i) => ({
@@ -291,7 +289,7 @@ export function useBrewing() {
       }, 300);
     } catch (error) {
       clearInterval(interval);
-      console.error('Analyze request failed, using deterministic fallback:', error);
+      console.error('Analyze request failed:', error);
 
       // Deterministic fallback based on brandName so different inputs show different results
       const deterministicFallback = (seedStr: string) => {
@@ -335,7 +333,6 @@ export function useBrewing() {
           sources
         };
 
-        console.debug('deterministicFallback for', seed, out);
         return out;
       };
 
