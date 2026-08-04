@@ -1,21 +1,18 @@
 import { createClient } from '@supabase/supabase-js';
 import ws from 'ws';
+import { isValidVoiceId } from './_lib/elevenlabsVoices.js';
 
 if (!globalThis.WebSocket) {
   globalThis.WebSocket = ws;
 }
 
-// Must match AVAILABLE_VOICES in src/hooks/useTTS.ts. voiceId used to be
-// interpolated straight into the ElevenLabs URL path with no validation —
-// an authenticated caller could pass anything (e.g. "abc/../user") and
-// pivot the site's paid ElevenLabs API key to a different endpoint than
-// intended. Only ever call the specific voice ids we actually offer.
-const ALLOWED_VOICE_IDS = new Set([
-  'EXAVITQu4vr4xnSDxMaL',
-  'onwK4e9ZLuTAKqWW03F9',
-  'XB0fDUnXU5powFXDhCwa',
-  'N2lVS1w4EtoT3dr4eOWO',
-]);
+// voiceId used to be interpolated straight into the ElevenLabs URL path with
+// no validation — an authenticated caller could pass anything (e.g.
+// "abc/../user") and pivot the site's paid ElevenLabs API key to a different
+// endpoint than intended. isValidVoiceId() checks both the id's shape and
+// that it's a real, current voice on the account (see _lib/elevenlabsVoices.js)
+// — this lets users pick from the full ElevenLabs catalog (see list-voices.js)
+// instead of a hardcoded handful, without reopening that hole.
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
@@ -94,12 +91,13 @@ export const handler = async (event) => {
   if (!text || typeof text !== 'string') {
     return { statusCode: 400, body: JSON.stringify({ error: 'text required' }) };
   }
-  if (!ALLOWED_VOICE_IDS.has(voiceId)) {
-    return { statusCode: 400, body: JSON.stringify({ error: 'Invalid voiceId' }) };
-  }
 
   const apiKey = process.env.ELEVENLABS_API_KEY;
   if (!apiKey) return { statusCode: 503, body: JSON.stringify({ error: 'TTS not configured' }) };
+
+  if (!(await isValidVoiceId(apiKey, voiceId))) {
+    return { statusCode: 400, body: JSON.stringify({ error: 'Invalid voiceId' }) };
+  }
 
   let res;
   try {

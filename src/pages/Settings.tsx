@@ -5,8 +5,9 @@ import {
   User, Bell, Shield, Trash2, Save,
   Upload, Camera, Loader2, KeyRound, Check, Mail, ArrowRight, ArrowLeft,
   Eye, EyeOff, CheckCircle2, Circle, CreditCard, Download, FileText, Volume2, Cpu, Lock,
+  Play, Square as StopIcon,
 } from 'lucide-react';
-import { loadVoicePrefs, saveVoicePrefs, VoicePrefs, AVAILABLE_VOICES } from '@/hooks/useTTS';
+import { loadVoicePrefs, saveVoicePrefs, VoicePrefs, AVAILABLE_VOICES, fetchAvailableVoices, ElevenLabsVoice } from '@/hooks/useTTS';
 import { MODEL_CATALOG, loadModelPrefs, saveModelPrefs, ModelPrefs } from '@/lib/models';
 import { usePlan, tierOf } from '@/hooks/useAccountInfo';
 import { Button } from '@/components/ui/button';
@@ -34,6 +35,37 @@ export default function Settings() {
   });
   const [voicePrefs, setVoicePrefs] = useState<VoicePrefs>(loadVoicePrefs);
   const [modelPrefs, setModelPrefs] = useState<ModelPrefs>(loadModelPrefs);
+  const [elevenLabsVoices, setElevenLabsVoices] = useState<ElevenLabsVoice[] | null>(null);
+  const [voicesLoading, setVoicesLoading] = useState(false);
+  const [previewingId, setPreviewingId] = useState<string | null>(null);
+  const previewAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Load the real ElevenLabs voice catalog once the user opens up the voice
+  // picker — no point fetching it if "read aloud" stays off.
+  useEffect(() => {
+    if (!voicePrefs.enabled || elevenLabsVoices !== null || voicesLoading) return;
+    setVoicesLoading(true);
+    fetchAvailableVoices()
+      .then(setElevenLabsVoices)
+      .finally(() => setVoicesLoading(false));
+  }, [voicePrefs.enabled, elevenLabsVoices, voicesLoading]);
+
+  useEffect(() => () => { previewAudioRef.current?.pause(); }, []);
+
+  const togglePreview = (voice: ElevenLabsVoice) => {
+    if (previewingId === voice.id) {
+      previewAudioRef.current?.pause();
+      setPreviewingId(null);
+      return;
+    }
+    if (!voice.previewUrl) return;
+    previewAudioRef.current?.pause();
+    const audio = new Audio(voice.previewUrl);
+    previewAudioRef.current = audio;
+    audio.onended = () => setPreviewingId(null);
+    audio.play();
+    setPreviewingId(voice.id);
+  };
   const { data: plan = 'Free' } = usePlan();
   const planTier = tierOf(plan);
 
@@ -684,27 +716,63 @@ export default function Settings() {
                     </button>
                   </div>
                   {voicePrefs.enabled && (
-                    <div className="grid grid-cols-2 gap-2">
-                      {AVAILABLE_VOICES.map(v => (
-                        <button
-                          key={v.id}
-                          onClick={() => {
-                            const p = { ...voicePrefs, voiceId: v.id };
-                            setVoicePrefs(p);
-                            saveVoicePrefs(p);
-                          }}
-                          className={cn(
-                            'flex flex-col items-start p-3 rounded-xl border text-left transition-all duration-150 active:scale-[0.98]',
-                            voicePrefs.voiceId === v.id
-                              ? 'bg-primary/10 border-primary text-primary'
-                              : 'border-input text-muted-foreground hover:text-foreground hover:bg-accent'
-                          )}
-                        >
-                          <span className="text-sm font-medium">{v.name}</span>
-                          <span className="text-[11px] opacity-70">{v.description}</span>
-                        </button>
-                      ))}
-                    </div>
+                    <>
+                      {voicesLoading && !elevenLabsVoices ? (
+                        <div className="grid grid-cols-2 gap-2">
+                          {[0, 1, 2, 3].map(i => (
+                            <div key={i} className="h-14 rounded-xl border border-input bg-muted/30 animate-pulse" />
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-2 gap-2">
+                          {(elevenLabsVoices && elevenLabsVoices.length > 0 ? elevenLabsVoices : AVAILABLE_VOICES).map(v => {
+                            const hasPreview = 'previewUrl' in v && !!v.previewUrl;
+                            const isPreviewing = previewingId === v.id;
+                            return (
+                              <div
+                                key={v.id}
+                                className={cn(
+                                  'flex items-center gap-1.5 p-3 rounded-xl border transition-all duration-150',
+                                  voicePrefs.voiceId === v.id
+                                    ? 'bg-primary/10 border-primary text-primary'
+                                    : 'border-input text-muted-foreground hover:text-foreground hover:bg-accent'
+                                )}
+                              >
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const p = { ...voicePrefs, voiceId: v.id };
+                                    setVoicePrefs(p);
+                                    saveVoicePrefs(p);
+                                  }}
+                                  className="flex-1 min-w-0 flex flex-col items-start text-left active:scale-[0.98] transition-transform"
+                                >
+                                  <span className="text-sm font-medium truncate w-full">{v.name}</span>
+                                  <span className="text-[11px] opacity-70 truncate w-full">
+                                    {'description' in v ? v.description : ('category' in v ? v.category ?? 'ElevenLabs' : 'ElevenLabs')}
+                                  </span>
+                                </button>
+                                {hasPreview && (
+                                  <button
+                                    type="button"
+                                    onClick={() => togglePreview(v as ElevenLabsVoice)}
+                                    aria-label={isPreviewing ? 'Stop preview' : `Preview ${v.name}`}
+                                    className="shrink-0 w-7 h-7 flex items-center justify-center rounded-lg border border-current/20 hover:bg-current/10 transition-colors active:scale-95"
+                                  >
+                                    {isPreviewing ? <StopIcon className="w-3 h-3" /> : <Play className="w-3 h-3" />}
+                                  </button>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                      {elevenLabsVoices && elevenLabsVoices.length === 0 && !voicesLoading && (
+                        <p className="text-[11px] text-muted-foreground/70 mt-2">
+                          Couldn't load your ElevenLabs voice catalog — showing the default set instead.
+                        </p>
+                      )}
+                    </>
                   )}
                   </div>
 
