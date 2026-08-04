@@ -221,8 +221,7 @@
 
   /* ── Wordmark ───────────────────────────────────────────────── */
   .font-wordmark {
-    font-family: 'Fraunces', 'Inter', system-ui, -apple-system, sans-serif;
-    font-optical-sizing: auto;
+    font-family: 'Michroma', 'Inter', system-ui, -apple-system, sans-serif;
   }
 
   /* ── Landing page ───────────────────────────────────────────── */

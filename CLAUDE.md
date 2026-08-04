@@ -22,11 +22,16 @@ hero. Uses Plus Jakarta Sans (`.font-landing` font scope).
 
 ## Wordmark font
 
-`.font-wordmark` (in `src/index.css`) uses **Fraunces** at max optical
-size (`opsz` axis maxed out) as a free stand-in for Casko (PP Casko is a
-paid font, not on Google Fonts) — a sharp, high-contrast display serif.
-Loaded via the main Google Fonts `<link>` in `index.html`; no separate
-Fontshare dependency anymore (Satoshi was dropped).
+`.font-wordmark` (in `src/index.css`) uses **Michroma** — a geometric,
+all-caps techno-sans, the closest free Google Fonts match to the
+Rimac Nevera logotype's squared-off letterforms (Nevera itself is a
+bespoke cut logotype, not a licensable font). Rendered uppercase via
+`Wordmark.tsx` (`uppercase tracking-wide font-normal` — Michroma only
+ships a single 400 weight, so don't add `font-bold`/`font-semibold` or
+the browser falls back silently, same failure mode as the earlier
+Fraunces attempt). Loaded via the main Google Fonts `<link>` in
+`index.html`. Previously tried Fraunces (Casko substitute) and Satoshi
+(via Fontshare) — both replaced.
 
 ## Social assets
 
