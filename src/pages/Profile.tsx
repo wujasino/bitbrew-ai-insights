@@ -221,7 +221,7 @@ const Profile = () => {
               onClick={stat.onClick}
               className={cn(
                 'glass-card p-5 flex flex-col gap-3',
-                stat.onClick && 'cursor-pointer hover:border-primary/40 hover:bg-card/60 transition-colors group'
+                stat.onClick && 'cursor-pointer hover:border-primary/40 hover:bg-card/60 active:scale-[0.98] transition-all group'
               )}>
               <div className="flex items-center justify-between">
                 <span className="text-xs text-muted-foreground">{stat.label}</span>
@@ -263,7 +263,7 @@ const Profile = () => {
               {alerts.slice(0, 4).map(a => (
                 <button key={a.id}
                   onClick={() => navigate(`/dashboard?id=${encodeURIComponent(a.id)}`)}
-                  className="w-full flex items-center justify-between gap-3 text-left rounded-xl px-3 py-2.5 hover:bg-red-500/10 transition-colors"
+                  className="w-full flex items-center justify-between gap-3 text-left rounded-xl px-3 py-2.5 hover:bg-red-500/10 transition-all duration-150 active:scale-[0.99]"
                 >
                   <span className="text-sm text-foreground font-medium">{a.brand}</span>
                   <span className="flex items-center gap-2 text-xs">
@@ -300,7 +300,7 @@ const Profile = () => {
               </div>
               <button
                 onClick={() => setSortDir(d => d === 'desc' ? 'asc' : 'desc')}
-                className="flex items-center gap-1 px-3 h-8 rounded-lg border border-input text-xs text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                className="flex items-center gap-1 px-3 h-8 rounded-lg border border-input text-xs text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-150 active:scale-[0.97]"
               >
                 Score {sortDir === 'desc' ? <ChevronDown className="w-3 h-3" /> : <ChevronUp className="w-3 h-3" />}
               </button>
@@ -309,7 +309,7 @@ const Profile = () => {
                   <button
                     onClick={() => exportData('csv')}
                     title={t('profile_export_csv')}
-                    className="flex items-center gap-1 px-3 h-8 text-xs text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                    className="flex items-center gap-1 px-3 h-8 text-xs text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-150 active:scale-[0.97]"
                   >
                     <Download className="w-3 h-3" /> CSV
                   </button>
@@ -317,7 +317,7 @@ const Profile = () => {
                   <button
                     onClick={() => exportData('json')}
                     title={t('profile_export_json')}
-                    className="px-3 h-8 text-xs text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                    className="px-3 h-8 text-xs text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-150 active:scale-[0.97]"
                   >
                     JSON
                   </button>
@@ -357,7 +357,7 @@ const Profile = () => {
                   <motion.div key={brew.id}
                     initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }}
                     onClick={() => navigate(`/dashboard?id=${encodeURIComponent(brew.id)}`)}
-                    className="glass-card-hover flex items-center justify-between p-4 cursor-pointer hover:!border-primary/30 transition-all group"
+                    className="glass-card-hover flex items-center justify-between p-4 cursor-pointer hover:!border-primary/30 active:scale-[0.995] transition-all group"
                   >
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
@@ -402,7 +402,7 @@ const Profile = () => {
           {filtered.length > 6 && (
             <button
               onClick={() => setShowAll(s => !s)}
-              className="mt-3 w-full py-2.5 text-sm text-muted-foreground hover:text-foreground border border-dashed border-border hover:border-primary/30 rounded-xl transition-colors"
+              className="mt-3 w-full py-2.5 text-sm text-muted-foreground hover:text-foreground border border-dashed border-border hover:border-primary/30 rounded-xl transition-all duration-150 active:scale-[0.99]"
             >
               {showAll ? t('profile_show_less') : `${t('profile_show_all')} (${filtered.length})`}
             </button>

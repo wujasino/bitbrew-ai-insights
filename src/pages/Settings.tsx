@@ -475,7 +475,7 @@ export default function Settings() {
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={cn(
-                    'flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-sm transition-colors text-left',
+                    'flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-sm transition-all duration-150 text-left active:scale-[0.98]',
                     activeTab === tab.id
                       ? 'bg-primary/10 text-primary font-medium'
                       : 'text-muted-foreground hover:text-foreground hover:bg-accent'
@@ -515,7 +515,7 @@ export default function Settings() {
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
                         disabled={uploading}
-                        className="relative block"
+                        className="relative block transition-transform duration-150 active:scale-[0.96]"
                         aria-label="Change photo"
                       >
                         <Avatar className="h-20 w-20 ring-2 ring-primary/30">
@@ -589,7 +589,7 @@ export default function Settings() {
                     <p className="text-xs text-muted-foreground mb-3">This operation is irreversible. All data will be permanently deleted.</p>
                     <button
                       onClick={() => setShowDeleteForm(true)}
-                      className="px-4 py-2 rounded-lg text-sm font-medium bg-destructive/10 text-destructive border border-destructive/20 hover:bg-destructive/20 transition-colors"
+                      className="px-4 py-2 rounded-lg text-sm font-medium bg-destructive/10 text-destructive border border-destructive/20 hover:bg-destructive/20 transition-all duration-150 active:scale-[0.98]"
                     >
                       <Trash2 className="inline w-3.5 h-3.5 mr-1.5" />
                       Delete account
@@ -617,13 +617,13 @@ export default function Settings() {
                           <div className="flex gap-2 text-xs">
                             <button
                               onClick={() => setDeleteMethod('password')}
-                              className={cn('px-3 py-1.5 rounded border transition-colors', deleteMethod === 'password' ? 'bg-destructive/10 border-destructive/30 text-destructive' : 'border-border text-muted-foreground hover:bg-accent')}
+                              className={cn('px-3 py-1.5 rounded border transition-all duration-150 active:scale-[0.98]', deleteMethod === 'password' ? 'bg-destructive/10 border-destructive/30 text-destructive' : 'border-border text-muted-foreground hover:bg-accent')}
                             >
                               Password
                             </button>
                             <button
                               onClick={() => setDeleteMethod('2fa')}
-                              className={cn('px-3 py-1.5 rounded border transition-colors', deleteMethod === '2fa' ? 'bg-destructive/10 border-destructive/30 text-destructive' : 'border-border text-muted-foreground hover:bg-accent')}
+                              className={cn('px-3 py-1.5 rounded border transition-all duration-150 active:scale-[0.98]', deleteMethod === '2fa' ? 'bg-destructive/10 border-destructive/30 text-destructive' : 'border-border text-muted-foreground hover:bg-accent')}
                             >
                               2FA code (I don't remember my password)
                             </button>
@@ -640,14 +640,14 @@ export default function Settings() {
                           <div className="flex gap-2 justify-end pt-2">
                             <button
                               onClick={() => { setShowDeleteForm(false); setDeletePassword(''); setDeleteTotpCode(''); setDeleteError(''); }}
-                              className="px-4 py-2 rounded-lg text-sm border border-border text-muted-foreground hover:bg-accent transition-colors"
+                              className="px-4 py-2 rounded-lg text-sm border border-border text-muted-foreground hover:bg-accent transition-all duration-150 active:scale-[0.98]"
                             >
                               Cancel
                             </button>
                             <button
                               disabled={deleteStatus === 'deleting'}
                               onClick={handleDeleteAccount}
-                              className="px-4 py-2 rounded-lg text-sm font-medium bg-destructive text-white hover:bg-destructive/90 transition-colors disabled:opacity-50"
+                              className="px-4 py-2 rounded-lg text-sm font-medium bg-destructive text-white hover:bg-destructive/90 transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
                             >
                               {deleteStatus === 'deleting' ? 'Deleting...' : 'Confirm and delete'}
                             </button>
@@ -678,7 +678,7 @@ export default function Settings() {
                         setVoicePrefs(p);
                         saveVoicePrefs(p);
                       }}
-                      className={cn('relative w-10 h-6 rounded-full transition-colors', voicePrefs.enabled ? 'bg-primary' : 'bg-muted')}
+                      className={cn('relative w-10 h-6 rounded-full transition-colors active:scale-95', voicePrefs.enabled ? 'bg-primary' : 'bg-muted')}
                     >
                       <span className={cn('absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all duration-200', voicePrefs.enabled ? 'left-5' : 'left-1')} />
                     </button>
@@ -694,7 +694,7 @@ export default function Settings() {
                             saveVoicePrefs(p);
                           }}
                           className={cn(
-                            'flex flex-col items-start p-3 rounded-xl border text-left transition-colors',
+                            'flex flex-col items-start p-3 rounded-xl border text-left transition-all duration-150 active:scale-[0.98]',
                             voicePrefs.voiceId === v.id
                               ? 'bg-primary/10 border-primary text-primary'
                               : 'border-input text-muted-foreground hover:text-foreground hover:bg-accent'
@@ -749,7 +749,7 @@ export default function Settings() {
                               saveModelPrefs(p);
                             }}
                             className={cn(
-                              'flex items-center justify-between gap-2 p-3 rounded-xl border text-left transition-colors',
+                              'flex items-center justify-between gap-2 p-3 rounded-xl border text-left transition-all duration-150 active:scale-[0.98]',
                               checked
                                 ? 'bg-primary/10 border-primary text-primary'
                                 : 'border-input text-muted-foreground hover:text-foreground hover:bg-accent'
@@ -783,7 +783,7 @@ export default function Settings() {
                       <button
                         onClick={() => item.set(!item.value)}
                         disabled={item.saving}
-                        className={cn('relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors disabled:opacity-50 disabled:cursor-not-allowed', item.value ? 'bg-primary' : 'bg-muted')}
+                        className={cn('relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed', item.value ? 'bg-primary' : 'bg-muted')}
                       >
                         <span className={cn('pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-lg transition-transform', item.value ? 'translate-x-4' : 'translate-x-0')} />
                       </button>
