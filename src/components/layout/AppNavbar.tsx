@@ -8,7 +8,7 @@ import AvatarNotifications from '@/components/ui/avatar-notifications';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { PLAN_LIMITS, usePlan, useAnalysesUsedThisMonth, useSessionUser } from '@/hooks/useAccountInfo';
+import { PLAN_LIMITS, PLAN_LABELS, usePlan, useAnalysesUsedThisMonth, useSessionUser } from '@/hooks/useAccountInfo';
 
 const DropdownLink = ({ to, icon: Icon, label, onClick }: { to: string; icon: React.FC<{ className?: string }>; label: string; onClick?: () => void }) => (
   <Link
@@ -187,7 +187,7 @@ export const AppNavbar = ({ collapsed = false, onToggle, onMobileToggle, chatOpe
                 </PopoverTrigger>
               </TooltipTrigger>
               <TooltipContent side="bottom" className="text-xs">
-                <p className="font-medium">{plan} — credits this month</p>
+                <p className="font-medium">{PLAN_LABELS[plan] ?? plan} — credits this month</p>
                 <p className="text-muted-foreground">{analysesUsed} / {limit} used ({usedPct}%)</p>
               </TooltipContent>
 
@@ -224,7 +224,7 @@ export const AppNavbar = ({ collapsed = false, onToggle, onMobileToggle, chatOpe
             <div className="px-4 py-3 border-b border-border">
               <p className="text-xs font-semibold text-foreground truncate">{userName || userEmail}</p>
               <p className="text-[10px] text-muted-foreground truncate">{userEmail}</p>
-              <span className="inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-semibold">{plan}</span>
+              <span className="inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-semibold">{PLAN_LABELS[plan] ?? plan}</span>
             </div>
 
             {/* Nav links */}

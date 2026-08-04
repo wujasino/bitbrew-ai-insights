@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 import { ScoreTrendChart } from '@/components/charts/ScoreTrendChart';
+import { usePlan, PLAN_LABELS, PLAN_LIMITS } from '@/hooks/useAccountInfo';
 
 interface Analysis {
   id: string;
@@ -17,23 +18,6 @@ interface Analysis {
   brand_name: string;
   created_at: string;
 }
-
-/* Plan names — no "Roast" branding for paid tiers */
-const PLAN_LABELS: Record<string, string> = {
-  free: 'Free',
-  solo: 'Solo',
-  growth: 'Growth',
-  enterprise: 'Enterprise Suite',
-  agency: 'Enterprise Suite', // some accounts have this stored instead of 'enterprise'
-};
-
-const PLAN_LIMITS: Record<string, number> = {
-  free: 10,
-  solo: 50,
-  growth: 100,
-  enterprise: 500,
-  agency: 500,
-};
 
 const SUB_STATUS_KEY = { active: 'sub_status_active', paused: 'sub_status_paused', cancelled: 'sub_status_cancelled' } as const;
 const SUB_DOT = {
@@ -60,7 +44,7 @@ const Profile = () => {
 
   const [email, setEmail] = useState('');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [plan, setPlan] = useState('free');
+  const { data: plan = 'Free' } = usePlan();
   const [analyses, setAnalyses] = useState<Analysis[]>([]);
   const [history, setHistory] = useState<Analysis[]>([]);
   const [prevScores, setPrevScores] = useState<Record<string, number>>({});
@@ -73,7 +57,7 @@ const Profile = () => {
   const [showAll, setShowAll] = useState(false);
 
   const initials = email ? email[0].toUpperCase() : '?';
-  const limit = PLAN_LIMITS[plan] ?? 10;
+  const limit = PLAN_LIMITS[plan] ?? 3;
   const usagePercent = Math.min(Math.round((analyses.length / limit) * 100), 100);
   const avgScore = analyses.length
     ? Math.round(analyses.reduce((s, a) => s + a.trust_score, 0) / analyses.length)
@@ -88,8 +72,7 @@ const Profile = () => {
       setEmail(user.email ?? '');
       setAvatarUrl(user.user_metadata?.avatar_url ?? null);
 
-      const { data: profile } = await supabase.from('profiles').select('plan, avatar_url').eq('id', user.id).single();
-      if (profile?.plan) setPlan(profile.plan);
+      const { data: profile } = await supabase.from('profiles').select('avatar_url').eq('id', user.id).single();
       if (profile?.avatar_url) setAvatarUrl(profile.avatar_url);
 
       /* Fetch all analyses to compute per-brand trend */
@@ -175,7 +158,7 @@ const Profile = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <PricingModal open={showPricing} onClose={() => setShowPricing(false)} currentPlan={plan} />
+      <PricingModal open={showPricing} onClose={() => setShowPricing(false)} currentPlan={plan.toLowerCase()} />
       <div className="pt-6 pb-20 px-4 max-w-5xl mx-auto space-y-6">
 
         {/* ── USER HEADER ─────────────────────────────────────────── */}
@@ -198,7 +181,7 @@ const Profile = () => {
             </div>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            {plan === 'free' && (
+            {plan === 'Free' && (
               <Button size="sm" onClick={() => navigate('/pricing')}>
                 <Zap className="w-3.5 h-3.5 mr-1.5" /> {t('profile_upgrade')}
               </Button>

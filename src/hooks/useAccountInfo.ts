@@ -2,14 +2,29 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 
-/** Keep in sync across every place that reads/limits credits by plan. */
+/**
+ * Keep in sync with the Pricing page copy AND the real enforcement in
+ * enforce_analysis_limit() (supabase/migrations/20240112_fix_analysis_limit_tiers.sql)
+ * — these numbers used to say Solo:30/Growth:120, which didn't match either
+ * the 10/50 the Pricing page promises or what the database actually allows.
+ */
 export const PLAN_LIMITS: Record<string, number> = {
   Free: 3,
   Starter: 5,
-  Solo: 30,
-  Growth: 120,
-  Enterprise: 9999,
-  Agency: 9999, // some accounts have this stored instead of 'Enterprise' (same tier, matches the Pricing page's "Agency" tier)
+  Solo: 10,
+  Growth: 50,
+  Enterprise: 999999,
+  Agency: 999999, // some accounts have this stored instead of 'Enterprise' (same tier, matches the Pricing page's "Agency" tier)
+};
+
+/** Friendly display name per plan — keep in sync with Pricing.tsx's tier names. */
+export const PLAN_LABELS: Record<string, string> = {
+  Free: 'Free',
+  Starter: 'Starter',
+  Solo: 'Solo',
+  Growth: 'Business',
+  Enterprise: 'Agency',
+  Agency: 'Agency', // some accounts have this stored instead of 'Enterprise'
 };
 
 /** Numeric plan tier — gates feature access (charts, sources, model roster). */

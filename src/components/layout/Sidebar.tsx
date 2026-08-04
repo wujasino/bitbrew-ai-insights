@@ -2,7 +2,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Home, Code2, Zap, FileText, Bot, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { usePlan } from '@/hooks/useAccountInfo';
+import { usePlan, PLAN_LABELS } from '@/hooks/useAccountInfo';
 import { Wordmark } from '@/components/Wordmark';
 
 interface NavItemProps {
@@ -101,7 +101,7 @@ export const Sidebar = ({ collapsed = false, mobileOpen = false, onMobileClose }
             <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted border border-border">
               <div className="w-2 h-2 rounded-full bg-primary shrink-0" />
               <span className="text-xs font-medium text-foreground flex-1">Presora</span>
-              <span className="text-[10px] px-2 py-0.5 rounded bg-primary text-primary-foreground font-bold">{plan}</span>
+              <span className="text-[10px] px-2 py-0.5 rounded bg-primary text-primary-foreground font-bold">{PLAN_LABELS[plan] ?? plan}</span>
             </div>
           </div>
         )}
