@@ -8,10 +8,9 @@ const MAX_REQUESTS_PER_WINDOW = 20;
 // rate-limit by IP rather than user id — secondary defense only.
 const requestStore = new Map();
 
-const getIp = (event) =>
-  event.headers['x-nf-client-connection-ip'] ||
-  event.headers['x-forwarded-for']?.split(',').pop()?.trim() ||
-  'unknown';
+// Only trust Netlify's own connection-IP header — x-forwarded-for can be
+// pre-populated by the client itself and isn't a reliable rate-limit key.
+const getIp = (event) => event.headers['x-nf-client-connection-ip'] || 'unknown';
 
 const shouldRateLimit = (key) => {
   const current = Date.now();

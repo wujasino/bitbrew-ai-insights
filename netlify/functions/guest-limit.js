@@ -15,10 +15,9 @@ const supabase = createClient(
 );
 
 // Netlify's trusted header — cannot be spoofed by client
-const getIp = (event) =>
-  event.headers['x-nf-client-connection-ip'] ||
-  event.headers['x-forwarded-for']?.split(',').pop()?.trim() ||
-  'unknown';
+// Only trust Netlify's own connection-IP header — x-forwarded-for can be
+// pre-populated by the client itself and isn't a reliable rate-limit key.
+const getIp = (event) => event.headers['x-nf-client-connection-ip'] || 'unknown';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',

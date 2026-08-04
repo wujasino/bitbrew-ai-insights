@@ -1,3 +1,14 @@
+// Only the app's own callback route may be forwarded to Google — without
+// this, the endpoint would proxy a token exchange for any redirect_uri a
+// caller supplies (Google still enforces its own registered-URI check, but
+// this closes the gap if that registration is ever loosely configured).
+const ALLOWED_REDIRECT_URIS = new Set([
+  `${process.env.VITE_SITE_URL || 'https://www.presora.app'}/auth/google/callback`,
+  'https://presora.app/auth/google/callback',
+  'http://localhost:5173/auth/google/callback',
+  'http://localhost:8888/auth/google/callback',
+]);
+
 export const handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
@@ -8,6 +19,10 @@ export const handler = async (event) => {
 
     if (!code || !redirect_uri) {
       return { statusCode: 400, body: JSON.stringify({ error: 'Missing code or redirect_uri' }) };
+    }
+
+    if (!ALLOWED_REDIRECT_URIS.has(redirect_uri)) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'Invalid redirect_uri' }) };
     }
 
     const clientId = process.env.VITE_GOOGLE_CLIENT_ID;

@@ -52,7 +52,15 @@ exports.handler = async (event) => {
   }
 
   const normalizedEmail = email.trim().toLowerCase();
-  if (sign(normalizedEmail) !== sig) {
+  const expected = sign(normalizedEmail);
+  // Constant-time comparison — a plain !== leaks timing information that,
+  // in principle, could help an attacker guess a valid signature byte by
+  // byte. Buffers must be equal length or timingSafeEqual throws.
+  const validSig =
+    typeof sig === 'string' &&
+    sig.length === expected.length &&
+    crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected));
+  if (!validSig) {
     return page('Nieprawidłowy link', 'Nie udało się zweryfikować tego linku.');
   }
 

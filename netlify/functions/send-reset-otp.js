@@ -14,6 +14,26 @@ const supabase = createClient(
 
 const ALLOWED_ORIGINS = ['https://presora.app', 'https://www.presora.app'];
 
+// IP-based throttle, on top of the per-email cap below — without it, an
+// attacker can cycle through arbitrary target email addresses (no account
+// required) and spam real inboxes / burn Resend send quota, since the
+// per-email limit alone doesn't cap requests across different emails.
+const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
+const MAX_REQUESTS_PER_IP = 10;
+const requestStore = new Map();
+const getIp = (event) => event.headers['x-nf-client-connection-ip'] || 'unknown';
+const shouldRateLimit = (key) => {
+  const current = Date.now();
+  const entry = requestStore.get(key) || { count: 0, windowStart: current };
+  if (current - entry.windowStart > RATE_LIMIT_WINDOW_MS) {
+    entry.windowStart = current;
+    entry.count = 0;
+  }
+  entry.count += 1;
+  requestStore.set(key, entry);
+  return entry.count > MAX_REQUESTS_PER_IP;
+};
+
 function corsHeaders(event) {
   const origin = event.headers?.origin || event.headers?.Origin || '';
   const allow = ALLOWED_ORIGINS.includes(origin) ? origin : 'https://presora.app';
@@ -78,6 +98,10 @@ export const handler = async (event) => {
   if (event.httpMethod !== 'POST') return json(405, { error: 'Method not allowed' }, event);
 
   if ((event.body?.length ?? 0) > 512) return json(400, { error: 'Payload too large' }, event);
+
+  if (shouldRateLimit(getIp(event))) {
+    return json(429, { error: 'Zbyt wiele prób. Spróbuj za 10 minut.' }, event);
+  }
 
   let email;
   try {

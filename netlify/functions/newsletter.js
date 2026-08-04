@@ -68,10 +68,9 @@ const ALLOWED_ORIGINS = new Set(['https://presora.app', 'https://www.presora.app
 const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
 const MAX_REQUESTS_PER_WINDOW = 5;
 const requestStore = new Map();
-const getIp = (event) =>
-  event.headers['x-nf-client-connection-ip'] ||
-  event.headers['x-forwarded-for']?.split(',').pop()?.trim() ||
-  'unknown';
+// Only trust Netlify's own connection-IP header — x-forwarded-for can be
+// pre-populated by the client itself and isn't a reliable rate-limit key.
+const getIp = (event) => event.headers['x-nf-client-connection-ip'] || 'unknown';
 const shouldRateLimit = (key) => {
   const current = Date.now();
   const entry = requestStore.get(key) || { count: 0, windowStart: current };
