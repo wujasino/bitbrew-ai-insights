@@ -15,12 +15,18 @@ glyph (`public/presora-mark-indigo.png`) — no more light/dark swap.
 
 ## Landing page (`src/pages/Landing.tsx`)
 
-Forces **light** theme via `useForceLightTheme()` regardless of the app's
-dark-by-default preference — deliberately monochrome (black/white/gray, see
-`.font-landing` overrides in `index.css`), not the app's indigo dark theme.
-Uses Plus Jakarta Sans (`.font-landing` font scope), wordmark uses Satoshi
-(`.font-wordmark`, loaded via Fontshare — blocked in this sandbox, falls
-back to Inter locally, works in production).
+Forces **dark** theme via `useForceDarkTheme()` regardless of visitor
+preference, using the same indigo palette as the rest of the app (see
+Brand palette above) plus an "indigo" `GradientMeshBg` orb variant for the
+hero. Uses Plus Jakarta Sans (`.font-landing` font scope).
+
+## Wordmark font
+
+`.font-wordmark` (in `src/index.css`) uses **Fraunces** at max optical
+size (`opsz` axis maxed out) as a free stand-in for Casko (PP Casko is a
+paid font, not on Google Fonts) — a sharp, high-contrast display serif.
+Loaded via the main Google Fonts `<link>` in `index.html`; no separate
+Fontshare dependency anymore (Satoshi was dropped).
 
 ## Social assets
 
@@ -33,8 +39,10 @@ banner assets" commit for the approach) if the palette or copy changes.
 ## Known sandbox limitations
 
 - No real internet in this dev/test sandbox except through the proxy —
-  `fonts.googleapis.com` works, `api.fontshare.com` (Satoshi) does not
-  (403 from proxy). Doesn't affect production.
+  `fonts.googleapis.com` and `fonts.gstatic.com` work fine via `curl` and
+  in Playwright/Chromium. If a webfont looks wrong in a screenshot, don't
+  assume proxy flakiness — check for a stale/corrupted cached font file in
+  `/tmp` first (re-`curl` it fresh) before suspecting the network.
 - Supabase MCP tools are read-only here; schema/data changes need SQL run
   manually by the user via the Supabase Dashboard SQL editor.
 - GitHub PR for this branch has been merged mid-session more than once —
