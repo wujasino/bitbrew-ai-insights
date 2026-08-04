@@ -1,12 +1,14 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { TotpSetup } from '@/components/ui/totp-setup';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import {
   User, Bell, Shield, Trash2, Save,
   Upload, Camera, Loader2, KeyRound, Check, Mail, ArrowRight, ArrowLeft,
-  Eye, EyeOff, CheckCircle2, Circle, CreditCard, Download, FileText, Volume2,
+  Eye, EyeOff, CheckCircle2, Circle, CreditCard, Download, FileText, Volume2, Cpu, Lock,
 } from 'lucide-react';
 import { loadVoicePrefs, saveVoicePrefs, VoicePrefs, AVAILABLE_VOICES } from '@/hooks/useTTS';
+import { MODEL_CATALOG, loadModelPrefs, saveModelPrefs, ModelPrefs } from '@/lib/models';
+import { usePlan, tierOf } from '@/hooks/useAccountInfo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -31,6 +33,9 @@ export default function Settings() {
     return tabs.some(t => t.id === requested) ? (requested as Tab) : 'account';
   });
   const [voicePrefs, setVoicePrefs] = useState<VoicePrefs>(loadVoicePrefs);
+  const [modelPrefs, setModelPrefs] = useState<ModelPrefs>(loadModelPrefs);
+  const { data: plan = 'Free' } = usePlan();
+  const planTier = tierOf(plan);
 
   // Billing / subscription — synced from `profiles` (kept up to date by
   // stripe-webhook.js) and mutated only through manage-subscription.js,
@@ -701,6 +706,63 @@ export default function Settings() {
                       ))}
                     </div>
                   )}
+                  </div>
+
+                  {/* AI Models */}
+                  <div className="h-px bg-border" />
+                  <div>
+                    <label className="text-sm font-medium text-foreground block mb-1">
+                      <Cpu className="inline w-4 h-4 mr-1.5 text-primary" />
+                      AI models scanned
+                    </label>
+                    <p className="text-xs text-muted-foreground mb-4">
+                      Choose which AI models to query on each scan. Your plan ({plan}) allows up to{' '}
+                      {MODEL_CATALOG.filter(m => m.tier <= planTier).length} of {MODEL_CATALOG.length}.
+                    </p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {MODEL_CATALOG.map(m => {
+                        const unlocked = m.tier <= planTier;
+                        const checked = modelPrefs.selected.includes(m.id);
+                        if (!unlocked) {
+                          return (
+                            <Link
+                              key={m.id}
+                              to="/pricing"
+                              className="flex items-center justify-between gap-2 p-3 rounded-xl border border-[hsl(var(--glass-border))] text-muted-foreground opacity-60 hover:opacity-100 transition-opacity"
+                            >
+                              <span className="text-sm font-medium">{m.label}</span>
+                              <Lock className="w-3.5 h-3.5 shrink-0" />
+                            </Link>
+                          );
+                        }
+                        return (
+                          <button
+                            key={m.id}
+                            type="button"
+                            onClick={() => {
+                              const next = checked
+                                ? modelPrefs.selected.filter(id => id !== m.id)
+                                : [...modelPrefs.selected, m.id];
+                              if (next.length === 0) return; // keep at least one model selected
+                              const p = { selected: next };
+                              setModelPrefs(p);
+                              saveModelPrefs(p);
+                            }}
+                            className={cn(
+                              'flex items-center justify-between gap-2 p-3 rounded-xl border text-left transition-colors',
+                              checked
+                                ? 'bg-primary/10 border-primary text-primary'
+                                : 'border-input text-muted-foreground hover:text-foreground hover:bg-accent'
+                            )}
+                          >
+                            <span className="text-sm font-medium">{m.label}</span>
+                            <span className={cn('w-4 h-4 rounded-md border flex items-center justify-center shrink-0', checked ? 'bg-primary border-primary' : 'border-input')}>
+                              {checked && <Check className="w-3 h-3 text-primary-foreground" />}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 </>
               )}

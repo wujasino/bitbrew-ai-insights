@@ -153,18 +153,38 @@ export const handler = async (event) => {
   }
 
   try {
-    const { url } = JSON.parse(event.body || '{}');
+    const { url, models: requestedModelIds } = JSON.parse(event.body || '{}');
     const target = String(url || '').trim().slice(0, 500) || 'unknown brand';
     let parsed = null;
 
-    // Real multi-model scan via OpenRouter — one key, one endpoint, actual
-    // GPT-4o / Claude / Gemini calls (previously only Claude was ever
-    // called; the other two "sources" were fabricated from a hash).
+    // Full model roster — keep ids/tiers in sync with MODEL_CATALOG in
+    // src/lib/models.ts. `tier` is the minimum plan tier (see PLAN_TIER in
+    // useAccountInfo.ts) required to query that model.
     const OPENROUTER_MODELS = [
-      { id: 'openai/gpt-4o', label: 'GPT-4o' },
-      { id: 'anthropic/claude-sonnet-4.5', label: 'Claude' },
-      { id: 'google/gemini-2.5-flash', label: 'Gemini' },
+      { id: 'openai/gpt-4o', label: 'GPT-4o', tier: 0 },
+      { id: 'anthropic/claude-sonnet-4.5', label: 'Claude', tier: 1 },
+      { id: 'google/gemini-2.5-flash', label: 'Gemini', tier: 1 },
+      { id: 'perplexity/sonar-pro', label: 'Perplexity', tier: 2 },
+      { id: 'mistralai/mistral-large', label: 'Mistral', tier: 2 },
+      { id: 'meta-llama/llama-3.3-70b-instruct', label: 'Llama 3', tier: 2 },
     ];
+
+    const { data: profile } = await supabaseAdmin
+      .from('profiles')
+      .select('plan')
+      .eq('id', authedUser.id)
+      .single();
+    const PLAN_TIER = { free: 0, starter: 1, solo: 1, growth: 2, enterprise: 2, agency: 2 };
+    const planTier = PLAN_TIER[String(profile?.plan || 'free').toLowerCase()] ?? 0;
+
+    const allowedModels = OPENROUTER_MODELS.filter((m) => m.tier <= planTier);
+    // User's model picks from Settings, intersected with what their plan
+    // actually allows — never let a client-supplied list escalate past tier.
+    const requestedSet = Array.isArray(requestedModelIds) ? new Set(requestedModelIds) : null;
+    const selectedModels = requestedSet
+      ? allowedModels.filter((m) => requestedSet.has(m.id))
+      : allowedModels;
+    const modelsToQuery = selectedModels.length > 0 ? selectedModels : allowedModels;
 
     if (process.env.OPENROUTER_API_KEY) {
       try {
@@ -211,14 +231,14 @@ ${brandContext || '(no stored knowledge for this brand)'}
           return { label, result };
         };
 
-        const settled = await Promise.allSettled(OPENROUTER_MODELS.map(queryModel));
+        const settled = await Promise.allSettled(modelsToQuery.map(queryModel));
         const successes = settled
           .filter((s) => s.status === 'fulfilled')
           .map((s) => s.value);
 
         settled.forEach((s, i) => {
           if (s.status === 'rejected') {
-            console.warn(`${OPENROUTER_MODELS[i].label} call failed:`, s.reason?.message);
+            console.warn(`${modelsToQuery[i].label} call failed:`, s.reason?.message);
           }
         });
 
