@@ -29,9 +29,9 @@ export const Wordmark = ({ className, iconOnly }: WordmarkProps) => {
     return <Mark className={cn('h-6 w-6', className)} />;
   }
   return (
-    <span className={cn('inline-flex items-center gap-2 font-wordmark font-normal tracking-wide text-foreground uppercase', className)}>
+    <span className={cn('inline-flex items-center gap-2 font-wordmark font-normal tracking-wide text-foreground uppercase text-xl', className)}>
       <Mark className="h-[2.2em] w-[2.2em]" />
-      <span className="text-xl leading-none">presora</span>
+      <span className="leading-none">presora</span>
     </span>
   );
 };
