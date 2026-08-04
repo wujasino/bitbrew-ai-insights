@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef, lazy, Suspense } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Bot, ArrowUp, Loader2, Target, Users, CalendarClock, Bell, Sparkles, Check, ArrowRight,
-  MessageSquare, Box, ChevronDown,
+  MessageSquare, Box, ChevronDown, Volume2, VolumeX,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
+import { useTTS, loadVoicePrefs, saveVoicePrefs } from '@/hooks/useTTS';
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
@@ -180,6 +182,22 @@ const Automations = () => {
   const [savingFrequency, setSavingFrequency] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
+  // Voice AI narration — reads out what was just done (assistant replies,
+  // save confirmations). Reuses the single "AI Voice" preference from
+  // Settings rather than a separate toggle, so it stays in sync everywhere.
+  const { speak, playing: voicePlaying } = useTTS();
+  const [voiceEnabled, setVoiceEnabled] = useState(() => loadVoicePrefs().enabled);
+  useEffect(() => {
+    const sync = () => setVoiceEnabled(loadVoicePrefs().enabled);
+    window.addEventListener('storage', sync);
+    window.addEventListener('focus', sync);
+    return () => { window.removeEventListener('storage', sync); window.removeEventListener('focus', sync); };
+  }, []);
+  const speakUpdate = (text: string) => {
+    if (!loadVoicePrefs().enabled || voicePlaying) return;
+    speak(text);
+  };
+
   // Load the current saved config once on mount.
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -217,6 +235,7 @@ const Automations = () => {
       if (!res.ok) throw new Error(data.error || 'Something went wrong.');
 
       setMessages(prev => [...prev, { role: 'assistant', text: data.reply }]);
+      speakUpdate(data.reply);
       if (data.config) setConfig(data.config);
       if (Array.isArray(data.pending)) setPending(data.pending);
     } catch (err) {
@@ -245,6 +264,7 @@ const Automations = () => {
       if (data.config) setConfig(data.config);
       setPending([]);
       setMessages(prev => [...prev, { role: 'assistant', text: '✓ Saved. Your monitoring is set — you can change it any time.' }]);
+      speakUpdate('Saved. Your monitoring is set up — you can change it any time.');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not save.');
     } finally {
@@ -283,6 +303,7 @@ const Automations = () => {
       if (upsertError) throw upsertError;
 
       setConfig(data as MonitorConfig);
+      speakUpdate(`Scan frequency set to ${FREQUENCY_LABEL[frequency].toLowerCase()}.`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not save.');
     } finally {
@@ -298,14 +319,44 @@ const Automations = () => {
     <div className="max-w-2xl mx-auto px-4 py-8 flex flex-col min-h-full">
       {/* Header */}
       <div className="mb-6">
-        <div className="inline-flex items-center gap-2 mb-2">
-          <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
-            <Bot className="w-5 h-5 text-primary" />
+        <div className="flex items-start justify-between gap-3">
+          <div className="inline-flex items-center gap-2 mb-2">
+            <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
+              <Bot className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-lg font-display text-foreground leading-tight">Automations</h1>
+              <p className="text-xs text-muted-foreground">Set up monitoring by chat — no forms</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-lg font-display text-foreground leading-tight">Automations</h1>
-            <p className="text-xs text-muted-foreground">Set up monitoring by chat — no forms</p>
-          </div>
+
+          {/* Voice AI narration toggle — reads out what was just done */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={() => {
+                  const next = { ...loadVoicePrefs(), enabled: !voiceEnabled };
+                  saveVoicePrefs(next);
+                  setVoiceEnabled(next.enabled);
+                }}
+                className={cn(
+                  'flex items-center gap-1.5 shrink-0 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all duration-150 active:scale-95',
+                  voiceEnabled
+                    ? 'bg-primary/10 border-primary/30 text-primary'
+                    : 'border-border text-muted-foreground hover:text-foreground hover:bg-accent'
+                )}
+              >
+                {voiceEnabled ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
+                <span className="hidden sm:inline">Voice replies</span>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="left">
+              {voiceEnabled
+                ? <>Voice AI reads out what was done. <Link to="/settings?tab=account" className="underline">Change voice</Link></>
+                : 'Off — click to have the AI read out what it just did'}
+            </TooltipContent>
+          </Tooltip>
         </div>
       </div>
 
