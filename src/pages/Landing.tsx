@@ -1,5 +1,4 @@
 import { useNavigate, Link } from 'react-router-dom';
-import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Zap, Eye, BarChart3, Shield, ChevronDown, HelpCircle, Mail, TrendingUp, ArrowRight, Globe, Star, Quote, ShieldCheck, Clock, Search, PenLine, Sparkles, MessageSquare, Rocket, LineChart, Building2 } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -83,11 +82,8 @@ const Landing = () => {
               </span>
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-display text-foreground mb-5 leading-[1.1]">
                 Understand your brand's{' '}
-                <span
-                  className="italic bg-gradient-to-r from-[#818CF8] via-[#C7D2FE] to-[#818CF8] bg-[length:200%] bg-clip-text text-transparent animate-shimmer [filter:drop-shadow(0_0_20px_rgba(99,102,241,0.4))]"
-                  style={{ fontFamily: "'Libre Baskerville', Georgia, serif" }}
-                >
-                  AI presence
+                <span className="ai-presence-accent" data-text="AI presence">
+                  <span className="ai-presence-accent-text">AI presence</span>
                 </span>
               </h1>
               <p className="text-lg text-muted-foreground max-w-lg mx-auto mb-10">
