@@ -13,7 +13,7 @@ import { ResultsBreakdown } from '@/components/ResultsBreakdown';
 import BrandKnowledgeForm from '@/components/BrandKnowledgeForm';
 import { useBrewing } from '@/hooks/useBrewing';
 import { useTTS, loadVoicePrefs } from '@/hooks/useTTS';
-import { usePlan } from '@/hooks/useAccountInfo';
+import { usePlan, tierOf } from '@/hooks/useAccountInfo';
 import { cn } from '@/lib/utils';
 import { AnalysisResult } from '@/types/analysis';
 import { scoreBrand, type BrandScore } from '@/lib/brandScore';
@@ -21,16 +21,6 @@ import { scoreBrand, type BrandScore } from '@/lib/brandScore';
 // Public origin that serves the embeddable badge endpoint (must be a live,
 // absolute URL so copied snippets work on any external site).
 const BADGE_ORIGIN = 'https://www.presora.app';
-
-const PLAN_TIER: Record<string, number> = {
-  free: 0,
-  starter: 1,
-  solo: 1,
-  growth: 2,
-  enterprise: 2,
-  agency: 2, // some accounts have this stored instead of 'enterprise' (same tier, matches the Pricing page's "Agency" tier)
-};
-const tierOf = (plan: string) => PLAN_TIER[plan] ?? 0;
 
 const LockedOverlay = ({ title, description, onUpgrade, t }: { title: string; description: string; onUpgrade: () => void; t: (k: string) => string }) => (
   <div className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-2xl overflow-hidden">

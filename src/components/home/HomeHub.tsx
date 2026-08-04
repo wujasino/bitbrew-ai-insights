@@ -8,6 +8,8 @@ import {
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 import { CreditsUsageWidget } from '@/components/CreditsUsageWidget';
+import { usePlan, tierOf } from '@/hooks/useAccountInfo';
+import { MODEL_CATALOG } from '@/lib/models';
 
 interface Analysis {
   id: string;
@@ -64,13 +66,14 @@ const Delta = ({ value }: { value: number | null }) => {
   );
 };
 
-const ACTIVE_MODELS = ['ChatGPT', 'Claude', 'Gemini'];
-const LOCKED_MODELS = ['Perplexity', 'Mistral', 'Llama 3'];
-
 const HomeHub = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [analyses, setAnalyses] = useState<Analysis[]>([]);
+  const { data: plan = 'Free' } = usePlan();
+  const planTier = tierOf(plan);
+  const visibleModels = MODEL_CATALOG.filter(m => m.tier <= planTier);
+  const lockedModels = MODEL_CATALOG.filter(m => m.tier > planTier);
 
   useEffect(() => {
     let active = true;
@@ -163,11 +166,11 @@ const HomeHub = () => {
             >
               <p className="text-xs text-muted-foreground uppercase tracking-wider mb-4">By AI model</p>
               <div className="space-y-2.5">
-                {ACTIVE_MODELS.map((m, i) => {
-                  const conf = Math.max(20, Math.min(99, [latest.authority, latest.accuracy, latest.mentions][i] ?? latest.trust_score));
+                {visibleModels.map((m, i) => {
+                  const conf = Math.max(20, Math.min(99, [latest.authority, latest.accuracy, latest.mentions][i % 3] ?? latest.trust_score));
                   return (
-                    <div key={m} className="flex items-center gap-3">
-                      <span className="text-sm text-foreground w-20 shrink-0">{m}</span>
+                    <div key={m.id} className="flex items-center gap-3">
+                      <span className="text-sm text-foreground w-20 shrink-0">{m.label}</span>
                       <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
                         <div className="h-full rounded-full bg-primary/70" style={{ width: `${conf}%` }} />
                       </div>
@@ -175,17 +178,19 @@ const HomeHub = () => {
                     </div>
                   );
                 })}
-                {LOCKED_MODELS.map(m => (
-                  <Link key={m} to="/pricing" className="flex items-center gap-3 group opacity-60 hover:opacity-100 transition-opacity">
-                    <span className="text-sm text-muted-foreground w-20 shrink-0">{m}</span>
+                {lockedModels.map(m => (
+                  <Link key={m.id} to="/pricing" className="flex items-center gap-3 group opacity-60 hover:opacity-100 transition-opacity">
+                    <span className="text-sm text-muted-foreground w-20 shrink-0">{m.label}</span>
                     <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden" />
                     <Lock className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
                   </Link>
                 ))}
               </div>
-              <Link to="/pricing" className="mt-4 inline-flex items-center gap-1 text-xs text-primary hover:underline">
-                Unlock all 6 models <ArrowRight className="w-3 h-3" />
-              </Link>
+              {lockedModels.length > 0 && (
+                <Link to="/pricing" className="mt-4 inline-flex items-center gap-1 text-xs text-primary hover:underline">
+                  Unlock all {MODEL_CATALOG.length} models <ArrowRight className="w-3 h-3" />
+                </Link>
+              )}
             </motion.div>
           </div>
         )}

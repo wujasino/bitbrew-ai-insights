@@ -12,6 +12,17 @@ export const PLAN_LIMITS: Record<string, number> = {
   Agency: 9999, // some accounts have this stored instead of 'Enterprise' (same tier, matches the Pricing page's "Agency" tier)
 };
 
+/** Numeric plan tier — gates feature access (charts, sources, model roster). */
+export const PLAN_TIER: Record<string, number> = {
+  free: 0,
+  starter: 1,
+  solo: 1,
+  growth: 2,
+  enterprise: 2,
+  agency: 2, // some accounts have this stored instead of 'enterprise' (same tier, matches the Pricing page's "Agency" tier)
+};
+export const tierOf = (plan: string) => PLAN_TIER[plan.toLowerCase()] ?? 0;
+
 export interface SessionUser {
   id: string | null;
   email: string | null;

@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { AnalysisResult, SourceResult } from '@/types/analysis';
 import { supabase } from '@/lib/supabase';
+import { loadModelPrefs } from '@/lib/models';
 
 type StoredDimensions = {
   authority: number;
@@ -112,7 +113,7 @@ export function useBrewing() {
       const response = await fetch('/.netlify/functions/analyze', {
         method: 'POST',
         headers,
-        body: JSON.stringify({ url: brandName })
+        body: JSON.stringify({ url: brandName, models: loadModelPrefs().selected })
       });
 
       const data = await response.json();
