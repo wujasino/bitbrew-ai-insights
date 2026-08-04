@@ -19,9 +19,14 @@ const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUP
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
+// Dedicated signing secret — was previously a plain SHA-256 of the service
+// role key, meaning a leak of one weakened the other. Falls back to the
+// service role key only until NEWSLETTER_UNSUBSCRIBE_SECRET is set in
+// Netlify; set it and every link signed after that uses the real HMAC key.
 // Same secret/scheme verified by unsubscribe-newsletter.js.
+const UNSUBSCRIBE_SECRET = process.env.NEWSLETTER_UNSUBSCRIBE_SECRET || SUPABASE_SERVICE_KEY;
 const signUnsubscribe = (email) =>
-  crypto.createHash('sha256').update(`${email}:${SUPABASE_SERVICE_KEY}`).digest('hex');
+  crypto.createHmac('sha256', UNSUBSCRIBE_SECRET).update(email).digest('hex');
 
 // Inlined branded email — keeps the function self-contained (no filesystem reads).
 // Visual language matches the other transactional emails (src/email-templates/*.html).
