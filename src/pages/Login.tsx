@@ -6,9 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useTranslation } from '@/lib/locale';
-import { Eye, EyeOff, ArrowRight, Zap, BarChart3, Shield, Loader2, ArrowLeft, Mail, KeyRound, CheckCircle2, Circle, Lock, Sparkles } from 'lucide-react';
+import { Eye, EyeOff, ArrowRight, Zap, BarChart3, Shield, Loader2, ArrowLeft, Mail, KeyRound, CheckCircle2, Circle, Lock, Sparkles, Building2 } from 'lucide-react';
 import { getAuthUser, loginUser } from '@/lib/auth';
 import { signInWithGoogle } from '@/lib/googleAuth';
+import { signInWithSSODomain } from '@/lib/samlAuth';
 import { supabase } from '@/lib/supabase';
 import { FloatingPathsBackground } from '@/components/ui/floating-paths';
 import { Wordmark } from '@/components/Wordmark';
@@ -104,7 +105,9 @@ const Login = () => {
   const [loading, setLoading]       = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
-  const [mode, setMode]             = useState<'login' | 'forgot' | 'otp' | 'reset' | 'forgot_sent' | 'totp'>('login');
+  const [mode, setMode]             = useState<'login' | 'forgot' | 'otp' | 'reset' | 'forgot_sent' | 'totp' | 'sso'>('login');
+  const [ssoDomain, setSsoDomain]   = useState('');
+  const [ssoLoading, setSsoLoading] = useState(false);
   const [totpFactorId, setTotpFactorId] = useState('');
   const [totpCode, setTotpCode]     = useState('');
   const [totpLoading, setTotpLoading] = useState(false);
@@ -278,6 +281,19 @@ const Login = () => {
     } catch {
       setError(t('google_signin_failed'));
       setGoogleLoading(false);
+    }
+  };
+
+  const handleSSOSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setSsoLoading(true);
+    try {
+      await signInWithSSODomain(ssoDomain);
+      // signInWithSSODomain redirects the browser away — this only resolves on failure.
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'SSO is not set up for this domain yet.');
+      setSsoLoading(false);
     }
   };
 
@@ -481,6 +497,47 @@ const Login = () => {
                       : <><Mail className="w-3.5 h-3.5" />Send code</>}
                   </Button>
                 </form>
+              </motion.div>
+            )}
+
+            {/* ── COMPANY SSO (SAML 2.0) ── */}
+            {mode === 'sso' && (
+              <motion.div key="sso" custom={dir} variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25, ease: 'easeOut' }} className="space-y-6">
+                <button type="button" onClick={() => switchMode('login', -1)} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  <ArrowLeft className="w-3.5 h-3.5" /> Back to login
+                </button>
+
+                <div>
+                  <h1 className="text-2xl font-display text-foreground">Company SSO</h1>
+                  <p className="text-sm text-muted-foreground mt-1">Enter your company's domain to sign in through your organization's identity provider.</p>
+                </div>
+
+                {error && (
+                  <motion.p initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}
+                    className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-2.5"
+                  >{error}</motion.p>
+                )}
+
+                <form onSubmit={handleSSOSignIn} className="space-y-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Company domain</Label>
+                    <div className="relative">
+                      <Building2 className="w-4 h-4 text-muted-foreground/60 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      <Input type="text" value={ssoDomain} onChange={e => setSsoDomain(e.target.value)} placeholder="your-company.com" required autoFocus className="h-11 pl-10" />
+                    </div>
+                  </div>
+
+                  <Button type="submit" className="w-full h-11 gap-2" disabled={ssoLoading || !ssoDomain.trim()}>
+                    {ssoLoading
+                      ? <span className="flex items-center gap-2"><Loader2 className="w-3.5 h-3.5 animate-spin" />Redirecting...</span>
+                      : <>Continue<ArrowRight className="w-3.5 h-3.5" /></>}
+                  </Button>
+                </form>
+
+                <p className="text-xs text-muted-foreground text-center leading-relaxed">
+                  SSO is available on the Agency plan. Ask your admin to set it up, or{' '}
+                  <a href="mailto:presora.poland@gmail.com" className="text-primary hover:underline">contact us</a>.
+                </p>
               </motion.div>
             )}
 

@@ -41,6 +41,26 @@ dot-grid + glow, wordmark in Unbounded font) — regenerate via a Playwright
 HTML render (see git history around the "Add social media avatar and
 banner assets" commit for the approach) if the palette or copy changes.
 
+## Enterprise SSO (SAML 2.0)
+
+Foundation only — no UI entry point is wired up yet (removed on purpose,
+"sam kod, bez przycisku"). `src/lib/samlAuth.ts` exports
+`signInWithSSODomain(domain)`, and `Login.tsx` has a ready `sso` mode panel
+(domain input → redirects to the IdP) that isn't linked from anywhere in
+the visible UI — re-add a button/link calling `switchMode('sso', 1)` when
+this is ready to ship.
+
+Supabase Auth acts as the SAML Service Provider. Presora's SP metadata URL
+(give this to a customer's IdP admin to set up trust) is:
+`https://wxwdymchrmhxeiccnzg.supabase.co/auth/v1/sso/saml/metadata`
+
+To actually register a connection for a customer's domain: the Supabase
+project needs the SSO add-on enabled (Team/Enterprise), then run
+`supabase sso add --type saml --metadata-url <their IdP metadata URL>
+--domains their-company.com` via the Supabase CLI with project-linked
+credentials — not doable from this sandbox (no CLI auth, no real project
+ref access beyond what's hardcoded in `netlify.toml`'s redirect).
+
 ## Known sandbox limitations
 
 - No real internet in this dev/test sandbox except through the proxy —
