@@ -93,7 +93,7 @@ export const RadarChartCard = memo(function RadarChartCard({
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.5, delay: 0.1 }}
-      className="glass-card p-8"
+      className="glass-card p-4 sm:p-8 overflow-x-hidden"
     >
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
         <div>
@@ -120,9 +120,9 @@ export const RadarChartCard = memo(function RadarChartCard({
           <RadarChart
             cx="50%"
             cy="50%"
-            outerRadius="90%"
+            outerRadius="78%"
             data={data}
-            margin={{ top: 10, right: 0, bottom: 10, left: 0 }}
+            margin={{ top: 10, right: 24, bottom: 10, left: 24 }}
           >
             <PolarGrid stroke="hsl(240, 4%, 22%)" />
             <PolarAngleAxis dataKey="subject" tick={renderTick} />
