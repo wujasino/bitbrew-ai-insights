@@ -217,7 +217,7 @@ export default function Settings() {
           .catch(() => { /* leave default */ });
       }
     });
-  }, [navigate]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [navigate]);
 
   const SUB_DOT = {
     active: 'bg-emerald-400 ring-emerald-400/30',
@@ -324,7 +324,7 @@ export default function Settings() {
 
       URL.revokeObjectURL(blobUrl);
       setAvatarUrl(publicUrl);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Avatar upload error:', err);
       URL.revokeObjectURL(blobUrl);
       setAvatarUrl(null);
@@ -385,8 +385,8 @@ export default function Settings() {
       if (!res.ok) throw new Error(data.error || 'Error sending code.');
       setPwdOtp('');
       setPwdStep('otp');
-    } catch (err: any) {
-      setPwdError(err.message);
+    } catch (err) {
+      setPwdError(err instanceof Error ? err.message : 'Error sending code.');
     } finally {
       setPwdLoading(false);
     }
@@ -408,8 +408,8 @@ export default function Settings() {
       setPwdNew('');
       setPwdConfirm('');
       setPwdStep('newpwd');
-    } catch (err: any) {
-      setPwdError(err.message);
+    } catch (err) {
+      setPwdError(err instanceof Error ? err.message : 'Invalid code.');
     } finally {
       setPwdLoading(false);
     }
@@ -430,8 +430,8 @@ export default function Settings() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to change password.');
       setPwdStep('done');
-    } catch (err: any) {
-      setPwdError(err.message);
+    } catch (err) {
+      setPwdError(err instanceof Error ? err.message : 'Failed to change password.');
     } finally {
       setPwdLoading(false);
     }
@@ -449,8 +449,8 @@ export default function Settings() {
       const { error } = await supabase.auth.updateUser({ email: newEmail.trim().toLowerCase() });
       if (error) throw error;
       setEmailStep('sent');
-    } catch (err: any) {
-      setEmailError(err.message || 'Failed to change email address.');
+    } catch (err) {
+      setEmailError(err instanceof Error ? err.message : 'Failed to change email address.');
     } finally {
       setEmailLoading(false);
     }
@@ -501,7 +501,7 @@ export default function Settings() {
         <div className="flex flex-col md:flex-row gap-4 md:gap-6">
           {/* Left tab sidebar — full-width stacked list on mobile, fixed side column from md up */}
           <aside className="w-full md:w-48 md:shrink-0">
-            <nav className="flex flex-row md:flex-col gap-0.5 overflow-x-auto md:overflow-visible -mx-4 px-4 md:mx-0 md:px-0">
+            <nav className="flex flex-row md:flex-col gap-0.5 overflow-x-auto md:overflow-visible -mx-4 px-5 md:mx-0 md:px-0">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}

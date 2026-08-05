@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Home, ArrowLeft, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -7,6 +7,7 @@ import { FloatingPathsBackground } from '@/components/ui/floating-paths';
 
 export default function NotFound() {
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     console.error('404:', location.pathname);
@@ -43,11 +44,9 @@ export default function NotFound() {
         </p>
 
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Button asChild variant="outline" className="gap-2">
-            <Link to={-1 as any}>
-              <ArrowLeft className="w-4 h-4" />
-              Back
-            </Link>
+          <Button variant="outline" className="gap-2" onClick={() => navigate(-1)}>
+            <ArrowLeft className="w-4 h-4" />
+            Back
           </Button>
           <Button asChild className="gap-2">
             <Link to="/">

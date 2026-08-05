@@ -1,17 +1,23 @@
-import { defineConfig } from "vite";
+import { defineConfig, type Connect, type ViteDevServer } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
+import { createRequire } from "module";
+import type { IncomingMessage, ServerResponse } from "http";
+
+const require = createRequire(import.meta.url);
+const FN_NAME_RE = /^[a-zA-Z0-9_-]+$/;
 
 function netlifyFunctionsPlugin() {
   return {
     name: 'netlify-functions-middleware',
-    configureServer(server: any) {
-      server.middlewares.use(async (req: any, res: any, next: any) => {
+    configureServer(server: ViteDevServer) {
+      server.middlewares.use(async (req: IncomingMessage, res: ServerResponse, next: Connect.NextFunction) => {
         try {
           if (!req.url || !req.url.startsWith('/.netlify/functions/')) return next();
-          const parts = req.url.split('/').filter(Boolean);
+          const url = new URL(req.url, 'http://localhost');
+          const parts = url.pathname.split('/').filter(Boolean);
           const fnName = parts[parts.indexOf('functions') + 1];
-          if (!fnName) return next();
+          if (!fnName || !FN_NAME_RE.test(fnName)) return next();
           const fnPath = path.resolve(process.cwd(), 'netlify', 'functions', `${fnName}.js`);
           const raw = await new Promise<Buffer>((resolve) => {
             const chunks: Buffer[] = [];
@@ -22,10 +28,11 @@ function netlifyFunctionsPlugin() {
           const event = {
             httpMethod: req.method,
             headers: req.headers,
-            queryStringParameters: {},
+            queryStringParameters: Object.fromEntries(url.searchParams),
             body: raw && raw.length ? raw.toString() : undefined,
             rawBody: raw
           };
+          delete require.cache[require.resolve(fnPath)];
           const mod = require(fnPath);
           const handler = mod.handler || mod.default || mod;
           const result = await handler(event);
@@ -33,10 +40,11 @@ function netlifyFunctionsPlugin() {
           const headers = result?.headers ?? { 'Content-Type': 'application/json' };
           res.writeHead(statusCode, headers);
           res.end(result?.body ?? '');
-        } catch (err: any) {
-          if ((err && err.code === 'MODULE_NOT_FOUND') || /Cannot find module/.test(String(err.message))) return next();
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          if ((err as NodeJS.ErrnoException)?.code === 'MODULE_NOT_FOUND' || /Cannot find module/.test(message)) return next();
           res.writeHead(500, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: String(err?.message || err) }));
+          res.end(JSON.stringify({ error: message }));
         }
       });
     }

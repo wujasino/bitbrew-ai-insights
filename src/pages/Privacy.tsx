@@ -16,10 +16,11 @@ const Privacy = () => {
         <ArrowLeft className="w-4 h-4" /> Powrót
       </button>
       <div
-        style={{ background: '#fff', borderRadius: 12, padding: '2em' }}
+        style={{ background: '#111827', border: '1px solid #334155', borderRadius: 12, padding: '2em' }}
         dangerouslySetInnerHTML={{
           __html: `
-<div style="font-family: sans-serif; font-size: 13pt; line-height: 1.7; color: #000;">
+<style>.legal-doc a { color: #6366F1; } .legal-doc a:hover { color: #4F46E5; }</style>
+<div class="legal-doc" style="font-family: sans-serif; font-size: 13pt; line-height: 1.7; color: #F8FAFC;">
 
   <section style="margin-bottom: 2em; text-align: center;">
     <small>
@@ -74,127 +75,127 @@ const Privacy = () => {
 
     <h3 style="font-size:1em; margin-top:1.2em;">1. Skorzystanie z bezpłatnych usług oferowanych w Serwisie</h3>
     <table style="width:100%;margin-top:1em;max-width:75em;border-collapse:collapse;">
-      <tr><th style="color:#000;background-color:#eee;text-align:center;border:1px solid #000;padding:0.5em 1em;">W jakim celu?</th></tr>
-      <tr><td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;">realizacja umowy o świadczenie usług oferowanych w Serwisie</td></tr>
-      <tr><th style="color:#000;background-color:#eee;text-align:center;border:1px solid #000;padding:0.5em 1em;">Na jakiej podstawie?</th></tr>
-      <tr><td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;">umowa o świadczenie usług (art. 6 ust. 1 lit. b RODO)</td></tr>
-      <tr><th style="color:#000;background-color:#eee;text-align:center;border:1px solid #000;padding:0.5em 1em;">Jak długo?</th></tr>
-      <tr><td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;">przez okres obowiązywania umowy</td></tr>
-      <tr><td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;">ponadto, Twoje dane będą przetwarzane do upływu okresu, w którym możliwe jest dochodzenie roszczeń – przez Ciebie lub przez nas<br>(więcej informacji na ten temat znajdziesz w ostatniej tabeli tej sekcji)</td></tr>
-      <tr><th style="color:#000;background-color:#eee;text-align:center;border:1px solid #000;padding:0.5em 1em;">Co się stanie, jeśli nie podasz danych?</th></tr>
-      <tr><td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;">nie będziesz mieć możliwości skorzystania z naszych usług</td></tr>
+      <tr><th style="color:#F8FAFC;background-color:#1E293B;text-align:center;border:1px solid #334155;padding:0.5em 1em;">W jakim celu?</th></tr>
+      <tr><td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">realizacja umowy o świadczenie usług oferowanych w Serwisie</td></tr>
+      <tr><th style="color:#F8FAFC;background-color:#1E293B;text-align:center;border:1px solid #334155;padding:0.5em 1em;">Na jakiej podstawie?</th></tr>
+      <tr><td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">umowa o świadczenie usług (art. 6 ust. 1 lit. b RODO)</td></tr>
+      <tr><th style="color:#F8FAFC;background-color:#1E293B;text-align:center;border:1px solid #334155;padding:0.5em 1em;">Jak długo?</th></tr>
+      <tr><td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">przez okres obowiązywania umowy</td></tr>
+      <tr><td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">ponadto, Twoje dane będą przetwarzane do upływu okresu, w którym możliwe jest dochodzenie roszczeń – przez Ciebie lub przez nas<br>(więcej informacji na ten temat znajdziesz w ostatniej tabeli tej sekcji)</td></tr>
+      <tr><th style="color:#F8FAFC;background-color:#1E293B;text-align:center;border:1px solid #334155;padding:0.5em 1em;">Co się stanie, jeśli nie podasz danych?</th></tr>
+      <tr><td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">nie będziesz mieć możliwości skorzystania z naszych usług</td></tr>
     </table>
     <br>
 
     <h3 style="font-size:1em; margin-top:1.2em;">2. Skorzystanie z płatnych usług oferowanych w Serwisie</h3>
     <table style="width:100%;margin-top:1em;max-width:75em;border-collapse:collapse;">
-      <tr><th style="color:#000;background-color:#eee;text-align:center;border:1px solid #000;padding:0.5em 1em;" colspan="2">W jakim celu?</th></tr>
-      <tr><td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;" colspan="2">realizacja umowy o świadczenie usług oferowanych w Serwisie</td></tr>
-      <tr><th style="color:#000;background-color:#eee;text-align:center;border:1px solid #000;padding:0.5em 1em;" colspan="2">Na jakiej podstawie?</th></tr>
+      <tr><th style="color:#F8FAFC;background-color:#1E293B;text-align:center;border:1px solid #334155;padding:0.5em 1em;" colspan="2">W jakim celu?</th></tr>
+      <tr><td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;" colspan="2">realizacja umowy o świadczenie usług oferowanych w Serwisie</td></tr>
+      <tr><th style="color:#F8FAFC;background-color:#1E293B;text-align:center;border:1px solid #334155;padding:0.5em 1em;" colspan="2">Na jakiej podstawie?</th></tr>
       <tr>
-        <td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;width:50%;">umowa o świadczenie usług (art. 6 ust. 1 lit. b RODO)</td>
-        <td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;width:50%;">obowiązek prawny, w szczególności związany z rachunkowością, zobowiązujący nas do przetwarzania Twoich danych osobowych (art. 6 ust. 1 lit. c RODO)</td>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;width:50%;">umowa o świadczenie usług (art. 6 ust. 1 lit. b RODO)</td>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;width:50%;">obowiązek prawny, w szczególności związany z rachunkowością, zobowiązujący nas do przetwarzania Twoich danych osobowych (art. 6 ust. 1 lit. c RODO)</td>
       </tr>
-      <tr><th style="color:#000;background-color:#eee;text-align:center;border:1px solid #000;padding:0.5em 1em;" colspan="2">Jak długo?</th></tr>
+      <tr><th style="color:#F8FAFC;background-color:#1E293B;text-align:center;border:1px solid #334155;padding:0.5em 1em;" colspan="2">Jak długo?</th></tr>
       <tr>
-        <td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;width:50%;">przez okres obowiązywania umowy</td>
-        <td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;width:50%;">do momentu wygaśnięcia ciążących na nas obowiązków prawnych</td>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;width:50%;">przez okres obowiązywania umowy</td>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;width:50%;">do momentu wygaśnięcia ciążących na nas obowiązków prawnych</td>
       </tr>
-      <tr><td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;" colspan="2">ponadto, Twoje dane będą przetwarzane do upływu okresu, w którym możliwe jest dochodzenie roszczeń – przez Ciebie lub przez nas<br>(więcej informacji na ten temat znajdziesz w ostatniej tabeli tej sekcji)</td></tr>
-      <tr><th style="color:#000;background-color:#eee;text-align:center;border:1px solid #000;padding:0.5em 1em;" colspan="2">Co się stanie, jeśli nie podasz danych?</th></tr>
-      <tr><td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;" colspan="2">nie będziesz mieć możliwości skorzystania z naszych usług</td></tr>
+      <tr><td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;" colspan="2">ponadto, Twoje dane będą przetwarzane do upływu okresu, w którym możliwe jest dochodzenie roszczeń – przez Ciebie lub przez nas<br>(więcej informacji na ten temat znajdziesz w ostatniej tabeli tej sekcji)</td></tr>
+      <tr><th style="color:#F8FAFC;background-color:#1E293B;text-align:center;border:1px solid #334155;padding:0.5em 1em;" colspan="2">Co się stanie, jeśli nie podasz danych?</th></tr>
+      <tr><td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;" colspan="2">nie będziesz mieć możliwości skorzystania z naszych usług</td></tr>
     </table>
     <br>
 
     <h3 style="font-size:1em; margin-top:1.2em;">3. Nawiązanie z nami kontaktu (np. w celu zadania pytania)</h3>
     <table style="width:100%;margin-top:1em;max-width:75em;border-collapse:collapse;">
-      <tr><th style="color:#000;background-color:#eee;text-align:center;border:1px solid #000;padding:0.5em 1em;" colspan="2">W jakim celu?</th></tr>
-      <tr><td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;" colspan="2">obsługa Twoich zapytań lub zgłoszeń</td></tr>
-      <tr><th style="color:#000;background-color:#eee;text-align:center;border:1px solid #000;padding:0.5em 1em;" colspan="2">Na jakiej podstawie?</th></tr>
+      <tr><th style="color:#F8FAFC;background-color:#1E293B;text-align:center;border:1px solid #334155;padding:0.5em 1em;" colspan="2">W jakim celu?</th></tr>
+      <tr><td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;" colspan="2">obsługa Twoich zapytań lub zgłoszeń</td></tr>
+      <tr><th style="color:#F8FAFC;background-color:#1E293B;text-align:center;border:1px solid #334155;padding:0.5em 1em;" colspan="2">Na jakiej podstawie?</th></tr>
       <tr>
-        <td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;width:50%;">umowa lub działania podejmowane na Twoje żądanie, zmierzające do jej zawarcia (art. 6 ust. 1 lit. b RODO) – w przypadku gdy Twoje zapytanie lub zgłoszenie dotyczy umowy, której jesteśmy lub możemy być stroną</td>
-        <td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;width:50%;">nasz prawnie uzasadniony interes, polegający na przetwarzaniu Twoich danych w celu prowadzenia z Tobą komunikacji (art. 6 ust. 1 lit. f RODO) – jeżeli Twoje zapytanie lub zgłoszenie nie ma związku z umową</td>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;width:50%;">umowa lub działania podejmowane na Twoje żądanie, zmierzające do jej zawarcia (art. 6 ust. 1 lit. b RODO) – w przypadku gdy Twoje zapytanie lub zgłoszenie dotyczy umowy, której jesteśmy lub możemy być stroną</td>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;width:50%;">nasz prawnie uzasadniony interes, polegający na przetwarzaniu Twoich danych w celu prowadzenia z Tobą komunikacji (art. 6 ust. 1 lit. f RODO) – jeżeli Twoje zapytanie lub zgłoszenie nie ma związku z umową</td>
       </tr>
-      <tr><th style="color:#000;background-color:#eee;text-align:center;border:1px solid #000;padding:0.5em 1em;" colspan="2">Jak długo?</th></tr>
+      <tr><th style="color:#F8FAFC;background-color:#1E293B;text-align:center;border:1px solid #334155;padding:0.5em 1em;" colspan="2">Jak długo?</th></tr>
       <tr>
-        <td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;width:50%;">przez czas trwania wiążącej nas umowy lub – jeśli umowa nie zostanie zawarta – do upływu okresu dochodzenia roszczeń – zobacz ostatnią tabelę tej sekcji*</td>
-        <td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;width:50%;">do upływu okresu dochodzenia roszczeń – zobacz ostatnią tabelę tej sekcji – lub do momentu, w którym uwzględnimy Twój sprzeciw wobec przetwarzania*</td>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;width:50%;">przez czas trwania wiążącej nas umowy lub – jeśli umowa nie zostanie zawarta – do upływu okresu dochodzenia roszczeń – zobacz ostatnią tabelę tej sekcji*</td>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;width:50%;">do upływu okresu dochodzenia roszczeń – zobacz ostatnią tabelę tej sekcji – lub do momentu, w którym uwzględnimy Twój sprzeciw wobec przetwarzania*</td>
       </tr>
-      <tr><td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;" colspan="2">ponadto, Twoje dane będą przetwarzane do upływu okresu, w którym możliwe jest dochodzenie roszczeń – przez Ciebie lub przez nas<br>(więcej informacji na ten temat znajdziesz w ostatniej tabeli tej sekcji)</td></tr>
-      <tr><th style="color:#000;background-color:#eee;text-align:center;border:1px solid #000;padding:0.5em 1em;" colspan="2">Co się stanie, jeśli nie podasz danych?</th></tr>
-      <tr><td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;" colspan="2">nie będziemy mieli możliwości udzielenia odpowiedzi na Twoje zapytanie lub zgłoszenie</td></tr>
+      <tr><td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;" colspan="2">ponadto, Twoje dane będą przetwarzane do upływu okresu, w którym możliwe jest dochodzenie roszczeń – przez Ciebie lub przez nas<br>(więcej informacji na ten temat znajdziesz w ostatniej tabeli tej sekcji)</td></tr>
+      <tr><th style="color:#F8FAFC;background-color:#1E293B;text-align:center;border:1px solid #334155;padding:0.5em 1em;" colspan="2">Co się stanie, jeśli nie podasz danych?</th></tr>
+      <tr><td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;" colspan="2">nie będziemy mieli możliwości udzielenia odpowiedzi na Twoje zapytanie lub zgłoszenie</td></tr>
     </table>
     * w zależności od tego, które ma zastosowanie w danym przypadku<br><br>
 
     <h3 style="font-size:1em; margin-top:1.2em;">4. Ustawienia przeglądarki lub inne zbliżone działanie zezwalające na prowadzenie działań analitycznych</h3>
     <table style="width:100%;margin-top:1em;max-width:75em;border-collapse:collapse;">
-      <tr><th style="color:#000;background-color:#eee;text-align:center;border:1px solid #000;padding:0.5em 1em;">W jakim celu?</th></tr>
-      <tr><td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;">analiza sposobu korzystania i poruszania się przez Ciebie po stronie internetowej Serwisu, celem polepszenia jej funkcjonalności<br>(więcej na ten temat przeczytasz w sekcji „Działania analityczne" i „Pliki cookies" Polityki prywatności)</td></tr>
-      <tr><th style="color:#000;background-color:#eee;text-align:center;border:1px solid #000;padding:0.5em 1em;">Na jakiej podstawie?</th></tr>
-      <tr><td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;">nasz prawnie uzasadniony interes, polegający na przetwarzaniu danych w podanym wyżej celu (art. 6 ust. 1 lit. f RODO)</td></tr>
-      <tr><th style="color:#000;background-color:#eee;text-align:center;border:1px solid #000;padding:0.5em 1em;">Jak długo?</th></tr>
-      <tr><td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;">do momentu wygaśnięcia ważności lub usunięcia przez Ciebie plików cookies, wykorzystywanych do celów analitycznych*</td></tr>
-      <tr><th style="color:#000;background-color:#eee;text-align:center;border:1px solid #000;padding:0.5em 1em;">Co się stanie, jeśli nie podasz danych?</th></tr>
-      <tr><td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;">nie uwzględnimy sposobu korzystania i poruszania się przez Ciebie po stronie internetowej Serwisu w pracach nad jej rozwojem</td></tr>
+      <tr><th style="color:#F8FAFC;background-color:#1E293B;text-align:center;border:1px solid #334155;padding:0.5em 1em;">W jakim celu?</th></tr>
+      <tr><td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">analiza sposobu korzystania i poruszania się przez Ciebie po stronie internetowej Serwisu, celem polepszenia jej funkcjonalności<br>(więcej na ten temat przeczytasz w sekcji „Działania analityczne" i „Pliki cookies" Polityki prywatności)</td></tr>
+      <tr><th style="color:#F8FAFC;background-color:#1E293B;text-align:center;border:1px solid #334155;padding:0.5em 1em;">Na jakiej podstawie?</th></tr>
+      <tr><td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">nasz prawnie uzasadniony interes, polegający na przetwarzaniu danych w podanym wyżej celu (art. 6 ust. 1 lit. f RODO)</td></tr>
+      <tr><th style="color:#F8FAFC;background-color:#1E293B;text-align:center;border:1px solid #334155;padding:0.5em 1em;">Jak długo?</th></tr>
+      <tr><td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">do momentu wygaśnięcia ważności lub usunięcia przez Ciebie plików cookies, wykorzystywanych do celów analitycznych*</td></tr>
+      <tr><th style="color:#F8FAFC;background-color:#1E293B;text-align:center;border:1px solid #334155;padding:0.5em 1em;">Co się stanie, jeśli nie podasz danych?</th></tr>
+      <tr><td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">nie uwzględnimy sposobu korzystania i poruszania się przez Ciebie po stronie internetowej Serwisu w pracach nad jej rozwojem</td></tr>
     </table>
     * w zależności od tego, które ma zastosowanie w danym przypadku<br><br>
 
     <h3 style="font-size:1em; margin-top:1.2em;">5. Wyrażenie przez Ciebie zgody na otrzymywanie od nas treści marketingowych</h3>
     <table style="width:100%;margin-top:1em;max-width:75em;border-collapse:collapse;">
-      <tr><th style="color:#000;background-color:#eee;text-align:center;border:1px solid #000;padding:0.5em 1em;" colspan="2">W jakim celu?</th></tr>
+      <tr><th style="color:#F8FAFC;background-color:#1E293B;text-align:center;border:1px solid #334155;padding:0.5em 1em;" colspan="2">W jakim celu?</th></tr>
       <tr>
-        <td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;width:50%;">wysyłka informacji marketingowych, zwłaszcza ofert specjalnych</td>
-        <td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;width:50%;">analiza efektywności wysłanych przez nas wiadomości, celem ustalenia ogólnych zasad dotyczących skutecznej wysyłki wiadomości w naszej działalności<br>(więcej na ten temat przeczytasz w sekcji „Działania analityczne" Polityki prywatności)</td>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;width:50%;">wysyłka informacji marketingowych, zwłaszcza ofert specjalnych</td>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;width:50%;">analiza efektywności wysłanych przez nas wiadomości, celem ustalenia ogólnych zasad dotyczących skutecznej wysyłki wiadomości w naszej działalności<br>(więcej na ten temat przeczytasz w sekcji „Działania analityczne" Polityki prywatności)</td>
       </tr>
-      <tr><th style="color:#000;background-color:#eee;text-align:center;border:1px solid #000;padding:0.5em 1em;" colspan="2">Na jakiej podstawie?</th></tr>
+      <tr><th style="color:#F8FAFC;background-color:#1E293B;text-align:center;border:1px solid #334155;padding:0.5em 1em;" colspan="2">Na jakiej podstawie?</th></tr>
       <tr>
-        <td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;width:50%;">Twoja zgoda na nasze działania marketingowe (art. 6 ust. 1 lit. a RODO)</td>
-        <td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;width:50%;">nasz prawnie uzasadniony interes, polegający na przetwarzaniu danych w podanym wyżej celu (art. 6 ust. 1 lit. f RODO)</td>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;width:50%;">Twoja zgoda na nasze działania marketingowe (art. 6 ust. 1 lit. a RODO)</td>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;width:50%;">nasz prawnie uzasadniony interes, polegający na przetwarzaniu danych w podanym wyżej celu (art. 6 ust. 1 lit. f RODO)</td>
       </tr>
-      <tr><th style="color:#000;background-color:#eee;text-align:center;border:1px solid #000;padding:0.5em 1em;" colspan="2">Jak długo?</th></tr>
+      <tr><th style="color:#F8FAFC;background-color:#1E293B;text-align:center;border:1px solid #334155;padding:0.5em 1em;" colspan="2">Jak długo?</th></tr>
       <tr>
-        <td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;width:50%;">do momentu wycofania przez Ciebie zgody – pamiętaj, w każdej chwili możesz wycofać zgodę. Przetwarzanie danych do momentu cofnięcia przez Ciebie zgody pozostaje zgodne z prawem.</td>
-        <td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;width:50%;">do momentu, w którym uwzględnimy Twój sprzeciw wobec przetwarzania</td>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;width:50%;">do momentu wycofania przez Ciebie zgody – pamiętaj, w każdej chwili możesz wycofać zgodę. Przetwarzanie danych do momentu cofnięcia przez Ciebie zgody pozostaje zgodne z prawem.</td>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;width:50%;">do momentu, w którym uwzględnimy Twój sprzeciw wobec przetwarzania</td>
       </tr>
-      <tr><td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;" colspan="2">ponadto, Twoje dane będą przetwarzane do upływu okresu, w którym możliwe jest dochodzenie roszczeń – przez Ciebie lub przez nas<br>(więcej informacji na ten temat znajdziesz w ostatniej tabeli tej sekcji)</td></tr>
-      <tr><th style="color:#000;background-color:#eee;text-align:center;border:1px solid #000;padding:0.5em 1em;" colspan="2">Co się stanie, jeśli nie podasz danych?</th></tr>
-      <tr><td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;" colspan="2">nie będziesz otrzymywać naszych materiałów marketingowych, w tym informacji o naszych ofertach specjalnych</td></tr>
+      <tr><td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;" colspan="2">ponadto, Twoje dane będą przetwarzane do upływu okresu, w którym możliwe jest dochodzenie roszczeń – przez Ciebie lub przez nas<br>(więcej informacji na ten temat znajdziesz w ostatniej tabeli tej sekcji)</td></tr>
+      <tr><th style="color:#F8FAFC;background-color:#1E293B;text-align:center;border:1px solid #334155;padding:0.5em 1em;" colspan="2">Co się stanie, jeśli nie podasz danych?</th></tr>
+      <tr><td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;" colspan="2">nie będziesz otrzymywać naszych materiałów marketingowych, w tym informacji o naszych ofertach specjalnych</td></tr>
     </table>
     <br>
 
     <h3 style="font-size:1em; margin-top:1.2em;">6. Zapisanie się na newsletter</h3>
     <table style="width:100%;margin-top:1em;max-width:75em;border-collapse:collapse;">
-      <tr><th style="color:#000;background-color:#eee;text-align:center;border:1px solid #000;padding:0.5em 1em;" colspan="2">W jakim celu?</th></tr>
+      <tr><th style="color:#F8FAFC;background-color:#1E293B;text-align:center;border:1px solid #334155;padding:0.5em 1em;" colspan="2">W jakim celu?</th></tr>
       <tr>
-        <td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;width:50%;">wysyłanie newslettera</td>
-        <td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;width:50%;">analiza efektywności wysłanych przez nas treści, celem ustalenia ogólnych zasad dotyczących skutecznej wysyłki wiadomości w naszej działalności<br>(więcej na ten temat przeczytasz w sekcji „Działania analityczne" Polityki prywatności)</td>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;width:50%;">wysyłanie newslettera</td>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;width:50%;">analiza efektywności wysłanych przez nas treści, celem ustalenia ogólnych zasad dotyczących skutecznej wysyłki wiadomości w naszej działalności<br>(więcej na ten temat przeczytasz w sekcji „Działania analityczne" Polityki prywatności)</td>
       </tr>
-      <tr><th style="color:#000;background-color:#eee;text-align:center;border:1px solid #000;padding:0.5em 1em;" colspan="2">Na jakiej podstawie?</th></tr>
+      <tr><th style="color:#F8FAFC;background-color:#1E293B;text-align:center;border:1px solid #334155;padding:0.5em 1em;" colspan="2">Na jakiej podstawie?</th></tr>
       <tr>
-        <td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;width:50%;">umowa o świadczenie usługi wysyłki newslettera (art. 6 ust. 1 lit. b RODO)</td>
-        <td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;width:50%;">nasz prawnie uzasadniony interes, polegający na przetwarzaniu danych w podanym wyżej celu (art. 6 ust. 1 lit. f RODO)</td>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;width:50%;">umowa o świadczenie usługi wysyłki newslettera (art. 6 ust. 1 lit. b RODO)</td>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;width:50%;">nasz prawnie uzasadniony interes, polegający na przetwarzaniu danych w podanym wyżej celu (art. 6 ust. 1 lit. f RODO)</td>
       </tr>
-      <tr><th style="color:#000;background-color:#eee;text-align:center;border:1px solid #000;padding:0.5em 1em;" colspan="2">Jak długo?</th></tr>
+      <tr><th style="color:#F8FAFC;background-color:#1E293B;text-align:center;border:1px solid #334155;padding:0.5em 1em;" colspan="2">Jak długo?</th></tr>
       <tr>
-        <td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;width:50%;">do momentu, w którym wypiszesz się z naszego newslettera</td>
-        <td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;width:50%;">do momentu, w którym uwzględnimy Twój sprzeciw wobec przetwarzania</td>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;width:50%;">do momentu, w którym wypiszesz się z naszego newslettera</td>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;width:50%;">do momentu, w którym uwzględnimy Twój sprzeciw wobec przetwarzania</td>
       </tr>
-      <tr><td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;" colspan="2">ponadto, Twoje dane będą przetwarzane do upływu okresu, w którym możliwe jest dochodzenie roszczeń – przez Ciebie lub przez nas<br>(więcej informacji na ten temat znajdziesz w ostatniej tabeli tej sekcji)</td></tr>
-      <tr><th style="color:#000;background-color:#eee;text-align:center;border:1px solid #000;padding:0.5em 1em;" colspan="2">Co się stanie, jeśli nie podasz danych?</th></tr>
-      <tr><td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;" colspan="2">nie będziesz mieć możliwości otrzymywania informacji dotyczących Serwisu i naszych usług</td></tr>
+      <tr><td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;" colspan="2">ponadto, Twoje dane będą przetwarzane do upływu okresu, w którym możliwe jest dochodzenie roszczeń – przez Ciebie lub przez nas<br>(więcej informacji na ten temat znajdziesz w ostatniej tabeli tej sekcji)</td></tr>
+      <tr><th style="color:#F8FAFC;background-color:#1E293B;text-align:center;border:1px solid #334155;padding:0.5em 1em;" colspan="2">Co się stanie, jeśli nie podasz danych?</th></tr>
+      <tr><td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;" colspan="2">nie będziesz mieć możliwości otrzymywania informacji dotyczących Serwisu i naszych usług</td></tr>
     </table>
     <br>
 
     <h3 style="font-size:1em; margin-top:1.2em;">7. Podjęcie działania lub zaniechanie mogące powodować powstanie roszczeń związanych z Serwisem lub naszymi usługami</h3>
     <table style="width:100%;margin-top:1em;max-width:75em;border-collapse:collapse;">
-      <tr><th style="color:#000;background-color:#eee;text-align:center;border:1px solid #000;padding:0.5em 1em;">W jakim celu?</th></tr>
-      <tr><td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;">ustalenie, dochodzenie lub obrona ewentualnych roszczeń, związanych z zawartą umową lub świadczonymi usługami</td></tr>
-      <tr><th style="color:#000;background-color:#eee;text-align:center;border:1px solid #000;padding:0.5em 1em;">Na jakiej podstawie?</th></tr>
-      <tr><td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;">nasz prawnie uzasadniony interes, polegający na przetwarzaniu danych osobowych we wskazanym powyżej celu (art. 6 ust. 1 lit. f RODO)</td></tr>
-      <tr><th style="color:#000;background-color:#eee;text-align:center;border:1px solid #000;padding:0.5em 1em;">Jak długo?</th></tr>
-      <tr><td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;">do upływu okresu przedawnienia roszczeń lub do momentu, w którym uwzględnimy Twój sprzeciw wobec przetwarzania*</td></tr>
-      <tr><th style="color:#000;background-color:#eee;text-align:center;border:1px solid #000;padding:0.5em 1em;">Co się stanie, jeśli nie podasz danych?</th></tr>
-      <tr><td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;">brak możliwości ustalenia, dochodzenia lub obrony roszczeń</td></tr>
+      <tr><th style="color:#F8FAFC;background-color:#1E293B;text-align:center;border:1px solid #334155;padding:0.5em 1em;">W jakim celu?</th></tr>
+      <tr><td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">ustalenie, dochodzenie lub obrona ewentualnych roszczeń, związanych z zawartą umową lub świadczonymi usługami</td></tr>
+      <tr><th style="color:#F8FAFC;background-color:#1E293B;text-align:center;border:1px solid #334155;padding:0.5em 1em;">Na jakiej podstawie?</th></tr>
+      <tr><td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">nasz prawnie uzasadniony interes, polegający na przetwarzaniu danych osobowych we wskazanym powyżej celu (art. 6 ust. 1 lit. f RODO)</td></tr>
+      <tr><th style="color:#F8FAFC;background-color:#1E293B;text-align:center;border:1px solid #334155;padding:0.5em 1em;">Jak długo?</th></tr>
+      <tr><td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">do upływu okresu przedawnienia roszczeń lub do momentu, w którym uwzględnimy Twój sprzeciw wobec przetwarzania*</td></tr>
+      <tr><th style="color:#F8FAFC;background-color:#1E293B;text-align:center;border:1px solid #334155;padding:0.5em 1em;">Co się stanie, jeśli nie podasz danych?</th></tr>
+      <tr><td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">brak możliwości ustalenia, dochodzenia lub obrony roszczeń</td></tr>
     </table>
     * w zależności od tego, które ma zastosowanie w danym przypadku<br><br>
   </section>
@@ -234,24 +235,24 @@ const Privacy = () => {
     <p>Poniżej znajdziesz informacje na temat funkcji przetwarzanych przez nas plików cookie oraz ich okresu ważności.</p>
     <table style="width:100%;margin-top:1em;max-width:75em;border-collapse:collapse;">
       <tr>
-        <th style="color:#000;background-color:#eee;text-align:center;border:1px solid #000;padding:0.5em 1em;">nazwa pliku cookie</th>
-        <th style="color:#000;background-color:#eee;text-align:center;border:1px solid #000;padding:0.5em 1em;">okres ważności pliku cookie</th>
-        <th style="color:#000;background-color:#eee;text-align:center;border:1px solid #000;padding:0.5em 1em;">funkcja pliku cookie</th>
+        <th style="color:#F8FAFC;background-color:#1E293B;text-align:center;border:1px solid #334155;padding:0.5em 1em;">nazwa pliku cookie</th>
+        <th style="color:#F8FAFC;background-color:#1E293B;text-align:center;border:1px solid #334155;padding:0.5em 1em;">okres ważności pliku cookie</th>
+        <th style="color:#F8FAFC;background-color:#1E293B;text-align:center;border:1px solid #334155;padding:0.5em 1em;">funkcja pliku cookie</th>
       </tr>
       <tr>
-        <td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;">bb_theme</td>
-        <td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;">trwały (localStorage)</td>
-        <td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;">zapamiętanie wybranego motywu kolorystycznego (jasny/ciemny)</td>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">bb_theme</td>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">trwały (localStorage)</td>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">zapamiętanie wybranego motywu kolorystycznego (jasny/ciemny)</td>
       </tr>
       <tr>
-        <td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;">sb-* (Supabase)</td>
-        <td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;">czas trwania sesji / 1 rok</td>
-        <td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;">utrzymanie sesji zalogowanego użytkownika (uwierzytelnienie)</td>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">sb-* (Supabase)</td>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">czas trwania sesji / 1 rok</td>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">utrzymanie sesji zalogowanego użytkownika (uwierzytelnienie)</td>
       </tr>
       <tr>
-        <td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;">presora_cookies</td>
-        <td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;">czas trwania sesji</td>
-        <td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;">śledzenie aktywności użytkownika w Serwisie</td>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">presora_cookies</td>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">czas trwania sesji</td>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">śledzenie aktywności użytkownika w Serwisie</td>
       </tr>
     </table>
     <br>
@@ -269,47 +270,47 @@ const Privacy = () => {
     <p>Poniżej znajdziesz listę odbiorców Twoich danych:</p>
     <table style="width:100%;margin-top:1em;max-width:75em;border-collapse:collapse;">
       <tr>
-        <th style="color:#000;background-color:#eee;text-align:center;border:1px solid #000;padding:0.5em 1em;">DZIAŁANIE</th>
-        <th style="color:#000;background-color:#eee;text-align:center;border:1px solid #000;padding:0.5em 1em;">ODBIORCY DANYCH</th>
-        <th style="color:#000;background-color:#eee;text-align:center;border:1px solid #000;padding:0.5em 1em;">PRZEKAZANIE DANYCH POZA UNIĘ EUROPEJSKĄ</th>
+        <th style="color:#F8FAFC;background-color:#1E293B;text-align:center;border:1px solid #334155;padding:0.5em 1em;">DZIAŁANIE</th>
+        <th style="color:#F8FAFC;background-color:#1E293B;text-align:center;border:1px solid #334155;padding:0.5em 1em;">ODBIORCY DANYCH</th>
+        <th style="color:#F8FAFC;background-color:#1E293B;text-align:center;border:1px solid #334155;padding:0.5em 1em;">PRZEKAZANIE DANYCH POZA UNIĘ EUROPEJSKĄ</th>
       </tr>
       <tr>
-        <th style="color:#000;background-color:#eee;text-align:center;border:1px solid #000;padding:0.5em 1em;" rowspan="1">każde działanie w związku z Serwisem</th>
-        <td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;">Brak</td>
-        <td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;">nie ma miejsca</td>
+        <th style="color:#F8FAFC;background-color:#1E293B;text-align:center;border:1px solid #334155;padding:0.5em 1em;" rowspan="1">każde działanie w związku z Serwisem</th>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">Brak</td>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">nie ma miejsca</td>
       </tr>
       <tr>
-        <th style="color:#000;background-color:#eee;text-align:center;border:1px solid #000;padding:0.5em 1em;">przebywanie na stronie Serwisu z ustawieniami zezwalającymi na prowadzenie działań marketingowych</th>
-        <td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;">podmiot zapewniający usługi marketingowe</td>
-        <td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;">nie ma miejsca</td>
+        <th style="color:#F8FAFC;background-color:#1E293B;text-align:center;border:1px solid #334155;padding:0.5em 1em;">przebywanie na stronie Serwisu z ustawieniami zezwalającymi na prowadzenie działań marketingowych</th>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">podmiot zapewniający usługi marketingowe</td>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">nie ma miejsca</td>
       </tr>
       <tr>
-        <th style="color:#000;background-color:#eee;text-align:center;border:1px solid #000;padding:0.5em 1em;">przebywanie na stronie Serwisu z ustawieniami zezwalającymi na prowadzenie działań analitycznych</th>
-        <td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;">podmiot umożliwiający działania analityczne na stronie</td>
-        <td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;">nie ma miejsca</td>
+        <th style="color:#F8FAFC;background-color:#1E293B;text-align:center;border:1px solid #334155;padding:0.5em 1em;">przebywanie na stronie Serwisu z ustawieniami zezwalającymi na prowadzenie działań analitycznych</th>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">podmiot umożliwiający działania analityczne na stronie</td>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">nie ma miejsca</td>
       </tr>
       <tr>
-        <th style="color:#000;background-color:#eee;text-align:center;border:1px solid #000;padding:0.5em 1em;" rowspan="3">skorzystanie z płatnych usług dostępnych w Serwisie</th>
-        <td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;">dostawca oprogramowania ułatwiającego prowadzenie działalności (np. oprogramowanie księgowe)</td>
-        <td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;">nie ma miejsca</td>
+        <th style="color:#F8FAFC;background-color:#1E293B;text-align:center;border:1px solid #334155;padding:0.5em 1em;" rowspan="3">skorzystanie z płatnych usług dostępnych w Serwisie</th>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">dostawca oprogramowania ułatwiającego prowadzenie działalności (np. oprogramowanie księgowe)</td>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">nie ma miejsca</td>
       </tr>
       <tr>
-        <td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;">dostawca płatności (Stripe)</td>
-        <td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;">nie ma miejsca</td>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">dostawca płatności (Stripe)</td>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">nie ma miejsca</td>
       </tr>
       <tr>
-        <td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;">dostawca standardowego oprogramowania biurowego (w tym skrzynki poczty elektronicznej)</td>
-        <td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;">nie ma miejsca</td>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">dostawca standardowego oprogramowania biurowego (w tym skrzynki poczty elektronicznej)</td>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">nie ma miejsca</td>
       </tr>
       <tr>
-        <th style="color:#000;background-color:#eee;text-align:center;border:1px solid #000;padding:0.5em 1em;">skorzystanie z bezpłatnych usług dostępnych w Serwisie</th>
-        <td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;">dostawca standardowego oprogramowania biurowego (w tym skrzynki poczty elektronicznej)</td>
-        <td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;">nie ma miejsca</td>
+        <th style="color:#F8FAFC;background-color:#1E293B;text-align:center;border:1px solid #334155;padding:0.5em 1em;">skorzystanie z bezpłatnych usług dostępnych w Serwisie</th>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">dostawca standardowego oprogramowania biurowego (w tym skrzynki poczty elektronicznej)</td>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">nie ma miejsca</td>
       </tr>
       <tr>
-        <th style="color:#000;background-color:#eee;text-align:center;border:1px solid #000;padding:0.5em 1em;">nawiązanie z nami kontaktu (np. zadanie pytania)</th>
-        <td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;">dostawca standardowego oprogramowania biurowego (w tym skrzynki poczty elektronicznej)</td>
-        <td style="color:#000;background-color:#fff;text-align:center;border:1px solid #000;padding:0.5em 1em;">nie ma miejsca</td>
+        <th style="color:#F8FAFC;background-color:#1E293B;text-align:center;border:1px solid #334155;padding:0.5em 1em;">nawiązanie z nami kontaktu (np. zadanie pytania)</th>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">dostawca standardowego oprogramowania biurowego (w tym skrzynki poczty elektronicznej)</td>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">nie ma miejsca</td>
       </tr>
     </table>
     <br>

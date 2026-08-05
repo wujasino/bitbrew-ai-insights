@@ -98,8 +98,8 @@ export default function ResetPassword() {
 
       setBackupCode(code);
       setStep('code');
-    } catch (err: any) {
-      setError(err?.message || 'Failed to change password. Please try again.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to change password. Please try again.');
     } finally {
       setLoading(false);
     }
