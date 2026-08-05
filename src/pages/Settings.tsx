@@ -501,7 +501,7 @@ export default function Settings() {
         <div className="flex flex-col md:flex-row gap-4 md:gap-6">
           {/* Left tab sidebar — full-width stacked list on mobile, fixed side column from md up */}
           <aside className="w-full md:w-48 md:shrink-0">
-            <nav className="flex flex-row md:flex-col gap-0.5 overflow-x-auto md:overflow-visible -mx-4 px-4 md:mx-0 md:px-0">
+            <nav className="flex flex-row md:flex-col gap-0.5 overflow-x-auto md:overflow-visible -mx-4 px-5 md:mx-0 md:px-0">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
