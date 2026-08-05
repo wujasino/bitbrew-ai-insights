@@ -62,7 +62,9 @@ const CookiePanel = (props: CookiePanelProps) => {
       try {
         const parsed = JSON.parse(storedPrefs) as Prefs;
         setPrefs({ necessary: true, ...parsed, necessary: true });
-      } catch {}
+      } catch {
+        // malformed stored prefs — ignore and keep defaults
+      }
     }
   }, []);
 

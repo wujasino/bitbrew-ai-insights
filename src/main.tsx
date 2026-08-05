@@ -14,9 +14,7 @@ if (typeof console !== 'undefined') {
     '%cTo jest funkcja przeglądarki przeznaczona dla deweloperów.\nJeśli ktoś kazał Ci tu coś wkleić, aby uzyskać dostęp do Twojego konta — jest to atak (Self-XSS).\nNIE wklejaj żadnego kodu.',
     'font-size:14px;color:#333;',
   ];
-  // eslint-disable-next-line no-console
   console.log(...stop);
-  // eslint-disable-next-line no-console
   console.log(...warn);
 }
 
