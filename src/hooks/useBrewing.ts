@@ -68,25 +68,9 @@ export function useBrewing() {
   const [guestLimitReached, setGuestLimitReached] = useState(false);
 
   const startBrewing = useCallback(async (brandName: string) => {
-
-    // Check auth: if not logged in, enforce IP-based guest limit
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        const res = await fetch('/.netlify/functions/guest-limit', { method: 'POST' });
-        if (res.ok) {
-          const { allowed, remaining } = await res.json();
-          if (!allowed) {
-            setGuestLimitReached(true);
-            return;
-          }
-          if (remaining <= 0) setGuestLimitReached(true);
-        }
-        // If function unreachable — fail open (allow brew)
-      }
-    } catch {
-      // Network error — allow the brew
-    }
+    // Guest limit (no session) is enforced server-side by analyze.js itself
+    // (atomic per-IP counter) — it responds with guestLimitReached below
+    // rather than this needing its own pre-flight check-and-increment call.
 
     setStatus('brewing');
     setProgress(0);
@@ -117,6 +101,20 @@ export function useBrewing() {
       });
 
       const data = await response.json();
+
+      if (!response.ok) {
+        clearInterval(interval);
+        if (data?.guestLimitReached) {
+          setGuestLimitReached(true);
+          setStatus('idle');
+          setProgress(0);
+          return;
+        }
+        // Any other server-side failure (rate limit, auth hiccup, etc.) —
+        // fall through to the deterministic client-side fallback below
+        // rather than surfacing raw error JSON as if it were a result.
+        throw new Error(data?.error || `Request failed (${response.status})`);
+      }
 
       clearInterval(interval);
       setProgress(100);
