@@ -22,7 +22,12 @@ export default function BrandKnowledgeForm({ brandName }: BrandKnowledgeFormProp
   const [fragments, setFragments] = useState<Fragment[]>([]);
   const [loadingFragments, setLoadingFragments] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [expanded, setExpanded] = useState(true);
+  // Collapsed by default on mobile — this form otherwise pushes the actual
+  // scan results (the reason someone is on this page) below the fold.
+  // Desktop keeps the original always-expanded default.
+  const [expanded, setExpanded] = useState(() =>
+    typeof window === 'undefined' || window.innerWidth >= 768
+  );
   const [expandedFragment, setExpandedFragment] = useState<string | null>(null);
 
   const loadFragments = useCallback(async () => {

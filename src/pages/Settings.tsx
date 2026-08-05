@@ -496,18 +496,18 @@ export default function Settings() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-4xl mx-auto px-6 py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
         <h1 className="text-2xl font-semibold text-foreground mb-6">Settings</h1>
-        <div className="flex gap-6">
-          {/* Left tab sidebar */}
-          <aside className="w-48 shrink-0">
-            <nav className="space-y-0.5">
+        <div className="flex flex-col md:flex-row gap-4 md:gap-6">
+          {/* Left tab sidebar — full-width stacked list on mobile, fixed side column from md up */}
+          <aside className="w-full md:w-48 md:shrink-0">
+            <nav className="flex flex-row md:flex-col gap-0.5 overflow-x-auto md:overflow-visible -mx-4 px-4 md:mx-0 md:px-0">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={cn(
-                    'flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-sm transition-all duration-150 text-left active:scale-[0.98]',
+                    'flex items-center gap-2.5 shrink-0 md:w-full px-3 py-2 rounded-lg text-sm transition-all duration-150 text-left active:scale-[0.98] whitespace-nowrap',
                     activeTab === tab.id
                       ? 'bg-primary/10 text-primary font-medium'
                       : 'text-muted-foreground hover:text-foreground hover:bg-accent'
@@ -522,7 +522,7 @@ export default function Settings() {
 
           {/* Content */}
           <div className="flex-1 min-w-0">
-            <div className="rounded-xl border border-[hsl(var(--glass-border))] bg-card p-6 space-y-6">
+            <div className="rounded-xl border border-[hsl(var(--glass-border))] bg-card p-4 sm:p-6 space-y-6">
 
               {/* ACCOUNT */}
               {activeTab === 'account' && (

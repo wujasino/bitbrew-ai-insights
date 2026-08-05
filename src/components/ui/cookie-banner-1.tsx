@@ -138,100 +138,102 @@ const CookiePanel = (props: CookiePanelProps) => {
       role="dialog"
       aria-live="polite"
       aria-label="Cookie consent"
-      className={cn(
-        "fixed right-4 bottom-4 md:right-6 md:bottom-6",
-        "z-50 w-[360px] max-w-[90vw]"
-      )}
+      className="fixed inset-x-0 bottom-0 z-50"
     >
       <div
         className={cn(
-          "relative border border-border/70 rounded-xl bg-card/95 text-card-foreground shadow-xl backdrop-blur",
-          "p-4 flex flex-col gap-3",
+          "relative border-t border-border/70 bg-card/97 text-card-foreground backdrop-blur-xl",
+          "shadow-[0_-12px_30px_-12px_rgba(0,0,0,0.35)]",
+          "pb-[env(safe-area-inset-bottom)]",
           visible
-            ? cn("animate-in", "fade-in", "slide-in-from-bottom-8")
-            : cn("animate-out", "fade-out", "slide-out-to-bottom-8"),
+            ? cn("animate-in", "fade-in", "slide-in-from-bottom-4")
+            : cn("animate-out", "fade-out", "slide-out-to-bottom-4"),
           "duration-300 ease-out",
           className
         )}
       >
-        <div className="flex items-center gap-3">
-          <span className="inline-flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary ring-1 ring-primary/20">
-            <IconEl className="size-5" aria-hidden="true" />
-          </span>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3.5">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+            <div className="flex items-start gap-3 flex-1 min-w-0 pr-8 sm:pr-0">
+              <span className="shrink-0 inline-flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary ring-1 ring-primary/20">
+                <IconEl className="size-4" aria-hidden="true" />
+              </span>
 
-          <h2 className="text-sm font-semibold leading-5">{title}</h2>
+              <div className="min-w-0">
+                <h2 className="text-sm font-semibold leading-5">{title}</h2>
+                <p className="text-xs leading-5 text-muted-foreground mt-0.5">
+                  {message} See our{" "}
+                  <a
+                    href={privacyHref}
+                    className="underline underline-offset-4 hover:text-foreground cursor-pointer"
+                  >
+                    Privacy Policy
+                  </a>{" "}
+                  and{" "}
+                  <a
+                    href={termsHref}
+                    className="underline underline-offset-4 hover:text-foreground cursor-pointer"
+                  >
+                    Terms & Conditions
+                  </a>
+                  .
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0 pl-11 sm:pl-0">
+              <button
+                type="button"
+                onClick={() => setShowPrefs((p) => !p)}
+                className={cn(
+                  "px-3 py-1.5 rounded-md border border-border/70 cursor-pointer",
+                  "bg-muted text-muted-foreground text-xs",
+                  "hover:bg-muted/80 transition-colors flex items-center gap-1"
+                )}
+                aria-expanded={showPrefs}
+                aria-controls="cookie-preferences-inline"
+              >
+                {customizeText}
+                {showPrefs ? (
+                  <ChevronUp className="size-3" />
+                ) : (
+                  <ChevronDown className="size-3" />
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => closeWithExit("true")}
+                className={cn(
+                  "px-3 py-1.5 rounded-md text-xs cursor-pointer whitespace-nowrap",
+                  "bg-primary text-primary-foreground",
+                  "hover:bg-primary/90 transition-colors"
+                )}
+              >
+                {acceptText}
+              </button>
+            </div>
+          </div>
 
           <button
             type="button"
             onClick={() => closeWithExit()}
-            className="ml-auto inline-flex size-8 items-center justify-center rounded-md hover:bg-foreground/5 cursor-pointer"
+            className="absolute top-2.5 right-3 sm:top-3.5 inline-flex size-7 items-center justify-center rounded-md hover:bg-foreground/5 cursor-pointer"
             aria-label="Close"
           >
             <X className="size-4 text-muted-foreground" />
           </button>
-        </div>
 
-        <p className="text-xs leading-5 text-muted-foreground">
-          {message} See our{" "}
-          <a
-            href={privacyHref}
-            className="underline underline-offset-4 hover:text-foreground cursor-pointer"
-          >
-            Privacy Policy
-          </a>{" "}
-          and{" "}
-          <a
-            href={termsHref}
-            className="underline underline-offset-4 hover:text-foreground cursor-pointer"
-          >
-            Terms & Conditions
-          </a>
-          .
-        </p>
-
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setShowPrefs((p) => !p)}
+          <div
+            id="cookie-preferences-inline"
+            ref={prefsRef}
+            style={{ height: prefsHeight ? `${prefsHeight}px` : 0 }}
             className={cn(
-              "px-3 py-1.5 rounded-md border border-border/70 cursor-pointer",
-              "bg-muted text-muted-foreground text-xs",
-              "hover:bg-muted/80 transition-colors flex items-center gap-1"
-            )}
-            aria-expanded={showPrefs}
-            aria-controls="cookie-preferences-inline"
-          >
-            {customizeText}
-            {showPrefs ? (
-              <ChevronUp className="size-3" />
-            ) : (
-              <ChevronDown className="size-3" />
-            )}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => closeWithExit("true")}
-            className={cn(
-              "px-3 py-1.5 rounded-md text-xs cursor-pointer",
-              "bg-primary text-primary-foreground",
-              "hover:bg-primary/90 transition-colors"
+              "overflow-hidden transition-[height] duration-300 ease-out will-change-[height]"
             )}
           >
-            {acceptText}
-          </button>
-        </div>
-
-        <div
-          id="cookie-preferences-inline"
-          ref={prefsRef}
-          style={{ height: prefsHeight ? `${prefsHeight}px` : 0 }}
-          className={cn(
-            "overflow-hidden transition-[height] duration-300 ease-out will-change-[height]"
-          )}
-        >
-          {showPrefs && (
-            <div className="mt-2 flex flex-col gap-2 animate-in fade-in slide-in-from-bottom-2 duration-200">
+            {showPrefs && (
+              <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 animate-in fade-in slide-in-from-bottom-2 duration-200">
               <PrefRow
                 title="Strictly necessary"
                 desc="Required for site functionality."
@@ -257,7 +259,7 @@ const CookiePanel = (props: CookiePanelProps) => {
                 field="marketing"
               />
 
-              <div className="flex justify-end gap-2 mt-1">
+              <div className="flex justify-end gap-2 mt-1 sm:col-span-2">
                 <button
                   type="button"
                   onClick={() => setShowPrefs(false)}
@@ -274,8 +276,9 @@ const CookiePanel = (props: CookiePanelProps) => {
                   Save preferences
                 </button>
               </div>
-            </div>
-          )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

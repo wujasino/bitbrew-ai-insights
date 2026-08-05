@@ -84,7 +84,8 @@ const App = () => (
               }
             />
             {/* /brand-visibility stays open to guests — it's where the free,
-                no-login scan happens (see useBrewing's guest-limit check). */}
+                no-login scan happens (guest limit enforced server-side in
+                netlify/functions/analyze.js). */}
             <Route path="/brand-visibility" element={<AppShell><Dashboard /></AppShell>} />
             <Route
               path="/automations"

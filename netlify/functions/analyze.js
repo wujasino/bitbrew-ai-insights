@@ -112,36 +112,64 @@ export const handler = async (event) => {
   const authHeader = event.headers.authorization || event.headers.Authorization || '';
   const token = authHeader.toString().replace(/^Bearer\s+/i, '');
 
-  if (!token) {
-    return {
-      statusCode: 401,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ error: 'Unauthorized' })
-    };
-  }
+  // Netlify's own trusted header — cannot be spoofed by the client, unlike
+  // x-forwarded-for which a caller can pre-populate themselves.
+  const getIp = () => event.headers['x-nf-client-connection-ip'] || 'unknown';
+  const GUEST_LIMIT = 3;
 
   let authedUser = null;
   let supabaseAdmin = null;
 
   try {
     supabaseAdmin = createAdminClient();
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
-    if (authError || !user) {
-      return {
-        statusCode: 401,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ error: 'Unauthorized' })
-      };
-    }
-    authedUser = user;
 
-    // Rate limit by verified user ID — not spoofable
-    if (shouldRateLimit(`user:${user.id}`)) {
-      return {
-        statusCode: 429,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ error: 'Too many requests. Spróbuj ponownie później.' })
-      };
+    if (token) {
+      const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+      if (authError || !user) {
+        return {
+          statusCode: 401,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ error: 'Unauthorized' })
+        };
+      }
+      authedUser = user;
+
+      // Rate limit by verified user ID — not spoofable
+      if (shouldRateLimit(`user:${user.id}`)) {
+        return {
+          statusCode: 429,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ error: 'Too many requests. Spróbuj ponownie później.' })
+        };
+      }
+    } else {
+      // No session — the free, no-login scan ("Free analysis, no credit
+      // card required" on the landing page). Gate it with a lifetime
+      // per-IP counter (increment_guest_limit) enforced right here, at the
+      // point that actually spends the paid OpenRouter budget — this used
+      // to unconditionally 401 instead, and a separate client-side
+      // pre-flight call to a now-removed guest-limit.js endpoint was the
+      // only thing tracking guest usage, which nothing stopped a caller
+      // from simply skipping.
+      const ip = getIp();
+      if (ip === 'unknown') {
+        return {
+          statusCode: 403,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ error: 'Could not verify request. Please sign in.', guestLimitReached: true })
+        };
+      }
+      const { data: guestCount, error: guestError } = await supabaseAdmin.rpc('increment_guest_limit', { p_ip: ip });
+      if (guestError) {
+        console.error('Guest limit RPC error:', guestError.message);
+        // Fail open — don't block a real visitor because the DB hiccuped
+      } else if ((guestCount ?? 0) > GUEST_LIMIT) {
+        return {
+          statusCode: 403,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ error: 'Guest limit reached. Sign up for more free analyses.', guestLimitReached: true })
+        };
+      }
     }
   } catch (err) {
     console.error('Auth error in analyze function');
@@ -169,13 +197,16 @@ export const handler = async (event) => {
       { id: 'meta-llama/llama-3.3-70b-instruct', label: 'Llama 3', tier: 2 },
     ];
 
-    const { data: profile } = await supabaseAdmin
-      .from('profiles')
-      .select('plan')
-      .eq('id', authedUser.id)
-      .single();
-    const PLAN_TIER = { free: 0, starter: 1, solo: 1, growth: 2, enterprise: 2, agency: 2 };
-    const planTier = PLAN_TIER[String(profile?.plan || 'free').toLowerCase()] ?? 0;
+    let planTier = 0; // guests get the Free-equivalent roster
+    if (authedUser) {
+      const { data: profile } = await supabaseAdmin
+        .from('profiles')
+        .select('plan')
+        .eq('id', authedUser.id)
+        .single();
+      const PLAN_TIER = { free: 0, starter: 1, solo: 1, growth: 2, enterprise: 2, agency: 2 };
+      planTier = PLAN_TIER[String(profile?.plan || 'free').toLowerCase()] ?? 0;
+    }
 
     const allowedModels = OPENROUTER_MODELS.filter((m) => m.tier <= planTier);
     // User's model picks from Settings, intersected with what their plan
@@ -188,12 +219,10 @@ export const handler = async (event) => {
 
     if (process.env.OPENROUTER_API_KEY) {
       try {
-        const brandContext = await getBrandContext(
-          supabaseAdmin,
-          authedUser.id,
-          target,
-          `Analiza widoczności marki ${target}`
-        );
+        // Guests have no account, so no saved brand knowledge to retrieve.
+        const brandContext = authedUser
+          ? await getBrandContext(supabaseAdmin, authedUser.id, target, `Analiza widoczności marki ${target}`)
+          : '';
 
         const systemPrompt = `You are a brand visibility analyst. Below is reference material the account owner uploaded about their brand and competitors. Use it as factual context for the analysis and prefer its facts over your general knowledge when they conflict. If the section is empty or irrelevant, fall back to general knowledge and note that.
 
