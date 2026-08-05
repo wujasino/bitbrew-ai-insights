@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { PLAN_LIMITS, usePlan, useAnalysesUsedThisMonth, useSessionUser } from '@/hooks/useAccountInfo';
+import { PLAN_LIMITS, PLAN_LABELS, usePlan, useAnalysesUsedThisMonth, useSessionUser } from '@/hooks/useAccountInfo';
 
 /**
  * Account status shown on the pricing control bar: a credit-usage meter and the
@@ -42,7 +42,7 @@ export const CreditsUsageWidget = () => {
         className="flex items-center justify-between gap-3 px-3 py-2.5 hover:bg-accent/50 transition-colors rounded-b-xl"
       >
         <span className="text-muted-foreground">
-          Plan · <span className="text-foreground font-medium">{plan}</span>
+          Plan · <span className="text-foreground font-medium">{PLAN_LABELS[plan] ?? plan}</span>
         </span>
         <ChevronRight className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
       </Link>

@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 
 const PRICES = {
+  starter_monthly: '$39', starter_yearly: '$374',
   solo_monthly: '$59',  solo_yearly: '$566',
   growth_monthly: '$89.99', growth_yearly: '$863.99',
   credits_20: '$29', credits_50: '$55', credits_120: '$99',
@@ -47,6 +48,10 @@ export function PricingModal({ open, onClose, currentPlan = 'free' }: Props) {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { window.location.href = '/register?plan=' + planId; return; }
       const priceMap: Record<string, { monthly?: string; yearly?: string }> = {
+        starter: {
+          monthly: import.meta.env.VITE_STRIPE_STARTER_PRICE_ID,
+          yearly: import.meta.env.VITE_STRIPE_STARTER_YEARLY_PRICE_ID,
+        },
         solo: {
           monthly: import.meta.env.VITE_STRIPE_SOLO_PRICE_ID,
           yearly: import.meta.env.VITE_STRIPE_SOLO_YEARLY_PRICE_ID,
@@ -134,6 +139,21 @@ export function PricingModal({ open, onClose, currentPlan = 'free' }: Props) {
         { name: 'Perception radar (5 dimensions)', isIncluded: true },
         { name: 'AI Verdict — actionable summary', isIncluded: true },
         { name: 'Sentiment trend (30 days)', isIncluded: false },
+        { name: 'Brand knowledge context (RAG)', isIncluded: false },
+        { name: 'Competitor comparison', isIncluded: false },
+      ],
+    },
+    {
+      id: 'starter', name: 'Starter', description: 'For creators taking their first steps into AI visibility.',
+      priceMonthly: prices.starter_monthly, priceYearly: prices.starter_yearly,
+      periodMonthly: period_month, periodYearly: period_year,
+      isPopular: false, isCurrent: currentPlan === 'starter',
+      buttonLabel: currentPlan === 'starter' ? 'Current plan' : 'Choose plan',
+      features: [
+        { name: '5 brand analyses per month', isIncluded: true },
+        { name: '3 LLM sources (GPT-4o, Claude, Gemini)', isIncluded: true },
+        { name: 'Sentiment trend (30 days)', isIncluded: true },
+        { name: 'AI Verdict — actionable summary', isIncluded: true },
         { name: 'Brand knowledge context (RAG)', isIncluded: false },
         { name: 'Competitor comparison', isIncluded: false },
       ],

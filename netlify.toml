@@ -45,7 +45,11 @@
     # Disable browser features not needed by the app
     Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=(self)"
     # Content-Security-Policy — restrictive but functional
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://js.stripe.com https://accounts.google.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com https://api.fontshare.com; font-src 'self' https://fonts.gstatic.com https://cdn.fontshare.com; img-src 'self' data: https: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.anthropic.com https://api.voyageai.com https://api.stripe.com https://api.mailchimp.com https://accounts.google.com; frame-src https://js.stripe.com https://hooks.stripe.com https://accounts.google.com; object-src 'none'; base-uri 'self'; form-action 'self';"
+    # script-src uses a hash for the one static inline script (theme-init in
+    # index.html) instead of blanket 'unsafe-inline', so an injected inline
+    # <script> from any other source won't execute even if some other
+    # vulnerability lets an attacker get markup onto the page.
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'sha256-/RP1qcferOxndzGpz9w//9Ab354eLJK4IuW6K6irJtA=' https://js.stripe.com https://accounts.google.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com https://api.fontshare.com; font-src 'self' https://fonts.gstatic.com https://cdn.fontshare.com; img-src 'self' data: https: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.anthropic.com https://api.voyageai.com https://api.stripe.com https://api.mailchimp.com https://accounts.google.com; frame-src https://js.stripe.com https://hooks.stripe.com https://accounts.google.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';"
 
 # JS/CSS chunks — content-hashed by Vite, safe to cache forever
 [[headers]]

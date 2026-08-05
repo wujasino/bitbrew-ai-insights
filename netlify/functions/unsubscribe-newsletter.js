@@ -21,9 +21,11 @@ const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUP
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
-// Same secret/scheme used to sign the link in newsletter.js's buildWelcomeEmail.
+// Same secret/scheme used to sign the link in newsletter.js's buildWelcomeEmail
+// — must stay identical between the two functions or every link 404s.
+const UNSUBSCRIBE_SECRET = process.env.NEWSLETTER_UNSUBSCRIBE_SECRET || SUPABASE_SERVICE_KEY;
 const sign = (email) =>
-  crypto.createHash('sha256').update(`${email}:${SUPABASE_SERVICE_KEY}`).digest('hex');
+  crypto.createHmac('sha256', UNSUBSCRIBE_SECRET).update(email).digest('hex');
 
 const escapeHtml = (s) =>
   String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -52,7 +54,15 @@ exports.handler = async (event) => {
   }
 
   const normalizedEmail = email.trim().toLowerCase();
-  if (sign(normalizedEmail) !== sig) {
+  const expected = sign(normalizedEmail);
+  // Constant-time comparison — a plain !== leaks timing information that,
+  // in principle, could help an attacker guess a valid signature byte by
+  // byte. Buffers must be equal length or timingSafeEqual throws.
+  const validSig =
+    typeof sig === 'string' &&
+    sig.length === expected.length &&
+    crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected));
+  if (!validSig) {
     return page('Nieprawidłowy link', 'Nie udało się zweryfikować tego linku.');
   }
 

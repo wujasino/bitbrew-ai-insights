@@ -13,12 +13,38 @@ export const DEFAULT_VOICE_PREFS: VoicePrefs = {
   voiceId: 'EXAVITQu4vr4xnSDxMaL',
 };
 
+// Static fallback shown before the real ElevenLabs catalog loads (or if that
+// fetch fails) — fetchAvailableVoices() below returns the full, live list.
 export const AVAILABLE_VOICES = [
   { id: 'EXAVITQu4vr4xnSDxMaL', name: 'Sarah',    description: 'Wyraźna, profesjonalna' },
   { id: 'onwK4e9ZLuTAKqWW03F9', name: 'Daniel',   description: 'Głęboki, spokojny'     },
   { id: 'XB0fDUnXU5powFXDhCwa', name: 'Charlotte', description: 'Ciepła, naturalna'     },
   { id: 'N2lVS1w4EtoT3dr4eOWO', name: 'Callum',   description: 'Dynamiczny, energiczny' },
 ];
+
+export interface ElevenLabsVoice {
+  id: string;
+  name: string;
+  previewUrl: string | null;
+  category: string | null;
+  labels: Record<string, string>;
+}
+
+/** Live voice catalog from the account's ElevenLabs API key. Requires sign-in. */
+export async function fetchAvailableVoices(): Promise<ElevenLabsVoice[]> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return [];
+  try {
+    const res = await fetch('/.netlify/functions/list-voices', {
+      headers: { Authorization: `Bearer ${session.access_token}` },
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return Array.isArray(data.voices) ? data.voices : [];
+  } catch {
+    return [];
+  }
+}
 
 export function loadVoicePrefs(): VoicePrefs {
   try {

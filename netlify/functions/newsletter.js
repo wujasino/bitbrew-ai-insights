@@ -19,9 +19,14 @@ const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUP
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
+// Dedicated signing secret — was previously a plain SHA-256 of the service
+// role key, meaning a leak of one weakened the other. Falls back to the
+// service role key only until NEWSLETTER_UNSUBSCRIBE_SECRET is set in
+// Netlify; set it and every link signed after that uses the real HMAC key.
 // Same secret/scheme verified by unsubscribe-newsletter.js.
+const UNSUBSCRIBE_SECRET = process.env.NEWSLETTER_UNSUBSCRIBE_SECRET || SUPABASE_SERVICE_KEY;
 const signUnsubscribe = (email) =>
-  crypto.createHash('sha256').update(`${email}:${SUPABASE_SERVICE_KEY}`).digest('hex');
+  crypto.createHmac('sha256', UNSUBSCRIBE_SECRET).update(email).digest('hex');
 
 // Inlined branded email — keeps the function self-contained (no filesystem reads).
 // Visual language matches the other transactional emails (src/email-templates/*.html).
@@ -68,10 +73,9 @@ const ALLOWED_ORIGINS = new Set(['https://presora.app', 'https://www.presora.app
 const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
 const MAX_REQUESTS_PER_WINDOW = 5;
 const requestStore = new Map();
-const getIp = (event) =>
-  event.headers['x-nf-client-connection-ip'] ||
-  event.headers['x-forwarded-for']?.split(',').pop()?.trim() ||
-  'unknown';
+// Only trust Netlify's own connection-IP header — x-forwarded-for can be
+// pre-populated by the client itself and isn't a reliable rate-limit key.
+const getIp = (event) => event.headers['x-nf-client-connection-ip'] || 'unknown';
 const shouldRateLimit = (key) => {
   const current = Date.now();
   const entry = requestStore.get(key) || { count: 0, windowStart: current };

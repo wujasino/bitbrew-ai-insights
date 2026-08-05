@@ -2,13 +2,13 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { X, Sparkles, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { usePlan, useAnalysesUsedThisMonth, useSessionUser } from '@/hooks/useAccountInfo';
+import { usePlan, useAnalysesUsedThisMonth, useSessionUser, PLAN_LIMITS } from '@/hooks/useAccountInfo';
+import { GUEST_LIMIT } from '@/hooks/useBrewing';
 
 const DISMISSED_KEY = 'presora_trial_banner_dismissed';
 
-/* Keep in sync with PLAN_LIMITS in Profile.tsx */
-const FREE_MONTHLY_LIMIT = 10;
-const GUEST_FREE_ANALYSES = 3;
+const FREE_MONTHLY_LIMIT = PLAN_LIMITS.Free;
+const GUEST_FREE_ANALYSES = GUEST_LIMIT;
 
 type State =
   | { kind: 'loading' }
