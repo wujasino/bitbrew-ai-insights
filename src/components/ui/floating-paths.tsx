@@ -45,7 +45,7 @@ export const FloatingPathsBackground = memo(function FloatingPathsBackground({
   return (
     <div id={id} className={cn("w-full relative", className)}>
       <div
-        className="absolute inset-0 pointer-events-none overflow-hidden"
+        className="absolute inset-0 -z-10 pointer-events-none overflow-hidden"
         style={{ willChange: 'auto' }}
       >
         <svg
