@@ -15,10 +15,21 @@ glyph (`public/presora-mark-indigo.png`) — no more light/dark swap.
 
 ## Landing page (`src/pages/Landing.tsx`)
 
-Forces **dark** theme via `useForceDarkTheme()` regardless of visitor
-preference, using the same indigo palette as the rest of the app (see
-Brand palette above) plus an "indigo" `GradientMeshBg` orb variant for the
-hero. Uses Plus Jakarta Sans (`.font-landing` font scope).
+Defaults to dark (via `ThemeProvider`'s `defaultTheme="dark"` in
+`main.tsx`, same as the rest of the app) but is now toggleable — the
+`Navbar` takes a `showThemeToggle` prop (only Landing passes it; other
+pages using the shared `Navbar` like Terms/Privacy have dark-hardcoded
+inline content and would break if toggled). Uses the same indigo palette
+as the rest of the app (see Brand palette above) plus an "indigo"
+`GradientMeshBg` orb variant for the hero. Uses Plus Jakarta Sans
+(`.font-landing` font scope).
+
+Landing-specific CSS classes with hand-picked colors (`.hero`, `.badge`,
+`.cta-box`, `.ai-presence-accent*` in `src/index.css`) each need both a
+base (light) and `.dark` override — previously they were dark-only since
+the page force-applied `.dark` regardless of the resolved theme.
+`useForceDarkTheme()` was removed when the toggle was added; don't
+re-add hardcoded dark-only colors on Landing without a light pairing.
 
 ## Wordmark font
 

@@ -109,7 +109,7 @@ export const handler = async (event) => {
     return {
       statusCode: 200,
       headers: CORS,
-      body: JSON.stringify({ reply: "The chat assistant isn't fully connected yet — feel free to browse Pricing or sign up, and reach out at presora.poland@gmail.com with questions in the meantime." }),
+      body: JSON.stringify({ reply: "The chat assistant isn't fully connected yet — feel free to browse Pricing or sign up, and reach out at contact.presora@gmail.com with questions in the meantime." }),
     };
   }
 

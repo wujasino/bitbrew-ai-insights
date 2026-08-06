@@ -145,11 +145,19 @@
 
   /* ── Hero section ───────────────────────────────────────────── */
   .hero {
+    background: linear-gradient(180deg, #ffffff 0%, #F5F3FF 100%);
+  }
+  .dark .hero {
     background: linear-gradient(180deg, #111827 0%, #0B0F19 100%);
   }
 
   /* ── Badge ──────────────────────────────────────────────────── */
   .badge {
+    background: rgba(99, 102, 241, 0.10);
+    border: 1px solid rgba(99, 102, 241, 0.28);
+    color: #4F46E5;
+  }
+  .dark .badge {
     background: rgba(99, 102, 241, 0.14);
     border: 1px solid rgba(99, 102, 241, 0.35);
     color: #A5B4FC;
@@ -157,6 +165,9 @@
 
   /* ── CTA box ────────────────────────────────────────────────── */
   .cta-box {
+    background: linear-gradient(135deg, #ffffff, #F5F3FF);
+  }
+  .dark .cta-box {
     background: linear-gradient(135deg, #111827, #0B0F19);
   }
 
@@ -242,6 +253,9 @@
   .ai-presence-accent-text {
     position: relative;
     z-index: 2;
+    color: #4F46E5;
+  }
+  .dark .ai-presence-accent-text {
     color: #F8FAFC;
   }
   .ai-presence-accent::before,
@@ -254,16 +268,28 @@
     font-family: inherit;
     font-style: inherit;
     pointer-events: none;
-    mix-blend-mode: screen;
+    mix-blend-mode: multiply;
   }
   .ai-presence-accent::before {
-    color: #818CF8;
+    color: #6366F1;
     transform: translate(-3px, 0);
-    opacity: 0.7;
+    opacity: 0.45;
   }
   .ai-presence-accent::after {
-    color: #22D3EE;
+    color: #0891B2;
     transform: translate(3px, 1px);
+    opacity: 0.35;
+  }
+  .dark .ai-presence-accent::before,
+  .dark .ai-presence-accent::after {
+    mix-blend-mode: screen;
+  }
+  .dark .ai-presence-accent::before {
+    color: #818CF8;
+    opacity: 0.7;
+  }
+  .dark .ai-presence-accent::after {
+    color: #22D3EE;
     opacity: 0.5;
   }
 }

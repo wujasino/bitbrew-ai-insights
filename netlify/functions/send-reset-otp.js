@@ -65,28 +65,29 @@ async function sha256(text) {
 function buildEmail(otp) {
   return `<!DOCTYPE html>
 <html lang="pl"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /></head>
-<body style="margin:0;padding:0;background-color:#0f0f0f;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#0f0f0f;"><tr><td align="center" style="padding:48px 16px;">
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:520px;background-color:#1a1a1a;border-radius:16px;border:1px solid #2a2a2a;overflow:hidden;">
-      <tr><td style="padding:32px 40px 24px;border-bottom:1px solid #2a2a2a;text-align:center;">
-        <div style="font-size:20px;font-weight:700;color:#F7F1DD;letter-spacing:-0.3px;">Presora</div>
-        <div style="font-size:11px;color:#666;margin-top:2px;text-transform:uppercase;letter-spacing:1px;">AI Brand Intelligence</div>
+<body style="margin:0;padding:0;background-color:#0B0F19;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#0B0F19;"><tr><td align="center" style="padding:48px 16px;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:520px;background-color:#111827;border-radius:16px;border:1px solid #334155;overflow:hidden;">
+      <tr><td style="padding:32px 40px 24px;border-bottom:1px solid #334155;text-align:center;">
+        <img src="https://presora.app/presora-mark-indigo.png" alt="Presora" width="48" height="48" style="display:inline-block;margin-bottom:12px;" />
+        <div style="font-size:20px;font-weight:700;color:#F8FAFC;letter-spacing:-0.3px;">Presora</div>
+        <div style="font-size:11px;color:#94A3B8;margin-top:2px;text-transform:uppercase;letter-spacing:1px;">AI Brand Intelligence</div>
       </td></tr>
       <tr><td style="padding:36px 40px 28px;">
-        <div style="text-align:center;margin-bottom:28px;"><div style="display:inline-block;width:56px;height:56px;border-radius:14px;background-color:#1f1a0e;border:1px solid #D4A01740;text-align:center;line-height:56px;"><span style="font-size:26px;">🔑</span></div></div>
-        <h1 style="margin:0 0 10px;font-size:22px;font-weight:700;color:#F7F1DD;text-align:center;letter-spacing:-0.3px;">Twój kod resetowania hasła</h1>
-        <p style="margin:0 0 32px;font-size:14px;line-height:1.65;color:#888;text-align:center;">Wpisz poniższy kod na stronie Presora,<br/>aby ustawić nowe hasło.</p>
-        <div style="text-align:center;margin-bottom:32px;"><div style="display:inline-block;background-color:#111;border:2px solid #D4A017;border-radius:14px;padding:20px 40px;">
-          <div style="font-size:11px;color:#666;text-transform:uppercase;letter-spacing:2px;margin-bottom:10px;">Kod jednorazowy</div>
-          <div style="font-size:40px;font-weight:800;color:#D4A017;letter-spacing:10px;line-height:1;">${otp}</div>
+        <div style="text-align:center;margin-bottom:28px;"><div style="display:inline-block;width:56px;height:56px;border-radius:14px;background-color:rgba(99,102,241,0.12);border:1px solid rgba(99,102,241,0.3);text-align:center;line-height:56px;"><span style="font-size:26px;">🔑</span></div></div>
+        <h1 style="margin:0 0 10px;font-size:22px;font-weight:700;color:#F8FAFC;text-align:center;letter-spacing:-0.3px;">Twój kod resetowania hasła</h1>
+        <p style="margin:0 0 32px;font-size:14px;line-height:1.65;color:#94A3B8;text-align:center;">Wpisz poniższy kod na stronie Presora,<br/>aby ustawić nowe hasło.</p>
+        <div style="text-align:center;margin-bottom:32px;"><div style="display:inline-block;background-color:#111827;border:2px solid #6366F1;border-radius:14px;padding:20px 40px;">
+          <div style="font-size:11px;color:#94A3B8;text-transform:uppercase;letter-spacing:2px;margin-bottom:10px;">Kod jednorazowy</div>
+          <div style="font-size:40px;font-weight:800;color:#6366F1;letter-spacing:10px;line-height:1;">${otp}</div>
         </div></div>
-        <div style="text-align:center;margin-bottom:28px;"><span style="display:inline-block;background-color:#141414;border:1px solid #2a2a2a;border-radius:8px;padding:8px 16px;font-size:12px;color:#555;">⏱ Kod wygasa za <strong style="color:#888;">10 minut</strong></span></div>
-        <div style="border-top:1px solid #2a2a2a;margin:24px 0;"></div>
-        <div style="background-color:#1a0e0e;border:1px solid #ef444430;border-radius:10px;padding:14px 16px;"><p style="margin:0;font-size:12px;color:#888;line-height:1.6;">🔒 <strong style="color:#f87171;">Nie prosiłeś o reset hasła?</strong> Zignoruj tę wiadomość — Twoje konto jest bezpieczne.</p></div>
+        <div style="text-align:center;margin-bottom:28px;"><span style="display:inline-block;background-color:#1E293B;border:1px solid #334155;border-radius:8px;padding:8px 16px;font-size:12px;color:#94A3B8;">⏱ Kod wygasa za <strong style="color:#94A3B8;">10 minut</strong></span></div>
+        <div style="border-top:1px solid #334155;margin:24px 0;"></div>
+        <div style="background-color:#1a0e0e;border:1px solid #ef444430;border-radius:10px;padding:14px 16px;"><p style="margin:0;font-size:12px;color:#94A3B8;line-height:1.6;">🔒 <strong style="color:#f87171;">Nie prosiłeś o reset hasła?</strong> Zignoruj tę wiadomość — Twoje konto jest bezpieczne.</p></div>
       </td></tr>
-      <tr><td style="padding:20px 40px 28px;border-top:1px solid #2a2a2a;text-align:center;">
-        <p style="margin:0 0 10px;font-size:11px;color:#444;">Wiadomość wysłana automatycznie przez <a href="https://presora.app" style="color:#D4A017;text-decoration:none;">Presora</a></p>
-        <div style="display:inline-flex;align-items:center;gap:6px;background-color:#141414;border:1px solid #2a2a2a;border-radius:8px;padding:6px 12px;"><span style="font-size:13px;">🔒</span><span style="font-size:11px;color:#555;">Płatności zabezpieczone przez <strong style="color:#888;">Stripe</strong> · SSL 256-bit</span></div>
+      <tr><td style="padding:20px 40px 28px;border-top:1px solid #334155;text-align:center;">
+        <p style="margin:0 0 10px;font-size:11px;color:#94A3B8;">Wiadomość wysłana automatycznie przez <a href="https://presora.app" style="color:#6366F1;text-decoration:none;">Presora</a></p>
+        <div style="display:inline-flex;align-items:center;gap:6px;background-color:#1E293B;border:1px solid #334155;border-radius:8px;padding:6px 12px;"><span style="font-size:13px;">🔒</span><span style="font-size:11px;color:#94A3B8;">Płatności zabezpieczone przez <strong style="color:#94A3B8;">Stripe</strong> · SSL 256-bit</span></div>
       </td></tr>
     </table>
   </td></tr></table>

@@ -96,7 +96,7 @@ exports.handler = async (event) => {
         },
         body: JSON.stringify({
           from: 'Presora <noreply@presora.app>',
-          to: ['kontakt@presora.app'],
+          to: ['contact.presora@gmail.com'],
           subject: `[Contact] ${payload.subject}`,
           text: `From: ${payload.name} <${payload.email}>\n\n${payload.message}`,
         }),
