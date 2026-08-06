@@ -46,6 +46,11 @@ export const Navbar = ({ showThemeToggle = false, landingCta = false }: NavbarPr
   const userName = sessionUser?.name ?? null;
   const userAvatar = sessionUser?.avatar ?? null;
   const isAuthed = !!userEmail;
+  // Signed out here, but "Remember me" was checked on a previous visit
+  // (see Login.tsx) — a returning user, not a fresh prospect.
+  const isReturning = (() => {
+    try { return localStorage.getItem('rememberMe') === 'true'; } catch { return false; }
+  })();
   const handleLogout = async () => {
     setAvatarOpen(false);
     try {
@@ -268,6 +273,12 @@ export const Navbar = ({ showThemeToggle = false, landingCta = false }: NavbarPr
                 <Button size="sm" asChild>
                   <Link to="/dashboard">Go to Dashboard</Link>
                 </Button>
+              ) : landingCta && isReturning ? (
+                <div className="hidden md:flex items-center gap-2">
+                  <Button size="sm" asChild>
+                    <Link to="/login">Log in</Link>
+                  </Button>
+                </div>
               ) : landingCta ? (
                 <div className="hidden md:flex items-center gap-2">
                   <Button variant="outline" size="sm" asChild>
