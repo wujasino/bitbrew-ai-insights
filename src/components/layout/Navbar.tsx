@@ -30,9 +30,14 @@ interface NavbarProps {
   /** Opt-in — only the landing page shows this; other pages using this navbar
       (Terms/Privacy/etc.) have dark-only content that isn't theme-aware. */
   showThemeToggle?: boolean;
+  /** Opt-in — swaps the Sign in/Sign up buttons for landing-style CTAs
+      ("Get a demo" / "Start free trial"). Only the landing page passes this;
+      other pages keep Sign in/Sign up since a returning user landing on
+      Terms/Privacy/etc. still needs a direct way back into their account. */
+  landingCta?: boolean;
 }
 
-export const Navbar = ({ showThemeToggle = false }: NavbarProps) => {
+export const Navbar = ({ showThemeToggle = false, landingCta = false }: NavbarProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -265,6 +270,15 @@ export const Navbar = ({ showThemeToggle = false }: NavbarProps) => {
                 <Button size="sm" asChild>
                   <Link to="/dashboard">Go to Dashboard</Link>
                 </Button>
+              ) : landingCta ? (
+                <div className="hidden md:flex items-center gap-2">
+                  <Button variant="outline" size="sm" asChild>
+                    <a href="/#contact">Get a demo</a>
+                  </Button>
+                  <Button size="sm" asChild>
+                    <Link to="/register">Start free trial</Link>
+                  </Button>
+                </div>
               ) : (
                 <div className="hidden md:flex items-center gap-2">
                   <Button variant="outline" size="sm" asChild>

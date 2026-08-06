@@ -63,7 +63,7 @@ const Landing = () => {
       >
         Skip to content
       </a>
-      <Navbar showThemeToggle />
+      <Navbar showThemeToggle landingCta />
 
       <main id="main-content">
       {/* ── Urgency strip ─────────────────────────────────────────── */}
