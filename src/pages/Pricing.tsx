@@ -80,7 +80,7 @@ const Pricing = () => {
       return;
     }
     if (planId === 'enterprise') {
-      window.location.href = 'mailto:kontakt@presora.app?subject=Custom Plan';
+      window.location.href = 'mailto:contact.presora@gmail.com?subject=Custom Plan';
       return;
     }
 

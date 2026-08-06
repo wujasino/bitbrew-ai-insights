@@ -536,7 +536,7 @@ const Login = () => {
 
                 <p className="text-xs text-muted-foreground text-center leading-relaxed">
                   SSO is available on the Agency plan. Ask your admin to set it up, or{' '}
-                  <a href="mailto:presora.poland@gmail.com" className="text-primary hover:underline">contact us</a>.
+                  <a href="mailto:contact.presora@gmail.com" className="text-primary hover:underline">contact us</a>.
                 </p>
               </motion.div>
             )}

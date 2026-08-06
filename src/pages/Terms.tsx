@@ -67,7 +67,7 @@ const Terms = () => {
     <td style="border:1px solid #334155;padding:8px;text-align:left;font-size:14px;line-height:200%;padding-bottom:40px;background-color:#111827;color:#F8FAFC;">
       <p>W celu kontaktowania się z nami możesz skorzystać z następujących form komunikacji elektronicznej:</p>
       <ul>
-        <li>poczta elektroniczna: <strong>kontakt@presora.app</strong></li>
+        <li>poczta elektroniczna: <strong>contact.presora@gmail.com</strong></li>
         <li>formularz kontaktowy dostępny pod adresem: <strong><a href="https://www.presora.app" target="_blank" rel="noopener noreferrer">https://www.presora.app</a></strong></li>
       </ul>
     </td>
@@ -248,7 +248,7 @@ const Terms = () => {
   <tr style="border:1px solid #334155;">
     <td style="border:1px solid #334155;padding:8px;text-align:left;font-size:14px;line-height:200%;padding-bottom:40px;background-color:#111827;color:#F8FAFC;">
       <p>Jeśli chcesz zgłosić nam nielegalne treści, skontaktuj się z nami za pośrednictwem adresu e-mail:</p>
-      <p><strong>kontakt@presora.app</strong></p>
+      <p><strong>contact.presora@gmail.com</strong></p>
       <p>lub formularza kontaktowego dostępnego pod adresem:</p>
       <p><strong><a href="https://www.presora.app" target="_blank" rel="noopener noreferrer">https://www.presora.app</a></strong></p>
       <p><strong>Prosimy, abyś w zgłoszeniu zawarł/a:</strong></p>
@@ -389,7 +389,7 @@ const Terms = () => {
       <p>Aby skorzystać z prawa odstąpienia od Umowy, musisz poinformować nas o swojej decyzji w drodze jednoznacznego oświadczenia (pismo wysłane pocztą lub pocztą elektroniczną). Możesz skorzystać z wzoru formularza poniżej — nie jest to obowiązkowe.</p>
       <p><strong>WZÓR FORMULARZA ODSTĄPIENIA OD UMOWY</strong></p>
       <p>(Formularz ten należy wypełnić i odesłać tylko w przypadku chęci odstąpienia od umowy)</p>
-      <p>Adresat:<br>Patryk Rybacki, działalność nierejestrowana<br>Biskupia 7/2<br>adres e-mail: kontakt@presora.app</p>
+      <p>Adresat:<br>Patryk Rybacki, działalność nierejestrowana<br>Biskupia 7/2<br>adres e-mail: contact.presora@gmail.com</p>
       <p>Ja/My(*) niniejszym informuję/informujemy(*) o moim/naszym(*) odstąpieniu od umowy o świadczenie następującej usługi (*):</p>
       <p>………………………………………………………………………………………</p>
       <p>Data zawarcia umowy(*): ………………………………………</p>
