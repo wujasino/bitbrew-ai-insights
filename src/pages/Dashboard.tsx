@@ -13,7 +13,8 @@ import { ResultsBreakdown } from '@/components/ResultsBreakdown';
 import BrandKnowledgeForm from '@/components/BrandKnowledgeForm';
 import { useBrewing } from '@/hooks/useBrewing';
 import { useTTS, loadVoicePrefs } from '@/hooks/useTTS';
-import { usePlan, tierOf } from '@/hooks/useAccountInfo';
+import { usePlan, tierOf, useSessionUser } from '@/hooks/useAccountInfo';
+import { ResultChatWidget } from '@/components/ui/result-chat-widget';
 import { cn } from '@/lib/utils';
 import { AnalysisResult } from '@/types/analysis';
 import { scoreBrand, type BrandScore } from '@/lib/brandScore';
@@ -325,6 +326,8 @@ const Dashboard = () => {
   const [moderationError, setModerationError] = useState('');
   const { data: plan = 'Free' } = usePlan();
   const planTier = tierOf(plan.toLowerCase());
+  const { data: sessionUser } = useSessionUser();
+  const isLoggedIn = !!sessionUser?.id;
   const isIdle = !brandFromUrl && !analysisId;
 
   // Competitor comparison (deterministic client-side score — no API/credit cost)
@@ -764,6 +767,8 @@ const Dashboard = () => {
           </motion.div>
         )}
       </div>
+
+      {status === 'completed' && result && isLoggedIn && <ResultChatWidget result={result} />}
     </div>
   );
 };
