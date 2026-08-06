@@ -162,6 +162,23 @@ export const Navbar = ({ showThemeToggle = false, landingCta = false }: NavbarPr
                         <LogOut className="w-4 h-4" />
                         Sign out
                       </button>
+                    ) : landingCta && isReturning ? (
+                      <>
+                        <Link
+                          to="/login?mode=forgot"
+                          onClick={() => setMobileOpen(false)}
+                          className="px-3 py-2 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-accent underline-offset-2 hover:underline"
+                        >
+                          Forgot password?
+                        </Link>
+                        <Link
+                          to="/login"
+                          onClick={() => setMobileOpen(false)}
+                          className="px-3 py-2 rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 text-center"
+                        >
+                          Log in
+                        </Link>
+                      </>
                     ) : (
                       <>
                         <Link
@@ -176,7 +193,7 @@ export const Navbar = ({ showThemeToggle = false, landingCta = false }: NavbarPr
                           onClick={() => setMobileOpen(false)}
                           className="px-3 py-2 rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 text-center"
                         >
-                          Sign up
+                          {landingCta ? 'Start free trial' : 'Sign up'}
                         </Link>
                       </>
                     )
