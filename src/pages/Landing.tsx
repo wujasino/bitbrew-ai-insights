@@ -7,6 +7,7 @@ import { Footer } from '@/components/layout/Footer';
 import { BrandScanInput } from '@/components/BrandScanInput';
 import { ScanResultPreview } from '@/components/ScanResultPreview';
 import { CookiePanel } from '@/components/ui/cookie-banner-1';
+import { SalesChatWidget } from '@/components/ui/sales-chat-widget';
 import { NewsletterSignup } from '@/components/ui/newsletter-signup';
 import { GradientMeshBg } from '@/components/ui/gradient-mesh-bg';
 import { ContactForm } from '@/components/ui/contact-form';
@@ -970,6 +971,7 @@ const Landing = () => {
       <Footer />
 
       <CookiePanel privacyHref="/polityka-prywatnosci" termsHref="/regulamin" />
+      <SalesChatWidget />
     </div>
   );
 };
