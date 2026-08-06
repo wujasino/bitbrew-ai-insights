@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useTheme } from 'next-themes';
-import { LogOut, User, Settings, Code2, Sun, Moon } from 'lucide-react';
+import { LogOut, User, Settings, Code2, Sun, Moon, KeyRound, Mail, ArrowRight } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -275,6 +275,41 @@ export const Navbar = ({ showThemeToggle = false, landingCta = false }: NavbarPr
                 </Button>
               ) : landingCta && isReturning ? (
                 <div className="hidden md:flex items-center gap-2">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        className="text-xs text-muted-foreground hover:text-foreground transition-colors underline-offset-2 hover:underline"
+                      >
+                        Forgot password?
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent align="end" className="w-72 p-4 space-y-3">
+                      <div className="flex items-center gap-2">
+                        <KeyRound className="w-4 h-4 text-primary" />
+                        <p className="text-sm font-medium text-foreground">Resetting your password</p>
+                      </div>
+                      <ol className="space-y-2 text-xs text-muted-foreground">
+                        <li className="flex items-start gap-2">
+                          <span className="shrink-0 w-4 h-4 rounded-full bg-primary/10 text-primary text-[10px] font-semibold flex items-center justify-center mt-0.5">1</span>
+                          Enter your account email
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="shrink-0 w-4 h-4 rounded-full bg-primary/10 text-primary text-[10px] font-semibold flex items-center justify-center mt-0.5">2</span>
+                          We'll email you a 6-digit code — check your inbox (and spam folder)
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="shrink-0 w-4 h-4 rounded-full bg-primary/10 text-primary text-[10px] font-semibold flex items-center justify-center mt-0.5">3</span>
+                          Enter the code and choose a new password
+                        </li>
+                      </ol>
+                      <Button size="sm" className="w-full gap-1.5" asChild>
+                        <Link to="/login?mode=forgot">
+                          <Mail className="w-3.5 h-3.5" /> Reset password <ArrowRight className="w-3.5 h-3.5" />
+                        </Link>
+                      </Button>
+                    </PopoverContent>
+                  </Popover>
                   <Button size="sm" asChild>
                     <Link to="/login">Log in</Link>
                   </Button>

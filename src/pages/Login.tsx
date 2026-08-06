@@ -105,7 +105,9 @@ const Login = () => {
   const [loading, setLoading]       = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
-  const [mode, setMode]             = useState<'login' | 'forgot' | 'otp' | 'reset' | 'forgot_sent' | 'totp' | 'sso'>('login');
+  const [mode, setMode]             = useState<'login' | 'forgot' | 'otp' | 'reset' | 'forgot_sent' | 'totp' | 'sso'>(
+    () => new URLSearchParams(location.search).get('mode') === 'forgot' ? 'forgot' : 'login'
+  );
   const [ssoDomain, setSsoDomain]   = useState('');
   const [ssoLoading, setSsoLoading] = useState(false);
   const [totpFactorId, setTotpFactorId] = useState('');
