@@ -1,5 +1,24 @@
+import { createClient } from '@supabase/supabase-js';
 import { moderate } from './_lib/moderation.js';
 import { SALES_SYSTEM_PROMPT } from './_lib/salesKnowledge.js';
+import { logConversation } from './_lib/logConversation.js';
+
+const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+// Logging is optional here (this endpoint has no other use for Supabase) —
+// never let a missing/misconfigured service key break the actual chat.
+const createAdminClient = () => {
+  if (!supabaseUrl || !supabaseServiceKey) return null;
+  try {
+    return createClient(supabaseUrl, supabaseServiceKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+      realtime: { params: { eventsPerSecond: 0 } },
+    });
+  } catch {
+    return null;
+  }
+};
 
 // Public landing-page sales/FAQ chat. No auth, no per-user data — static
 // knowledge only (see _lib/salesKnowledge.js). This is the "sales mode"
@@ -108,13 +127,12 @@ export const handler = async (event) => {
     }
 
     const lastUserMessage = messages[messages.length - 1].content;
+    const admin = createAdminClient();
     const modResult = await moderate(lastUserMessage).catch(() => ({ flagged: false }));
     if (modResult.flagged) {
-      return {
-        statusCode: 200,
-        headers: CORS,
-        body: JSON.stringify({ reply: "I can't help with that here — happy to answer questions about Presora, AI visibility, or pricing though." }),
-      };
+      const reply = "I can't help with that here — happy to answer questions about Presora, AI visibility, or pricing though.";
+      await logConversation(admin, { mode: 'sales', userMessage: lastUserMessage, assistantReply: reply, flagged: true });
+      return { statusCode: 200, headers: CORS, body: JSON.stringify({ reply }) };
     }
 
     const res = await callAnthropic(messages);
@@ -126,11 +144,14 @@ export const handler = async (event) => {
     const data = await res.json();
     const content = Array.isArray(data.content) ? data.content : [];
     const reply = content.filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
+    const finalReply = reply || "Sorry, I didn't catch that — could you rephrase?";
+
+    await logConversation(admin, { mode: 'sales', userMessage: lastUserMessage, assistantReply: finalReply });
 
     return {
       statusCode: 200,
       headers: CORS,
-      body: JSON.stringify({ reply: reply || "Sorry, I didn't catch that — could you rephrase?" }),
+      body: JSON.stringify({ reply: finalReply }),
     };
   } catch (error) {
     console.error('chat-sales handler error:', error.message);

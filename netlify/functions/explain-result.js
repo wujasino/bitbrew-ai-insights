@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { RESULT_SYSTEM_PROMPT } from './_lib/resultKnowledge.js';
+import { logConversation } from './_lib/logConversation.js';
 
 // Authenticated "result interpreter" chat — mode 2 of the support-bot plan.
 // Unlike chat-sales.js (static knowledge, no auth), this injects the
@@ -187,11 +188,21 @@ ${JSON.stringify(scanResult)}
     const data = await res.json();
     const content = Array.isArray(data.content) ? data.content : [];
     const reply = content.filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
+    const finalReply = reply || "Sorry, I didn't catch that — could you rephrase?";
+
+    await logConversation(admin, {
+      userId: authedUser.id,
+      mode: 'result',
+      brandName: scanResult.brandName,
+      scanSnapshot: { trustScore: scanResult.trustScore, dimensions: scanResult.dimensions },
+      userMessage: messages[messages.length - 1].content,
+      assistantReply: finalReply,
+    });
 
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ reply: reply || "Sorry, I didn't catch that — could you rephrase?" }),
+      body: JSON.stringify({ reply: finalReply }),
     };
   } catch (error) {
     console.error('explain-result handler error:', error.message);
