@@ -18,14 +18,6 @@ import { Wordmark } from '@/components/Wordmark';
 import { logout } from '@/lib/auth';
 import { useSessionUser } from '@/hooks/useAccountInfo';
 
-const authedLinks = [
-  { to: '/dashboard', label: 'Dashboard' },
-];
-
-const publicLinks = [
-  { to: '/dashboard', label: 'Dashboard' },
-];
-
 interface NavbarProps {
   /** Opt-in — only the landing page shows this; other pages using this navbar
       (Terms/Privacy/etc.) have dark-only content that isn't theme-aware. */
@@ -60,8 +52,6 @@ export const Navbar = ({ showThemeToggle = false, landingCta = false }: NavbarPr
       console.error('Logout failed', e);
     }
   };
-
-  const navLinks = isAuthed ? authedLinks : publicLinks;
 
   // Initials: from display name if set, otherwise first letter of email
   const initials = userName
@@ -138,20 +128,6 @@ export const Navbar = ({ showThemeToggle = false, landingCta = false }: NavbarPr
                   >
                     Contact
                   </a>
-                  {navLinks.map((link) => (
-                    <Link
-                      key={link.to}
-                      to={link.to}
-                      onClick={() => setMobileOpen(false)}
-                      className={`px-3 py-2 rounded-md text-sm transition-colors ${
-                        location.pathname === link.to
-                          ? 'text-primary bg-primary/10 font-medium'
-                          : 'text-muted-foreground hover:text-foreground hover:bg-accent'
-                      }`}
-                    >
-                      {link.label}
-                    </Link>
-                  ))}
                   <div className="my-1 h-px bg-border" />
                   {!authLoading && (
                     isAuthed ? (
@@ -245,24 +221,6 @@ export const Navbar = ({ showThemeToggle = false, landingCta = false }: NavbarPr
                     </ul>
                   </NavigationMenuContent>
                 </NavigationMenuItem>
-
-                {/* Other nav links */}
-                {navLinks.map((link) => (
-                  <NavigationMenuItem key={link.to}>
-                    <NavigationMenuLink asChild>
-                      <Link
-                        to={link.to}
-                        className={`px-3 py-1.5 rounded-lg text-sm transition-colors inline-flex items-center ${
-                          location.pathname === link.to
-                            ? 'text-primary bg-primary/10 font-medium'
-                            : 'text-muted-foreground hover:text-foreground hover:bg-accent'
-                        }`}
-                      >
-                        {link.label}
-                      </Link>
-                    </NavigationMenuLink>
-                  </NavigationMenuItem>
-                ))}
               </NavigationMenuList>
               <NavigationMenuViewport />
             </NavigationMenu>
