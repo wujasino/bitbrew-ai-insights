@@ -12,7 +12,6 @@ import { NewsletterSignup } from '@/components/ui/newsletter-signup';
 import { GradientMeshBg } from '@/components/ui/gradient-mesh-bg';
 import { ContactForm } from '@/components/ui/contact-form';
 import { FAQ_EN } from '@/lib/faq';
-import { useForceDarkTheme } from '@/hooks/useForceDarkTheme';
 
 /* ── Integration logos (text-based, gray) ─────────────────────────── */
 const INTEGRATIONS = [
@@ -55,7 +54,6 @@ const TESTIMONIALS = [
 
 const Landing = () => {
   const navigate = useNavigate();
-  useForceDarkTheme();
 
   return (
     <div className="min-h-screen bg-background font-landing">
@@ -65,13 +63,13 @@ const Landing = () => {
       >
         Skip to content
       </a>
-      <Navbar />
+      <Navbar showThemeToggle />
 
       <main id="main-content">
       {/* ── Urgency strip ─────────────────────────────────────────── */}
-      <div className="w-full bg-[#111827] border-b border-[#334155] px-4 py-2.5 flex items-center justify-center gap-2 text-center">
-        <TrendingUp className="w-3.5 h-3.5 text-[#6366F1] shrink-0" />
-        <p className="text-xs text-[#F8FAFC]/90">
+      <div className="w-full bg-card border-b border-border px-4 py-2.5 flex items-center justify-center gap-2 text-center">
+        <TrendingUp className="w-3.5 h-3.5 text-primary shrink-0" />
+        <p className="text-xs text-foreground/90">
           AI models are already shaping brand reputations. Is yours represented accurately?
         </p>
       </div>

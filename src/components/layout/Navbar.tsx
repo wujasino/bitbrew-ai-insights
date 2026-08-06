@@ -1,6 +1,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
-import { LogOut, User, Settings, Code2 } from 'lucide-react';
+import { useTheme } from 'next-themes';
+import { LogOut, User, Settings, Code2, Sun, Moon } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -25,11 +26,18 @@ const publicLinks = [
   { to: '/dashboard', label: 'Dashboard' },
 ];
 
-export const Navbar = () => {
+interface NavbarProps {
+  /** Opt-in — only the landing page shows this; other pages using this navbar
+      (Terms/Privacy/etc.) have dark-only content that isn't theme-aware. */
+  showThemeToggle?: boolean;
+}
+
+export const Navbar = ({ showThemeToggle = false }: NavbarProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [avatarOpen, setAvatarOpen] = useState(false);
+  const { resolvedTheme, setTheme } = useTheme();
   const { data: sessionUser, isLoading: authLoading } = useSessionUser();
   const userEmail = sessionUser?.email ?? null;
   const userName = sessionUser?.name ?? null;
@@ -235,8 +243,19 @@ export const Navbar = () => {
             </NavigationMenu>
           </div>
 
-          {/* Right: language + auth */}
+          {/* Right: theme toggle + auth */}
           <div className="flex items-center gap-2">
+            {showThemeToggle && (
+              <button
+                type="button"
+                onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
+                className="flex items-center justify-center w-9 h-9 rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground transition-colors shrink-0"
+                aria-label={resolvedTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+                title={resolvedTheme === 'dark' ? 'Light mode' : 'Dark mode'}
+              >
+                {resolvedTheme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              </button>
+            )}
             {authLoading ? (
               <div className="hidden md:flex items-center gap-2">
                 <div className="w-16 h-8 rounded-lg bg-muted animate-pulse" />
