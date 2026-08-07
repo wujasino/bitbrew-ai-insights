@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 import { CreditsUsageWidget } from '@/components/CreditsUsageWidget';
 import { usePlan, tierOf } from '@/hooks/useAccountInfo';
 import { MODEL_CATALOG } from '@/lib/models';
+import { BrandScanInput } from '@/components/BrandScanInput';
 
 interface Analysis {
   id: string;
@@ -126,7 +127,7 @@ const HomeHub = () => {
             ))}
           </div>
         ) : !latest ? (
-          <EmptyState onDemo={() => runScan('Nike')} />
+          <EmptyState onScan={runScan} onDemo={() => runScan('Nike')} />
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-10">
             {/* Score card — the reason people come back */}
@@ -276,7 +277,7 @@ const HomeHub = () => {
 };
 
 /* ── Empty state: one screen, one CTA, plus a demo ──────────────────── */
-const EmptyState = ({ onDemo }: { onDemo: () => void }) => (
+const EmptyState = ({ onScan, onDemo }: { onScan: (brand: string) => void; onDemo: () => void }) => (
   <motion.div
     initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
     className="rounded-2xl border border-border bg-card/40 p-10 sm:p-14 text-center mb-10"
@@ -288,13 +289,13 @@ const EmptyState = ({ onDemo }: { onDemo: () => void }) => (
     <p className="text-sm text-muted-foreground max-w-md mx-auto mb-6">
       Run your first scan to see how AI models describe your brand — a visibility score, a per-model breakdown, and what to do next.
     </p>
+    <BrandScanInput onSubmit={onScan} className="max-w-md mx-auto" />
     <button
       onClick={onDemo}
-      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+      className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground mt-4 transition-colors"
     >
-      See a sample — Nike demo <ArrowRight className="w-4 h-4" />
+      or see a sample — Nike demo <ArrowRight className="w-3 h-3" />
     </button>
-    <p className="text-xs text-muted-foreground/70 mt-3">or type your own brand in the box above</p>
   </motion.div>
 );
 
