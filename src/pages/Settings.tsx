@@ -5,7 +5,7 @@ import {
   User, Bell, Shield, Trash2, Save,
   Upload, Camera, Loader2, KeyRound, Check, Mail, ArrowRight, ArrowLeft,
   Eye, EyeOff, CheckCircle2, Circle, CreditCard, Download, FileText, Volume2, Cpu, Lock,
-  Play, Square as StopIcon,
+  Play, Square as StopIcon, Gift, Copy, Users,
 } from 'lucide-react';
 import { loadVoicePrefs, saveVoicePrefs, VoicePrefs, AVAILABLE_VOICES, fetchAvailableVoices, ElevenLabsVoice } from '@/hooks/useTTS';
 import { MODEL_CATALOG, loadModelPrefs, saveModelPrefs, ModelPrefs } from '@/lib/models';
@@ -17,7 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 
-type Tab = 'account' | 'notifications' | 'security' | 'privacy' | 'billing';
+type Tab = 'account' | 'notifications' | 'security' | 'privacy' | 'billing' | 'referral';
 
 const tabs: { id: Tab; label: string; icon: React.FC<{ className?: string }> }[] = [
   { id: 'account',       label: 'Account',       icon: User },
@@ -25,7 +25,22 @@ const tabs: { id: Tab; label: string; icon: React.FC<{ className?: string }> }[]
   { id: 'security',      label: 'Security',      icon: KeyRound },
   { id: 'privacy',       label: 'Privacy',       icon: Shield },
   { id: 'billing',       label: 'Billing',       icon: CreditCard },
+  { id: 'referral',      label: 'Refer a friend', icon: Gift },
 ];
+
+// Keep in sync with FREE_PLAN_CREDIT_REWARD in netlify/functions/referral.js
+const FREE_PLAN_CREDIT_REWARD_LABEL = 50;
+
+interface ReferralStatus {
+  referralCode: string;
+  referralLink: string;
+  totalReferrals: number;
+  progressInCurrentMilestone: number;
+  milestoneSize: number;
+  rewardsClaimed: number;
+  milestonesAvailable: number;
+  rewardType?: string;
+}
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -78,6 +93,69 @@ export default function Settings() {
   const [exportFormat, setExportFormat] = useState<'csv' | 'json'>('csv');
   const [subActionLoading, setSubActionLoading] = useState(false);
   const [subError, setSubError] = useState('');
+
+  // Referral program — see netlify/functions/referral.js
+  const [referral, setReferral] = useState<ReferralStatus | null>(null);
+  const [referralLoading, setReferralLoading] = useState(false);
+  const [referralClaiming, setReferralClaiming] = useState(false);
+  const [referralError, setReferralError] = useState('');
+  const [referralCopied, setReferralCopied] = useState(false);
+
+  const fetchReferralStatus = async () => {
+    setReferralLoading(true);
+    setReferralError('');
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Please sign in again.');
+      const res = await fetch('/.netlify/functions/referral', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ action: 'status' }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'Could not load referral status.');
+      setReferral(data);
+    } catch (err) {
+      setReferralError(err instanceof Error ? err.message : 'Could not load referral status.');
+    } finally {
+      setReferralLoading(false);
+    }
+  };
+
+  const claimReferralReward = async () => {
+    setReferralClaiming(true);
+    setReferralError('');
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Please sign in again.');
+      const res = await fetch('/.netlify/functions/referral', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ action: 'claim' }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'Could not claim your reward.');
+      setReferral(data);
+    } catch (err) {
+      setReferralError(err instanceof Error ? err.message : 'Could not claim your reward.');
+    } finally {
+      setReferralClaiming(false);
+    }
+  };
+
+  const copyReferralLink = () => {
+    if (!referral) return;
+    navigator.clipboard.writeText(referral.referralLink);
+    setReferralCopied(true);
+    setTimeout(() => setReferralCopied(false), 1800);
+  };
+
+  useEffect(() => {
+    if (activeTab === 'referral' && !referral && !referralLoading) {
+      fetchReferralStatus();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
 
   const [email, setEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
@@ -1191,6 +1269,72 @@ export default function Settings() {
                       </div>
                     )}
                   </div>
+                </div>
+              )}
+
+              {activeTab === 'referral' && (
+                <div className="space-y-5">
+                  {referralLoading && !referral ? (
+                    <div className="flex items-center justify-center py-12 text-sm text-muted-foreground gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin" /> Loading…
+                    </div>
+                  ) : referral ? (
+                    <>
+                      <div className="p-4 rounded-xl border border-[hsl(var(--glass-border))] bg-card/40">
+                        <p className="text-sm font-medium text-foreground mb-1">Your referral link</p>
+                        <p className="text-xs text-muted-foreground mb-3">
+                          Share it — every friend who signs up counts toward your reward. Every {referral.milestoneSize} referrals unlocks 20% off your next invoice (or {FREE_PLAN_CREDIT_REWARD_LABEL} bonus analyses if you're on the free plan).
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <Input readOnly value={referral.referralLink} className="text-xs font-mono" />
+                          <Button size="sm" variant="outline" className="shrink-0 gap-1.5" onClick={copyReferralLink}>
+                            {referralCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                            {referralCopied ? 'Copied' : 'Copy'}
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div className="p-4 rounded-xl border border-[hsl(var(--glass-border))] bg-card/40">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <Users className="w-4 h-4 text-primary" />
+                            <p className="text-sm font-medium text-foreground">{referral.totalReferrals} friend{referral.totalReferrals === 1 ? '' : 's'} referred</p>
+                          </div>
+                          <span className="text-xs text-muted-foreground">
+                            {referral.progressInCurrentMilestone}/{referral.milestoneSize} to next reward
+                          </span>
+                        </div>
+                        <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-primary transition-all"
+                            style={{ width: `${(referral.progressInCurrentMilestone / referral.milestoneSize) * 100}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      {referral.milestonesAvailable > 0 && (
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl border border-primary/30 bg-primary/[0.06]">
+                          <div>
+                            <p className="text-sm font-medium text-foreground">Reward ready to claim</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              You've unlocked {referral.milestonesAvailable} reward{referral.milestonesAvailable === 1 ? '' : 's'}.
+                            </p>
+                          </div>
+                          <Button size="sm" disabled={referralClaiming} onClick={claimReferralReward} className="gap-1.5 shrink-0">
+                            {referralClaiming ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Gift className="w-3.5 h-3.5" />}
+                            Claim reward
+                          </Button>
+                        </div>
+                      )}
+
+                      {referral.rewardsClaimed > 0 && (
+                        <p className="text-xs text-muted-foreground">
+                          {referral.rewardsClaimed} reward{referral.rewardsClaimed === 1 ? '' : 's'} claimed so far.
+                        </p>
+                      )}
+                    </>
+                  ) : null}
+                  {referralError && <p className="text-sm text-destructive">{referralError}</p>}
                 </div>
               )}
 
