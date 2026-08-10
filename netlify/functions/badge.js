@@ -16,7 +16,10 @@ function scoreBrand(brandName) {
   for (let i = 0; i < seed.length; i++) {
     h = Math.imul(h ^ seed.charCodeAt(i), 16777619) >>> 0;
   }
-  const next = () => Math.round((h = Math.imul(h ^ (h >>> 13), 1274126177)) % 66) + 30;
+  const next = () => {
+    h = Math.imul(h ^ (h >>> 13), 1274126177);
+    return Math.round(((h % 66) + 66) % 66) + 30;
+  };
 
   const dims = {
     authority: next(), sentiment: next(), recency: next(), mentions: next(), accuracy: next(),

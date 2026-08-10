@@ -17,6 +17,13 @@
 [functions]
   node_bundler = "nft"
 
+# Re-scans due brand_monitors (per their frequency) and writes an in-app
+# notification when alert_metric crosses below alert_threshold. Runs hourly
+# so daily/weekly/monthly monitors each get checked close to when they're
+# actually due, not just once a day regardless of frequency.
+[functions."check-score-alerts"]
+  schedule = "@hourly"
+
 # ── Google OAuth proxy — ukrywa ID projektu Supabase ─────────────────────────
 [[redirects]]
   from   = "/auth/callback"

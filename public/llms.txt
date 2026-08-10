@@ -1,0 +1,28 @@
+# Presora
+
+> Presora is a SaaS tool that measures how AI models — ChatGPT (GPT-4o), Claude, Gemini, Perplexity, Mistral and Llama — perceive a brand, and recommends concrete steps to improve that perception. Founded 2024. Contact: contact.presora@gmail.com.
+
+Presora runs a brand name through multiple large language models and scores the result across 5 dimensions:
+
+- **Authority** — how often models treat the brand as a trustworthy, citable reference.
+- **Sentiment** — whether models describe the brand positively, neutrally or negatively.
+- **Accuracy** — whether models state correct facts about the brand (products, category, founding) or hallucinate.
+- **Mentions** — how often the brand surfaces at all when models are asked about its category.
+- **Recency** — whether models treat the brand's information as current and up to date.
+
+A full scan takes about 15 seconds and returns an overall AI-visibility score (0–100), per-dimension breakdowns, and prioritised recommendations for the weakest signals.
+
+This category of work is sometimes called GEO (Generative Engine Optimization) or AIO (AI Optimization): as more users ask AI assistants directly instead of searching, a brand's visibility inside model responses matters as much as its search-engine ranking.
+
+## Product
+
+- [Homepage](https://www.presora.app/): overview, live demo scan, pricing.
+- [Pricing](https://www.presora.app/pricing): Free (3 analyses/month, GPT-4o), Solo ($29/mo, weekly monitoring + Claude + Gemini), Growth ($79/mo, all 6 models + competitor comparison + API), Enterprise (custom).
+- [API docs](https://www.presora.app/docs/api): REST API and webhooks for programmatic access to brand scans.
+- [Changelog](https://www.presora.app/changelog): product updates.
+
+## Company
+
+- Contact: contact.presora@gmail.com
+- [Terms of service](https://www.presora.app/regulamin)
+- [Privacy policy](https://www.presora.app/polityka-prywatnosci)

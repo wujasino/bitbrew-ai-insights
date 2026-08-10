@@ -49,7 +49,7 @@ export default function GoogleCallback() {
 
         const { id_token } = await res.json();
 
-        const { error: supaErr } = await supabase.auth.signInWithIdToken({
+        const { data: signInData, error: supaErr } = await supabase.auth.signInWithIdToken({
           provider: 'google',
           token: id_token,
         });
@@ -58,7 +58,21 @@ export default function GoogleCallback() {
 
         sessionStorage.removeItem('google_pkce_verifier');
         setStatus('success');
-        setTimeout(() => navigate('/dashboard'), 1500);
+
+        // Route first-time Google sign-ups through the same onboarding wizard
+        // email/password signups get (Register.tsx) — otherwise a returning
+        // user's every login also gets re-checked here, so this must be
+        // conditional, not unconditional like Register.tsx's redirect.
+        let destination = '/dashboard';
+        if (signInData.user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('onboarded')
+            .eq('id', signInData.user.id)
+            .maybeSingle();
+          if (!profile?.onboarded) destination = '/onboarding';
+        }
+        setTimeout(() => navigate(destination), 1500);
       } catch (err) {
         console.error('Google callback error:', err);
         setErrorMsg(err instanceof Error ? err.message : 'Błąd logowania. Spróbuj ponownie.');

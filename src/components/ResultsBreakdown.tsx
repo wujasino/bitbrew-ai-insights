@@ -71,7 +71,7 @@ const DimensionResult = ({ dim, score, delay }: { dim: DimKey; score: number; de
 };
 
 // ── Prioritised action plan derived from the weakest dimensions ─────────────
-const ActionPlan = ({ ranked }: { ranked: { dim: DimKey; score: number }[] }) => {
+const ActionPlan = ({ ranked, brandName }: { ranked: { dim: DimKey; score: number }[]; brandName: string }) => {
   const { t } = useTranslation();
   // Everything below "strong" needs attention; surface the three lowest first.
   const todo = ranked.filter(r => r.score < 70).slice(0, 3);
@@ -124,7 +124,9 @@ const ActionPlan = ({ ranked }: { ranked: { dim: DimKey; score: number }[] }) =>
                 </span>
                 <span className="text-[10px] font-data text-muted-foreground">{item.score}%</span>
               </div>
-              <p className="text-xs text-muted-foreground leading-relaxed">{t(`rec_${item.dim}`)}</p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                {t(`rec_${item.dim}`).split('{brand}').join(brandName)}
+              </p>
             </div>
           </motion.div>
         );
@@ -178,7 +180,7 @@ export const ResultsBreakdown = memo(function ResultsBreakdown({ result }: Resul
           <Sparkles className="w-3 h-3 text-primary/70" />
           {t('results_action_subtitle')}
         </p>
-        <ActionPlan ranked={ranked} />
+        <ActionPlan ranked={ranked} brandName={result.brandName} />
       </div>
     </div>
   );
