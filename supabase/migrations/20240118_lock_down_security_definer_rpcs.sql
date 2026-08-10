@@ -20,7 +20,7 @@
 -- revoking PUBLIC execute here breaks nothing legitimate.
 
 revoke execute on function public.increment_credits(uuid, integer) from public, anon, authenticated;
-revoke execute on function public.match_brand_knowledge(vector, uuid, integer, text) from public, anon, authenticated;
+revoke execute on function public.match_brand_knowledge(public.vector, uuid, integer, text) from public, anon, authenticated;
 revoke execute on function public.increment_guest_limit(text) from public, anon, authenticated;
 revoke execute on function public.register_otp_attempt(text) from public, anon, authenticated;
 revoke execute on function public.cleanup_expired_otps() from public, anon, authenticated;
@@ -34,7 +34,7 @@ revoke execute on function public.enforce_analysis_limit() from public, anon, au
 revoke execute on function public.protect_plan_changes() from public, anon, authenticated;
 
 grant execute on function public.increment_credits(uuid, integer) to service_role;
-grant execute on function public.match_brand_knowledge(vector, uuid, integer, text) to service_role;
+grant execute on function public.match_brand_knowledge(public.vector, uuid, integer, text) to service_role;
 grant execute on function public.increment_guest_limit(text) to service_role;
 grant execute on function public.register_otp_attempt(text) to service_role;
 grant execute on function public.cleanup_expired_otps() to service_role;
