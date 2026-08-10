@@ -3,6 +3,21 @@ import App from "./App.tsx";
 import "./index.css";
 import { LocaleProvider } from './lib/locale';
 import { ThemeProvider } from 'next-themes';
+import { supabase } from './lib/supabase';
+
+// Belt-and-suspenders session refresh: supabase-js already auto-refreshes
+// the access token on a timer, but that timer is paused while the tab is
+// hidden/frozen (mobile browsers routinely discard background tabs for
+// hours). Without this, a user who reopens a long-dormant tab can hit the
+// first API call with an already-expired token before the timer catches up,
+// which looks exactly like "I got logged out for no reason". getSession()
+// transparently refreshes if the stored token is stale, so this is a no-op
+// most of the time and cheap either way.
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    supabase.auth.getSession();
+  }
+});
 
 // Self-XSS protection
 if (typeof console !== 'undefined') {

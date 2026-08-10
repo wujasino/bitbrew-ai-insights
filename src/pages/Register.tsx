@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useMemo, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -172,6 +172,8 @@ const SuccessScreen = ({ email }: { email: string }) => {
 
 const Register = () => {
   const { t } = useTranslation();
+  const [searchParams] = useSearchParams();
+  const referralCode = searchParams.get('ref');
 
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
@@ -201,7 +203,7 @@ const Register = () => {
     if (password !== confirm) { setError(t('passwords_no_match')); return; }
     setLoading(true);
     try {
-      await registerUser(email, password);
+      await registerUser(email, password, referralCode || undefined);
       setSuccess(true);
     } catch (err: any) {
       setError(err.message || 'Registration error');

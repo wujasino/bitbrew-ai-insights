@@ -6,8 +6,12 @@ export type AuthUser = {
   name?: string;
 };
 
-export async function registerUser(email: string, password: string) {
-  const { data, error } = await supabase.auth.signUp({ email, password });
+export async function registerUser(email: string, password: string, referralCode?: string) {
+  // referral_code lands in raw_user_meta_data, which handle_new_user() reads
+  // to record the referral atomically at account-creation time — see
+  // supabase/migrations/20240117_referrals.sql.
+  const options = referralCode ? { data: { referral_code: referralCode } } : undefined;
+  const { data, error } = await supabase.auth.signUp({ email, password, options });
   if (error) throw error;
   return data;
 }
