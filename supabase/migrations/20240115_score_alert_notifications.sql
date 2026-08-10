@@ -1,18 +1,13 @@
 -- notifications: in-app alerts, written by netlify/functions/check-score-alerts.js
 -- (the scheduled function) via the service role. The bell in AppNavbar
 -- (avatar-notifications.tsx) reads this directly.
-create table if not exists notifications (
-  id          uuid primary key default gen_random_uuid(),
-  user_id     uuid        not null references auth.users(id) on delete cascade,
-  created_at  timestamptz not null default now(),
-  read_at     timestamptz,
-  type        text        not null default 'score_alert' check (type in ('score_alert')),
-  title       text        not null,
-  body        text        not null,
-  brand_name  text,
-  metric      text        check (metric in ('sentiment', 'visibility', 'mentions')),
-  data        jsonb
-);
+--
+-- The `notifications` table itself is NOT created here — it already exists
+-- (created manually in Supabase). Before running this, verify it has these
+-- columns: id uuid pk, user_id uuid references auth.users(id), created_at
+-- timestamptz, read_at timestamptz, type text, title text, body text,
+-- brand_name text, metric text, data jsonb. This migration only adds the
+-- index, RLS policies, and the brand_monitors column.
 
 create index if not exists notifications_user_id_created_at_idx
   on notifications(user_id, created_at desc);
@@ -22,11 +17,13 @@ create index if not exists notifications_user_id_created_at_idx
 -- check-score-alerts.js, so no insert policy is needed for regular users.
 alter table notifications enable row level security;
 
+drop policy if exists "User can view their own notifications" on notifications;
 create policy "User can view their own notifications" on notifications
   for select
   to authenticated
   using (user_id = auth.uid());
 
+drop policy if exists "User can mark their own notifications read" on notifications;
 create policy "User can mark their own notifications read" on notifications
   for update
   to authenticated
