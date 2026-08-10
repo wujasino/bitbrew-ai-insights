@@ -12,6 +12,10 @@ export const SEO_CONFIG: Record<string, SeoConfig> = {
     title: 'Presora — AI Brand Visibility Scanner | ChatGPT, Claude, Gemini',
     description: 'Presora checks whether ChatGPT, Claude and Gemini recommend your brand — or your competitors. Get your AI visibility score in 30 seconds. Built for agencies, brands and freelancers.',
   },
+  '/about': {
+    title: 'About Presora | AI Brand Visibility Scanner',
+    description: 'Presora is a SaaS tool, founded in 2024, that measures how ChatGPT, Claude, Gemini and other AI models perceive a brand across 5 dimensions: authority, sentiment, accuracy, mentions and recency.',
+  },
   '/pricing': {
     title: 'Pricing | Presora',
     description: 'Compare Presora plans — Free, Solo and Growth. Weekly AI visibility monitoring, competitor comparison, API access and alerts across ChatGPT, Claude and Gemini.',

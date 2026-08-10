@@ -23,6 +23,8 @@ This category of work is sometimes called GEO (Generative Engine Optimization) o
 
 ## Company
 
+- [About](https://www.presora.app/about): full company and product facts.
+- Founder: Patryk Rybacki.
 - Contact: contact.presora@gmail.com
 - [Terms of service](https://www.presora.app/regulamin)
 - [Privacy policy](https://www.presora.app/polityka-prywatnosci)
