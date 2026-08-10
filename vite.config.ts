@@ -78,6 +78,16 @@ export default defineConfig(({ mode }) => ({
           if (id.includes('node_modules/react-dom') || id.includes('node_modules/react-router-dom')) return 'vendor-react';
           if (/node_modules\/react\//.test(id)) return 'vendor-react';
           if (id.includes('node_modules/lucide-react')) return 'vendor-icons';
+          // three.js + the force-graph stack it powers are the bulk of
+          // AutomationGraph3D's ~1.3MB chunk. That chunk is already lazy
+          // (route-split, and only fetched once a user clicks Automations'
+          // "Preview" tab) so this split doesn't shrink first load — it
+          // means a future code change to AutomationGraph3D.tsx itself
+          // doesn't force re-downloading three.js too, since it stays
+          // cached separately across deploys.
+          if (id.includes('node_modules/three') || id.includes('node_modules/3d-force-graph')
+            || id.includes('node_modules/react-force-graph-3d') || id.includes('node_modules/d3-force-3d')
+            || id.includes('node_modules/react-kapsule')) return 'vendor-three';
         },
       },
       treeshake: {
