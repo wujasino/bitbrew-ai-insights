@@ -3,6 +3,7 @@ import { Github, Twitter, Linkedin } from 'lucide-react';
 import { Wordmark } from '@/components/Wordmark';
 
 const LINKS = [
+  { label: 'About', to: '/about' },
   { label: 'Dashboard', to: '/dashboard' },
   { label: 'Pricing', to: '/pricing' },
   { label: 'API Docs', to: '/docs/api' },
