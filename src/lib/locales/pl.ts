@@ -268,6 +268,8 @@ const dict: Record<string, string> = {
     sub_status_active: 'Aktywna',
     sub_status_paused: 'Wstrzymana',
     sub_status_cancelled: 'Anulowana',
+    sub_status_inactive: 'Brak aktywnej subskrypcji',
+    sub_status_past_due: 'Płatność nieudana',
     upgrade_to_unlock: 'Ulepsz plan, aby odblokować',
     upgrade_cta: 'Zobacz plany',
     tier_solo_desc: 'Dla indie founderów i samodzielnych marketerów monitorujących swoją markę.',

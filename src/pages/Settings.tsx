@@ -87,7 +87,7 @@ export default function Settings() {
   // Billing / subscription — synced from `profiles` (kept up to date by
   // stripe-webhook.js) and mutated only through manage-subscription.js,
   // which is the one place that actually calls the Stripe API.
-  const [subStatus, setSubStatus] = useState<'active' | 'paused' | 'cancelled' | 'inactive' | 'past_due'>('inactive');
+  const [subStatus, setSubStatus] = useState<'active' | 'paused' | 'canceled' | 'inactive' | 'past_due'>('inactive');
   const [currentPeriodEnd, setCurrentPeriodEnd] = useState<string | null>(null);
   const [subHistory, setSubHistory] = useState<Array<{ status: typeof subStatus; label: string; timestamp: string }>>([]);
   const [exportFormat, setExportFormat] = useState<'csv' | 'json'>('csv');
@@ -300,12 +300,12 @@ export default function Settings() {
   const SUB_DOT = {
     active: 'bg-emerald-400 ring-emerald-400/30',
     paused: 'bg-amber-400 ring-amber-400/30',
-    cancelled: 'bg-red-500 ring-red-500/30',
+    canceled: 'bg-red-500 ring-red-500/30',
     inactive: 'bg-muted-foreground/40 ring-muted-foreground/10',
     past_due: 'bg-red-500 ring-red-500/30',
   } as const;
   const SUB_STATUS_LABEL = {
-    active: 'Active', paused: 'Paused', cancelled: 'Cancels at period end',
+    active: 'Active', paused: 'Paused', canceled: 'Cancels at period end',
     inactive: 'No active subscription', past_due: 'Payment failed — update your card',
   } as const;
 
@@ -326,7 +326,7 @@ export default function Settings() {
         return;
       }
 
-      const nextStatus: typeof subStatus = data.paused ? 'paused' : data.cancel_at_period_end ? 'cancelled' : data.status;
+      const nextStatus: typeof subStatus = data.paused ? 'paused' : data.cancel_at_period_end ? 'canceled' : data.status;
       setSubStatus(nextStatus);
       setCurrentPeriodEnd(data.current_period_end ?? null);
 
@@ -1150,7 +1150,7 @@ export default function Settings() {
                       <div>
                         <p className="text-sm font-medium text-foreground">{SUB_STATUS_LABEL[subStatus]}</p>
                         <p className="text-xs text-muted-foreground mt-0.5">
-                          {subStatus === 'cancelled' && currentPeriodEnd
+                          {subStatus === 'canceled' && currentPeriodEnd
                             ? `Access continues until ${new Date(currentPeriodEnd).toLocaleDateString()}.`
                             : 'Pause or cancel anytime — no contracts.'}
                         </p>
@@ -1172,7 +1172,7 @@ export default function Settings() {
                           <Button size="sm" variant="outline" disabled={subActionLoading} onClick={() => updateSub('cancel')}>Cancel</Button>
                         </>
                       )}
-                      {subStatus === 'cancelled' && (
+                      {subStatus === 'canceled' && (
                         <Button size="sm" disabled={subActionLoading} onClick={() => updateSub('resume')}>Resume</Button>
                       )}
                       {subStatus === 'inactive' && (
