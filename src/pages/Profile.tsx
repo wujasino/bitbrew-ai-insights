@@ -19,12 +19,20 @@ interface Analysis {
   created_at: string;
 }
 
-const SUB_STATUS_KEY = { active: 'sub_status_active', paused: 'sub_status_paused', cancelled: 'sub_status_cancelled' } as const;
+// Keys match profiles.subscription_status exactly (see stripe-webhook.js's
+// profileFieldsFromSubscription) — 'canceled', single L, not 'cancelled'.
+const SUB_STATUS_KEY = {
+  active: 'sub_status_active', paused: 'sub_status_paused', canceled: 'sub_status_cancelled',
+  inactive: 'sub_status_inactive', past_due: 'sub_status_past_due',
+} as const;
 const SUB_DOT = {
   active: 'bg-emerald-400 ring-emerald-400/30',
   paused: 'bg-amber-400 ring-amber-400/30',
-  cancelled: 'bg-red-500 ring-red-500/30',
+  canceled: 'bg-red-500 ring-red-500/30',
+  inactive: 'bg-muted-foreground/40 ring-muted-foreground/10',
+  past_due: 'bg-red-500 ring-red-500/30',
 } as const;
+type SubStatus = keyof typeof SUB_DOT;
 
 /* Locale code → toLocaleDateString tag */
 const LOCALE_DATE_TAG: Record<string, string> = {
@@ -48,7 +56,7 @@ const Profile = () => {
   const [analyses, setAnalyses] = useState<Analysis[]>([]);
   const [history, setHistory] = useState<Analysis[]>([]);
   const [prevScores, setPrevScores] = useState<Record<string, number>>({});
-  const [subStatus] = useState<'active' | 'paused' | 'cancelled'>('active');
+  const [subStatus, setSubStatus] = useState<SubStatus>('inactive');
 
   const [showPricing, setShowPricing] = useState(false);
 
@@ -72,8 +80,11 @@ const Profile = () => {
       setEmail(user.email ?? '');
       setAvatarUrl(user.user_metadata?.avatar_url ?? null);
 
-      const { data: profile } = await supabase.from('profiles').select('avatar_url').eq('id', user.id).single();
+      const { data: profile } = await supabase.from('profiles').select('avatar_url, subscription_status').eq('id', user.id).single();
       if (profile?.avatar_url) setAvatarUrl(profile.avatar_url);
+      if (profile?.subscription_status && profile.subscription_status in SUB_DOT) {
+        setSubStatus(profile.subscription_status as SubStatus);
+      }
 
       /* Fetch all analyses to compute per-brand trend */
       const { data } = await supabase
