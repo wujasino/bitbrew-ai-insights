@@ -5,6 +5,7 @@ import {
   Search, Bot, FileText, ArrowRight, ArrowUpRight, ArrowUp, ArrowDown,
   Lock, Sparkles, CalendarClock, ShieldCheck, Smile, Target, AtSign, Clock,
 } from 'lucide-react';
+import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 import { CreditsUsageWidget } from '@/components/CreditsUsageWidget';
@@ -36,6 +37,55 @@ const DIMENSIONS: { key: keyof Pick<Analysis, 'authority' | 'sentiment' | 'accur
 ];
 
 const barColor = (s: number) => (s >= 70 ? 'bg-emerald-500' : s >= 50 ? 'bg-amber-500' : 'bg-red-500');
+
+// Same score → status band thresholds as ResultsBreakdown.tsx, kept in sync
+// so "Strong"/"Needs work"/"Critical" mean the same thing everywhere.
+type Band = 'strong' | 'moderate' | 'critical';
+const bandOf = (score: number): Band => (score >= 70 ? 'strong' : score >= 50 ? 'moderate' : 'critical');
+const BAND_COLOR: Record<Band, string> = { strong: '#10b981', moderate: '#f59e0b', critical: '#ef4444' };
+const BAND_LABEL: Record<Band, string> = { strong: 'Strong', moderate: 'Needs work', critical: 'Critical' };
+
+/* ── Visibility health ring — at-a-glance donut of how many of the 5
+   dimensions are Strong/Needs work/Critical, with the overall score in
+   the center. Complements the linear dimension strip in the score card. */
+const HealthRing = ({ analysis }: { analysis: Analysis }) => {
+  const counts = useMemo(() => {
+    const c: Record<Band, number> = { strong: 0, moderate: 0, critical: 0 };
+    DIMENSIONS.forEach(({ key }) => { c[bandOf(analysis[key])] += 1; });
+    return c;
+  }, [analysis]);
+  const data = (['strong', 'moderate', 'critical'] as Band[])
+    .filter(b => counts[b] > 0)
+    .map(b => ({ band: b, value: counts[b] }));
+
+  return (
+    <div className="flex items-center gap-3 rounded-xl border border-[hsl(var(--glass-border))] bg-card/60 px-3 py-2.5">
+      <div className="relative w-11 h-11 shrink-0">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie data={data} dataKey="value" cx="50%" cy="50%" innerRadius={14} outerRadius={20} paddingAngle={3} stroke="none">
+              {data.map(d => <Cell key={d.band} fill={BAND_COLOR[d.band]} />)}
+            </Pie>
+          </PieChart>
+        </ResponsiveContainer>
+        <span className="absolute inset-0 flex items-center justify-center text-[10px] font-data font-semibold text-foreground">
+          {analysis.trust_score}
+        </span>
+      </div>
+      <div className="text-xs leading-tight">
+        <p className="text-muted-foreground mb-1">Dimension health</p>
+        <div className="flex items-center gap-2.5">
+          {(['strong', 'moderate', 'critical'] as Band[]).map(b => (
+            <span key={b} className="inline-flex items-center gap-1 text-muted-foreground" title={BAND_LABEL[b]}>
+              <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: BAND_COLOR[b] }} />
+              {counts[b]}
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 /* ── 5-dimension mini breakdown — fills the score card with the data the
    analyses row already has, instead of leaving it visually empty next to
@@ -149,7 +199,10 @@ const HomeHub = () => {
             <h1 className="text-2xl font-display text-foreground">Home</h1>
             <p className="text-sm text-muted-foreground mt-0.5">Your AI visibility, at a glance.</p>
           </div>
-          <CreditsUsageWidget />
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-start gap-3">
+            {latest && <HealthRing analysis={latest} />}
+            <CreditsUsageWidget />
+          </div>
         </div>
 
         {/* ── State: loading / empty / populated ──────────────────── */}
