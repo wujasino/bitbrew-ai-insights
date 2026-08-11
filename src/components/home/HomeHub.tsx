@@ -3,8 +3,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Search, Bot, FileText, ArrowRight, ArrowUpRight, ArrowUp, ArrowDown,
-  Lock, Sparkles, CalendarClock,
+  Lock, Sparkles, CalendarClock, ShieldCheck, Smile, Target, AtSign, Clock,
 } from 'lucide-react';
+import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 import { CreditsUsageWidget } from '@/components/CreditsUsageWidget';
@@ -22,10 +23,93 @@ interface Analysis {
   mentions: number;
   accuracy: number;
   created_at: string;
+  sources: { model: string; sentiment: string; association: string; confidence: number }[] | null;
 }
 
 const formatDate = (iso: string) =>
   new Date(iso).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' });
+
+const DIMENSIONS: { key: keyof Pick<Analysis, 'authority' | 'sentiment' | 'accuracy' | 'mentions' | 'recency'>; label: string; Icon: typeof ShieldCheck }[] = [
+  { key: 'authority', label: 'Authority', Icon: ShieldCheck },
+  { key: 'sentiment', label: 'Sentiment', Icon: Smile },
+  { key: 'accuracy', label: 'Accuracy', Icon: Target },
+  { key: 'mentions', label: 'Mentions', Icon: AtSign },
+  { key: 'recency', label: 'Recency', Icon: Clock },
+];
+
+const barColor = (s: number) => (s >= 70 ? 'bg-emerald-500' : s >= 50 ? 'bg-amber-500' : 'bg-red-500');
+
+// Same score → status band thresholds as ResultsBreakdown.tsx, kept in sync
+// so "Strong"/"Needs work"/"Critical" mean the same thing everywhere.
+type Band = 'strong' | 'moderate' | 'critical';
+const bandOf = (score: number): Band => (score >= 70 ? 'strong' : score >= 50 ? 'moderate' : 'critical');
+const BAND_COLOR: Record<Band, string> = { strong: '#10b981', moderate: '#f59e0b', critical: '#ef4444' };
+const BAND_LABEL: Record<Band, string> = { strong: 'Strong', moderate: 'Needs work', critical: 'Critical' };
+
+/* ── Visibility health ring — at-a-glance donut of how many of the 5
+   dimensions are Strong/Needs work/Critical, with the overall score in
+   the center. Complements the linear dimension strip in the score card. */
+const HealthRing = ({ analysis }: { analysis: Analysis }) => {
+  const counts = useMemo(() => {
+    const c: Record<Band, number> = { strong: 0, moderate: 0, critical: 0 };
+    DIMENSIONS.forEach(({ key }) => { c[bandOf(analysis[key])] += 1; });
+    return c;
+  }, [analysis]);
+  const data = (['strong', 'moderate', 'critical'] as Band[])
+    .filter(b => counts[b] > 0)
+    .map(b => ({ band: b, value: counts[b] }));
+
+  return (
+    <div className="flex items-center gap-3 rounded-xl border border-[hsl(var(--glass-border))] bg-card/60 px-3 py-2.5">
+      <div className="relative w-11 h-11 shrink-0">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie data={data} dataKey="value" cx="50%" cy="50%" innerRadius={14} outerRadius={20} paddingAngle={3} stroke="none">
+              {data.map(d => <Cell key={d.band} fill={BAND_COLOR[d.band]} />)}
+            </Pie>
+          </PieChart>
+        </ResponsiveContainer>
+        <span className="absolute inset-0 flex items-center justify-center text-[10px] font-data font-semibold text-foreground">
+          {analysis.trust_score}
+        </span>
+      </div>
+      <div className="text-xs leading-tight">
+        <p className="text-muted-foreground mb-1">Dimension health</p>
+        <div className="flex items-center gap-2.5">
+          {(['strong', 'moderate', 'critical'] as Band[]).map(b => (
+            <span key={b} className="inline-flex items-center gap-1 text-muted-foreground" title={BAND_LABEL[b]}>
+              <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: BAND_COLOR[b] }} />
+              {counts[b]}
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ── 5-dimension mini breakdown — fills the score card with the data the
+   analyses row already has, instead of leaving it visually empty next to
+   the taller "By AI model" card. ────────────────────────────────────── */
+const DimensionStrip = ({ analysis }: { analysis: Analysis }) => (
+  <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mt-5 pt-5 border-t border-border">
+    {DIMENSIONS.map(({ key, label, Icon }) => {
+      const v = Math.round(analysis[key]);
+      return (
+        <div key={key}>
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <Icon className="w-3 h-3 text-muted-foreground shrink-0" />
+            <span className="text-[11px] text-muted-foreground truncate">{label}</span>
+          </div>
+          <div className="h-1 w-full rounded-full bg-muted overflow-hidden mb-1">
+            <div className={cn('h-full rounded-full', barColor(v))} style={{ width: `${v}%` }} />
+          </div>
+          <span className="text-xs font-data font-semibold tabular-nums text-foreground">{v}%</span>
+        </div>
+      );
+    })}
+  </div>
+);
 
 const scoreColor = (s: number) =>
   s >= 75 ? 'text-emerald-600 dark:text-emerald-400'
@@ -83,7 +167,7 @@ const HomeHub = () => {
       if (!user) { if (active) setLoading(false); return; }
       const { data } = await supabase
         .from('analyses')
-        .select('id, brand_name, trust_score, authority, sentiment, recency, mentions, accuracy, created_at')
+        .select('id, brand_name, trust_score, authority, sentiment, recency, mentions, accuracy, created_at, sources')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(10);
@@ -116,7 +200,10 @@ const HomeHub = () => {
             <h1 className="text-2xl font-display text-foreground">Home</h1>
             <p className="text-sm text-muted-foreground mt-0.5">Your AI visibility, at a glance.</p>
           </div>
-          <CreditsUsageWidget />
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-start gap-3">
+            {latest && <HealthRing analysis={latest} />}
+            <CreditsUsageWidget />
+          </div>
         </div>
 
         {/* ── State: loading / empty / populated ──────────────────── */}
@@ -152,6 +239,9 @@ const HomeHub = () => {
                 <div className="mb-1"><Delta value={delta} /></div>
                 <div className="ml-auto mb-0.5"><Sparkline values={sparkValues} /></div>
               </div>
+
+              <DimensionStrip analysis={latest} />
+
               <Link
                 to={`/brand-visibility?id=${latest.id}`}
                 className="mt-5 inline-flex items-center gap-1 text-sm text-primary font-medium hover:gap-1.5 transition-all w-fit"
@@ -167,15 +257,20 @@ const HomeHub = () => {
             >
               <p className="text-xs text-muted-foreground uppercase tracking-wider mb-4">By AI model</p>
               <div className="space-y-2.5">
-                {visibleModels.map((m, i) => {
-                  const conf = Math.max(20, Math.min(99, [latest.authority, latest.accuracy, latest.mentions][i % 3] ?? latest.trust_score));
+                {visibleModels.map((m) => {
+                  // Real per-model confidence from the scan, when this report has it
+                  // (sources wasn't persisted before this was added — older rows are
+                  // null). Never fabricate a number for a model that wasn't actually
+                  // queried; show "–" instead of a misleading fake bar.
+                  const source = latest.sources?.find(s => s.model === m.label);
+                  const conf = source ? Math.max(0, Math.min(100, Math.round(source.confidence))) : null;
                   return (
                     <div key={m.id} className="flex items-center gap-3">
                       <span className="text-sm text-foreground w-20 shrink-0">{m.label}</span>
                       <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
-                        <div className="h-full rounded-full bg-primary/70" style={{ width: `${conf}%` }} />
+                        {conf !== null && <div className="h-full rounded-full bg-primary/70" style={{ width: `${conf}%` }} />}
                       </div>
-                      <span className="text-xs text-muted-foreground w-7 text-right tabular-nums">{conf}</span>
+                      <span className="text-xs text-muted-foreground w-7 text-right tabular-nums">{conf !== null ? conf : '–'}</span>
                     </div>
                   );
                 })}
