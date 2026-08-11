@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Search, Bot, FileText, ArrowRight, ArrowUpRight, ArrowUp, ArrowDown,
-  Lock, Sparkles, CalendarClock,
+  Lock, Sparkles, CalendarClock, ShieldCheck, Smile, Target, AtSign, Clock,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
@@ -26,6 +26,39 @@ interface Analysis {
 
 const formatDate = (iso: string) =>
   new Date(iso).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' });
+
+const DIMENSIONS: { key: keyof Pick<Analysis, 'authority' | 'sentiment' | 'accuracy' | 'mentions' | 'recency'>; label: string; Icon: typeof ShieldCheck }[] = [
+  { key: 'authority', label: 'Authority', Icon: ShieldCheck },
+  { key: 'sentiment', label: 'Sentiment', Icon: Smile },
+  { key: 'accuracy', label: 'Accuracy', Icon: Target },
+  { key: 'mentions', label: 'Mentions', Icon: AtSign },
+  { key: 'recency', label: 'Recency', Icon: Clock },
+];
+
+const barColor = (s: number) => (s >= 70 ? 'bg-emerald-500' : s >= 50 ? 'bg-amber-500' : 'bg-red-500');
+
+/* ── 5-dimension mini breakdown — fills the score card with the data the
+   analyses row already has, instead of leaving it visually empty next to
+   the taller "By AI model" card. ────────────────────────────────────── */
+const DimensionStrip = ({ analysis }: { analysis: Analysis }) => (
+  <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mt-5 pt-5 border-t border-border">
+    {DIMENSIONS.map(({ key, label, Icon }) => {
+      const v = Math.round(analysis[key]);
+      return (
+        <div key={key}>
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <Icon className="w-3 h-3 text-muted-foreground shrink-0" />
+            <span className="text-[11px] text-muted-foreground truncate">{label}</span>
+          </div>
+          <div className="h-1 w-full rounded-full bg-muted overflow-hidden mb-1">
+            <div className={cn('h-full rounded-full', barColor(v))} style={{ width: `${v}%` }} />
+          </div>
+          <span className="text-xs font-data font-semibold tabular-nums text-foreground">{v}%</span>
+        </div>
+      );
+    })}
+  </div>
+);
 
 const scoreColor = (s: number) =>
   s >= 75 ? 'text-emerald-600 dark:text-emerald-400'
@@ -152,6 +185,9 @@ const HomeHub = () => {
                 <div className="mb-1"><Delta value={delta} /></div>
                 <div className="ml-auto mb-0.5"><Sparkline values={sparkValues} /></div>
               </div>
+
+              <DimensionStrip analysis={latest} />
+
               <Link
                 to={`/brand-visibility?id=${latest.id}`}
                 className="mt-5 inline-flex items-center gap-1 text-sm text-primary font-medium hover:gap-1.5 transition-all w-fit"
