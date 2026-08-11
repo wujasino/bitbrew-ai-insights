@@ -81,7 +81,7 @@ const deterministicResult = (seedStr) => {
     authority, sentiment, recency, mentions, accuracy, trustScore,
     sources: [
       { model: 'GPT-4o', sentiment: 'Positive', association: `${seed} product`, confidence: Math.round((authority + 5) % 100) },
-      { model: 'Claude-sonnet-4-5', sentiment: 'Neutral', association: `${seed} brand`, confidence: Math.round((accuracy + 10) % 100) },
+      { model: 'Claude', sentiment: 'Neutral', association: `${seed} brand`, confidence: Math.round((accuracy + 10) % 100) },
       { model: 'Gemini', sentiment: 'Positive', association: `${seed} mentions`, confidence: Math.round((mentions + 2) % 100) }
     ]
   };

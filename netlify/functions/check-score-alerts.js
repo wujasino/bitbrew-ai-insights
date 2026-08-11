@@ -109,6 +109,7 @@ export const handler = async () => {
         recency: result.recency,
         mentions: result.mentions,
         accuracy: result.accuracy,
+        sources: result.sources,
       });
 
       const column = METRIC_COLUMN[monitor.alert_metric];

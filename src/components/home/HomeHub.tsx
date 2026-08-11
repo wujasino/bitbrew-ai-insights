@@ -23,6 +23,7 @@ interface Analysis {
   mentions: number;
   accuracy: number;
   created_at: string;
+  sources: { model: string; sentiment: string; association: string; confidence: number }[] | null;
 }
 
 const formatDate = (iso: string) =>
@@ -166,7 +167,7 @@ const HomeHub = () => {
       if (!user) { if (active) setLoading(false); return; }
       const { data } = await supabase
         .from('analyses')
-        .select('id, brand_name, trust_score, authority, sentiment, recency, mentions, accuracy, created_at')
+        .select('id, brand_name, trust_score, authority, sentiment, recency, mentions, accuracy, created_at, sources')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(10);
@@ -256,15 +257,20 @@ const HomeHub = () => {
             >
               <p className="text-xs text-muted-foreground uppercase tracking-wider mb-4">By AI model</p>
               <div className="space-y-2.5">
-                {visibleModels.map((m, i) => {
-                  const conf = Math.max(20, Math.min(99, [latest.authority, latest.accuracy, latest.mentions][i % 3] ?? latest.trust_score));
+                {visibleModels.map((m) => {
+                  // Real per-model confidence from the scan, when this report has it
+                  // (sources wasn't persisted before this was added — older rows are
+                  // null). Never fabricate a number for a model that wasn't actually
+                  // queried; show "–" instead of a misleading fake bar.
+                  const source = latest.sources?.find(s => s.model === m.label);
+                  const conf = source ? Math.max(0, Math.min(100, Math.round(source.confidence))) : null;
                   return (
                     <div key={m.id} className="flex items-center gap-3">
                       <span className="text-sm text-foreground w-20 shrink-0">{m.label}</span>
                       <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
-                        <div className="h-full rounded-full bg-primary/70" style={{ width: `${conf}%` }} />
+                        {conf !== null && <div className="h-full rounded-full bg-primary/70" style={{ width: `${conf}%` }} />}
                       </div>
-                      <span className="text-xs text-muted-foreground w-7 text-right tabular-nums">{conf}</span>
+                      <span className="text-xs text-muted-foreground w-7 text-right tabular-nums">{conf !== null ? conf : '–'}</span>
                     </div>
                   );
                 })}

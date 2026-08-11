@@ -268,7 +268,8 @@ export function useBrewing() {
             sentiment: analysisResult.dimensions.sentiment,
             recency: analysisResult.dimensions.recency,
             mentions: analysisResult.dimensions.mentions,
-            accuracy: analysisResult.dimensions.accuracy
+            accuracy: analysisResult.dimensions.accuracy,
+            sources: analysisResult.sources
           });
 
           if (dbError) {
