@@ -17,9 +17,20 @@ if (!globalThis.WebSocket) {
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
-  auth: { autoRefreshToken: false, persistSession: false },
-});
+// createClient() throws synchronously on a missing/malformed URL or key.
+// That happens at module load, before the handler (and its try/catch) ever
+// runs — Netlify then can't even invoke the function and returns a bare 502,
+// which is indistinguishable from the exact bug this file's try/catch below
+// was meant to fix. Guard it so a bad/missing env var surfaces as clean JSON
+// instead of a require-time crash.
+let supabaseAdmin;
+try {
+  supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+} catch (err) {
+  console.error('newsletter-preference: Supabase client init failed:', err.message);
+}
 
 const ALLOWED_ORIGINS = new Set(['https://presora.app', 'https://www.presora.app']);
 
@@ -49,6 +60,10 @@ exports.handler = async (event) => {
   // page load (GET), so that failure mode was hit far more than a rare edge
   // case would suggest.
   try {
+    if (!supabaseAdmin) {
+      return { statusCode: 500, headers, body: JSON.stringify({ error: 'Server misconfiguration' }) };
+    }
+
     const authHeader = event.headers.authorization || event.headers.Authorization || '';
     const token = authHeader.replace(/^Bearer\s+/i, '');
     if (!token) {
