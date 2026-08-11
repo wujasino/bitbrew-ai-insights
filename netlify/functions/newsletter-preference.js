@@ -41,58 +41,70 @@ exports.handler = async (event) => {
     return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
 
-  const authHeader = event.headers.authorization || event.headers.Authorization || '';
-  const token = authHeader.replace(/^Bearer\s+/i, '');
-  if (!token) {
-    return { statusCode: 401, headers, body: JSON.stringify({ error: 'Unauthorized' }) };
-  }
+  // Unlike its sibling functions (newsletter.js, contact.js), this handler
+  // previously had no top-level try/catch — any unexpected exception (e.g.
+  // supabaseAdmin.auth.getUser() rejecting on a transient network error)
+  // propagated as an unhandled rejection, which Netlify surfaces as a bare
+  // 502 instead of a JSON error response. Settings.tsx fires this on every
+  // page load (GET), so that failure mode was hit far more than a rare edge
+  // case would suggest.
+  try {
+    const authHeader = event.headers.authorization || event.headers.Authorization || '';
+    const token = authHeader.replace(/^Bearer\s+/i, '');
+    if (!token) {
+      return { statusCode: 401, headers, body: JSON.stringify({ error: 'Unauthorized' }) };
+    }
 
-  const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
-  if (authError || !user?.email) {
-    return { statusCode: 401, headers, body: JSON.stringify({ error: 'Unauthorized' }) };
-  }
-  const email = user.email.toLowerCase();
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+    if (authError || !user?.email) {
+      return { statusCode: 401, headers, body: JSON.stringify({ error: 'Unauthorized' }) };
+    }
+    const email = user.email.toLowerCase();
 
-  if (event.httpMethod === 'GET') {
-    const { data, error } = await supabaseAdmin
+    if (event.httpMethod === 'GET') {
+      const { data, error } = await supabaseAdmin
+        .from('newsletter_subscribers')
+        .select('unsubscribed_at')
+        .eq('email', email)
+        .maybeSingle();
+
+      if (error) {
+        console.error('newsletter-preference GET error:', error.message);
+        return { statusCode: 500, headers, body: JSON.stringify({ error: 'Database error' }) };
+      }
+      return { statusCode: 200, headers, body: JSON.stringify({ subscribed: !!data && !data.unsubscribed_at }) };
+    }
+
+    // POST
+    let subscribed;
+    try {
+      ({ subscribed } = JSON.parse(event.body || '{}'));
+    } catch {
+      return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid JSON' }) };
+    }
+    if (typeof subscribed !== 'boolean') {
+      return { statusCode: 400, headers, body: JSON.stringify({ error: '"subscribed" must be a boolean' }) };
+    }
+
+    const { error } = await supabaseAdmin
       .from('newsletter_subscribers')
-      .select('unsubscribed_at')
-      .eq('email', email)
-      .maybeSingle();
+      .upsert(
+        {
+          email,
+          subscribed_at: new Date().toISOString(),
+          unsubscribed_at: subscribed ? null : new Date().toISOString(),
+        },
+        { onConflict: 'email' }
+      );
 
     if (error) {
-      console.error('newsletter-preference GET error');
+      console.error('newsletter-preference POST error:', error.message);
       return { statusCode: 500, headers, body: JSON.stringify({ error: 'Database error' }) };
     }
-    return { statusCode: 200, headers, body: JSON.stringify({ subscribed: !!data && !data.unsubscribed_at }) };
-  }
 
-  // POST
-  let subscribed;
-  try {
-    ({ subscribed } = JSON.parse(event.body || '{}'));
-  } catch {
-    return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid JSON' }) };
+    return { statusCode: 200, headers, body: JSON.stringify({ subscribed }) };
+  } catch (err) {
+    console.error('newsletter-preference handler error:', err.message);
+    return { statusCode: 500, headers, body: JSON.stringify({ error: 'Something went wrong. Please try again.' }) };
   }
-  if (typeof subscribed !== 'boolean') {
-    return { statusCode: 400, headers, body: JSON.stringify({ error: '"subscribed" must be a boolean' }) };
-  }
-
-  const { error } = await supabaseAdmin
-    .from('newsletter_subscribers')
-    .upsert(
-      {
-        email,
-        subscribed_at: new Date().toISOString(),
-        unsubscribed_at: subscribed ? null : new Date().toISOString(),
-      },
-      { onConflict: 'email' }
-    );
-
-  if (error) {
-    console.error('newsletter-preference POST error');
-    return { statusCode: 500, headers, body: JSON.stringify({ error: 'Database error' }) };
-  }
-
-  return { statusCode: 200, headers, body: JSON.stringify({ subscribed }) };
 };
