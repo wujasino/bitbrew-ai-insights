@@ -321,10 +321,11 @@ const Register = () => {
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Email */}
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('email')}</Label>
+              <Label htmlFor="register-email" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('email')}</Label>
               <div className="relative">
                 <Mail className="w-4 h-4 text-muted-foreground/60 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <Input
+                  id="register-email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -338,10 +339,11 @@ const Register = () => {
 
             {/* Password */}
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('password')}</Label>
+              <Label htmlFor="register-password" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('password')}</Label>
               <div className="relative">
                 <Lock className="w-4 h-4 text-muted-foreground/60 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <Input
+                  id="register-password"
                   type={showPwd ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -391,10 +393,11 @@ const Register = () => {
 
             {/* Confirm */}
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('confirmPassword')}</Label>
+              <Label htmlFor="register-confirm-password" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('confirmPassword')}</Label>
               <div className="relative">
                 <Lock className="w-4 h-4 text-muted-foreground/60 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <Input
+                  id="register-confirm-password"
                   type={showCfm ? 'text' : 'password'}
                   value={confirm}
                   onChange={(e) => setConfirm(e.target.value)}

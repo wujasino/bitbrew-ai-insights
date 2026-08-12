@@ -23,4 +23,14 @@ export default tseslint.config(
       "@typescript-eslint/no-unused-vars": "off",
     },
   },
+  {
+    // Playwright test/fixture files, not React — the `react-hooks` rules
+    // misfire here because fixtures.ts calls Playwright's `use(...)`
+    // callback, which the rule mistakes for a React hook by name alone.
+    // Must come after the block above so this override wins.
+    files: ["e2e/**/*.ts"],
+    rules: {
+      "react-hooks/rules-of-hooks": "off",
+    },
+  },
 );
