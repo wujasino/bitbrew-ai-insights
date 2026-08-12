@@ -23,6 +23,8 @@ palette — see [Testing](#testing) below for the full breakdown.
 - **Full account layer** — email + Google OAuth sign-in, OTP password reset, recovery codes, avatars, newsletter preferences
 - **Billing** — Stripe checkout for monthly/yearly plans and credit packs, with webhook-driven plan sync
 - **6 UI languages** — EN, PL, DE, ES, FR, IT
+- **Public status page** — live health check of the app and Supabase Auth/DB reachability, no fabricated uptime numbers
+- **Contact page** — a real form (name, email, subject, message) backed by its own rate-limited serverless endpoint
 
 ## Tech stack
 
@@ -30,7 +32,7 @@ palette — see [Testing](#testing) below for the full breakdown.
 |-------|--------------|
 | Frontend | React 18, TypeScript, Vite, Tailwind CSS, shadcn/ui (Radix), React Router, TanStack Query |
 | Visualisation | Recharts, three.js / react-force-graph-3d, Framer Motion |
-| Backend | Node.js on Netlify serverless functions (18 endpoints) |
+| Backend | Node.js on Netlify serverless functions (23 endpoints) |
 | Data & Auth | Supabase — PostgreSQL, pgvector, Auth, Row-Level Security, Storage |
 | AI | Anthropic Claude (analysis + tool-calling assistant), Voyage AI embeddings, ElevenLabs TTS |
 | Payments | Stripe — checkout, customer portal, webhook-driven plan upgrades |
@@ -49,13 +51,14 @@ palette — see [Testing](#testing) below for the full breakdown.
 - **Cache strategy tuned per asset class** — immutable hashing for build output, revalidation for images, no-store for HTML
 - **11 versioned SQL migrations** covering schema, policies, triggers and storage buckets
 - **Shipped and debugged in production** across auth, serverless runtime limits, Stripe webhooks and third-party API failures
+- **Error monitoring & analytics ready, opt-in** — Sentry and Plausible are wired up but inert until `VITE_SENTRY_DSN` / `VITE_PLAUSIBLE_DOMAIN` are set, so nothing ships half-configured or points at a fake project
 
 ## Project structure
 
 ```
-netlify/functions/   18 serverless endpoints (analyze, chat, ingest-knowledge,
+netlify/functions/   23 serverless endpoints (analyze, chat, ingest-knowledge,
                      stripe-webhook, badge, tts, auth/OTP, newsletter, …)
-src/pages/           23 routes — Landing, Dashboard, Reports, Automations,
+src/pages/           25 routes — Landing, Dashboard, Reports, Automations,
                      Pricing, Developers, ApiDocs, Settings, auth flows
 src/lib/             Supabase client, auth, brand scoring, i18n + 6 locales
 src/components/      shadcn/ui-based component layer
@@ -84,6 +87,7 @@ Frontend-only (`npm run dev`, port 4000) works, but any route hitting `/.netlify
 | Auth | `VITE_GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` |
 | Email | `RESEND_API_KEY`, `RESEND_FROM`, `MAILCHIMP_API_KEY`, `MAILCHIMP_LIST_ID` |
 | Limits | `RATE_LIMIT_WINDOW_MS`, `MAX_REQUESTS_PER_WINDOW`, `MAX_REQUESTS_PER_DAY` |
+| Observability *(optional)* | `VITE_SENTRY_DSN` (error monitoring, off until set), `VITE_PLAUSIBLE_DOMAIN` (cookieless analytics, off until set) |
 
 ### Tests
 

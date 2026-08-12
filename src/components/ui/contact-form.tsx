@@ -104,10 +104,11 @@ export function ContactForm() {
             >
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  <Label htmlFor="contact-name" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Full name *
                   </Label>
                   <Input
+                    id="contact-name"
                     value={name}
                     onChange={e => setName(e.target.value)}
                     placeholder="John Smith"
@@ -118,10 +119,11 @@ export function ContactForm() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  <Label htmlFor="contact-email" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Email *
                   </Label>
                   <Input
+                    id="contact-email"
                     type="email"
                     value={email}
                     onChange={e => setEmail(e.target.value)}
@@ -133,10 +135,11 @@ export function ContactForm() {
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <Label htmlFor="contact-subject" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Subject
                 </Label>
                 <Input
+                  id="contact-subject"
                   value={subject}
                   onChange={e => setSubject(e.target.value)}
                   placeholder="Question about Enterprise plan..."
@@ -146,10 +149,11 @@ export function ContactForm() {
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <Label htmlFor="contact-message" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Message *
                 </Label>
                 <textarea
+                  id="contact-message"
                   value={message}
                   onChange={e => setMessage(e.target.value)}
                   placeholder="Describe your question or needs..."

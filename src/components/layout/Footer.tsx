@@ -7,6 +7,8 @@ const LINKS = [
   { label: 'Dashboard', to: '/dashboard' },
   { label: 'Pricing', to: '/pricing' },
   { label: 'API Docs', to: '/docs/api' },
+  { label: 'Contact', to: '/contact' },
+  { label: 'Status', to: '/status' },
   { label: 'Privacy Policy', to: '/polityka-prywatnosci' },
   { label: 'Terms of Service', to: '/regulamin' },
 ];

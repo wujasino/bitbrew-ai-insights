@@ -74,6 +74,7 @@ export default defineConfig(({ mode }) => ({
           if (id.includes('node_modules/framer-motion')) return 'vendor-motion';
           if (id.includes('node_modules/recharts') || id.includes('node_modules/d3-')) return 'vendor-charts';
           if (id.includes('node_modules/@supabase')) return 'vendor-supabase';
+          if (id.includes('node_modules/@sentry')) return 'vendor-sentry';
           if (id.includes('node_modules/@radix-ui')) return 'vendor-radix';
           if (id.includes('node_modules/react-dom') || id.includes('node_modules/react-router-dom')) return 'vendor-react';
           if (/node_modules\/react\//.test(id)) return 'vendor-react';
