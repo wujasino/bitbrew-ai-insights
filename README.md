@@ -3,8 +3,9 @@
 [Test runs →](https://github.com/wujasino/presora/actions)
 
 Automated test suite for [Presora](https://presora.app), a production SaaS that
-tracks brand visibility in AI-generated answers. Covers authentication, the core
-analysis flow, Stripe subscription checkout, and API contracts.
+tracks brand visibility in AI-generated answers. Covers authentication, the
+dashboard's real data, subscription state in Settings, and the global command
+palette — see [Testing](#testing) below for the full breakdown.
 
 **Stack:** Playwright · TypeScript · GitHub Actions
 
@@ -87,63 +88,59 @@ Frontend-only (`npm run dev`, port 4000) works, but any route hitting `/.netlify
 ### Tests
 
 ```bash
-npm test              # Vitest unit tests
-npx playwright test   # E2E
+npm test    # Vitest unit tests
+npm run e2e # Playwright E2E — see "Testing" below for what's covered and how it's set up
 ```
 
 ## Testing
 
-Presora is a production SaaS handling authentication, LLM-driven analysis pipelines and Stripe subscriptions, so the test suite is built around the paths where a regression costs real money: sign-in, running an analysis, and checkout.
+Presora is a production SaaS handling authentication, LLM-driven analysis pipelines and Stripe subscriptions, so the E2E suite is built around the paths where a regression costs real money: sign-in/sign-up, the dashboard's real data, and subscription state in Settings.
 
-Stack
-Layer	Tool
-End-to-end (UI)	Playwright + TypeScript
-API contract	Playwright APIRequestContext
-CI	GitHub Actions (sharded, runs on every push and PR)
-What is covered
+| Layer | Tool |
+|-------|------|
+| End-to-end (UI) | Playwright + TypeScript, Page Object Model |
+| Unit | Vitest + Testing Library |
+| CI | GitHub Actions, 2-way sharded, runs on every push and PR |
 
-Authentication — sign-in with valid credentials, rejection of bad passwords, redirect of unauthenticated users away from the dashboard, signup validation.
+**What is covered** (45 tests × chromium + mobile-chrome, `e2e/`)
 
-Dashboard — analyses list rendering, navigation into an analysis, mobile viewport navigation.
+- **Authentication** — successful login, rejection of bad credentials, required-field validation, the forgot-password → OTP-code flow, signup (success, password-mismatch validation, "already registered" failure), and unauthenticated visitors getting redirected off protected routes.
+- **Dashboard** — the real per-model AI confidence data (`analyses.sources`) rendering correctly, a `–` placeholder instead of a fabricated number when that data is missing, and the account menu/sign-out flow.
+- **Settings** — a canceled subscription showing its status and a working *Resume* button, an active subscription showing no cancellation banner, the referral panel (happy path and a failed lookup degrading to an inline error instead of a crash), and tab navigation.
+- **Command palette** — the ⌘K/Ctrl+K global search opens, filters, navigates, and closes on Escape, with an assertion that it never trips a Radix accessibility warning.
+- **Public pages** — Landing, Pricing, About render with zero console errors.
 
-Brand analysis — the core product flow: submitting a brand, waiting on the LLM-backed pipeline, asserting a visibility score is returned; validation on empty input; deletion removing the record from the list.
+**Design decisions**
 
-Billing — pricing page renders all plans, plan selection redirects to Stripe Checkout, and a full payment with a Stripe test card returns to the success URL with an active subscription. Runs against Stripe test keys only.
+- **No live backend or test account required.** The suite mocks Supabase Auth/REST and the Netlify Functions layer at the network level (`e2e/mocks/supabase.ts`) instead of hitting a real Supabase project — deterministic, runs in CI with zero secrets, and lets edge cases (a canceled subscription, a 500 from an API) be asserted directly rather than reproduced by hand. `auth.setup.ts` still drives the real login form once, against a mocked `/auth/v1/token` response, and persists the resulting session via `storageState` for every other spec to reuse.
+- **PostgREST-shape-aware mocks.** supabase-js sends a different `Accept` header for `.single()`/`.maybeSingle()` queries and expects a bare object back, not an array — the mocks inspect that header and respond with the shape the caller actually expects.
+- **Role-based locators first.** `getByRole` / `getByLabel` over CSS selectors, so the tests survive refactors and surface accessibility problems as failures — this is how two real bugs were found and fixed while building the suite (see below).
+- **No `waitForTimeout` anywhere.** The suite waits on element state, URL changes, and mocked network responses rather than fixed delays.
+- **Console-error fixture.** A shared `consoleIssues` fixture (`e2e/fixtures.ts`) collects uncaught page errors and `console.error` calls per test, so regressions that don't fail an assertion but do throw silently still get caught.
+- **Failures are debuggable.** Traces on first retry, screenshots and video on failure, all uploaded as CI artifacts.
 
-API — response contracts for create/read/delete, 400 on invalid payloads, 404 on unknown ids, 401/403 for unauthenticated requests, and row-level isolation between accounts.
+**Bugs found and fixed while building the suite**
 
-Design decisions
+- `Login.tsx`/`Register.tsx` had `<Label>` elements never associated to their `<Input>` via `htmlFor`/`id` — invisible to `getByLabel()` and to screen readers alike, despite looking correctly labeled.
+- Signing out from a protected page could silently land on `/login` instead of the landing page: `signOut()` fires an auth-state-change partway through its own promise chain, which `ProtectedRoute` (still mounted at that moment) reacts to with its own redirect — a race the explicit `navigate('/')` call could lose non-deterministically.
 
-Authentication happens once. A setup project signs in through the UI and persists storageState; every other project depends on it. Tests that must run signed-out (auth.spec.ts) run in a separate project with no stored state.
+**Running locally**
 
-No waitForTimeout anywhere. Analyses call external LLM APIs with variable latency, so the suite waits on the actual POST /api/analyses response and on element state rather than on fixed delays. This is what keeps the suite from flaking in CI.
-
-Tests own their data. A seededAnalysis fixture creates a uniquely-named record through the API and deletes it in teardown, including after a failure. Tests can therefore run in parallel against the same account.
-
-Role-based locators first. getByRole / getByLabel over CSS selectors, so the tests survive refactors and surface accessibility problems as failures.
-
-Failures are debuggable. Traces on first retry, screenshots and video on failure, all uploaded as CI artifacts.
-
-Running locally
-bash
+```bash
 npm install
 npx playwright install --with-deps chromium
 
-cp .env.example .env.local   # fill in TEST_USER_EMAIL / TEST_USER_PASSWORD
+# The suite never calls a real backend, so any non-empty Supabase URL/key
+# unblocks the app's own startup check:
+echo 'VITE_SUPABASE_URL=https://placeholder.supabase.co
+VITE_SUPABASE_ANON_KEY=placeholder' > .env.local
 
-npx playwright test                      # everything
-npx playwright test --ui                 # interactive runner
-npx playwright test --grep @checkout     # Stripe flow only
-npx playwright test --grep-invert @slow  # skip the LLM-backed tests
-npx playwright show-report
+npm run e2e                        # everything (starts the dev server automatically)
+npm run e2e:ui                     # interactive runner
+npm run e2e:report                 # open the last HTML report
+```
 
-The config starts the dev server automatically. Set BASE_URL to run against a deployed preview instead.
-
-Environment variables
-Variable	Purpose
-TEST_USER_EMAIL / TEST_USER_PASSWORD	Dedicated test account, never a real customer
-BASE_URL	Optional; run against a preview deployment
-FOREIGN_ANALYSIS_ID	Optional; enables the cross-account isolation test
+Set `BASE_URL` to point the suite at a deployed preview instead of the local dev server.
 
 ## Security
 
