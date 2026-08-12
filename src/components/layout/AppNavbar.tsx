@@ -238,7 +238,22 @@ export const AppNavbar = ({ collapsed = false, onToggle, onMobileToggle, chatOpe
             {/* Sign out */}
             <div className="p-2">
               <button
-                onClick={async () => { setOpen(false); await logout(); navigate('/'); }}
+                onClick={async () => {
+                  setOpen(false);
+                  await logout();
+                  // signOut() fires an auth-state-change partway through its
+                  // own promise chain, which ProtectedRoute (still mounted
+                  // here on /dashboard at that point) reacts to by
+                  // redirecting to /login. That redirect is a React state
+                  // update queued for the next render, so calling
+                  // navigate('/') synchronously right after `await logout()`
+                  // can still lose the race — React sometimes flushes
+                  // ProtectedRoute's pending /login redirect after this call
+                  // commits, silently overwriting it. Deferring to a macrotask
+                  // guarantees this runs after any such pending redirect has
+                  // already committed, so it reliably wins.
+                  setTimeout(() => navigate('/', { replace: true }), 0);
+                }}
                 className="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-sm text-destructive hover:bg-destructive/10 transition-colors"
               >
                 <LogOut className="w-4 h-4" />

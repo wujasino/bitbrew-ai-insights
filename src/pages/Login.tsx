@@ -401,23 +401,23 @@ const Login = () => {
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('email')}</Label>
+                    <Label htmlFor="login-email" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('email')}</Label>
                     <div className="relative">
                       <Mail className="w-4 h-4 text-muted-foreground/60 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                      <Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" required autoComplete="email" className="h-11 pl-10" />
+                      <Input id="login-email" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" required autoComplete="email" className="h-11 pl-10" />
                     </div>
                   </div>
 
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('password')}</Label>
+                      <Label htmlFor="login-password" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('password')}</Label>
                       <button type="button" onClick={() => switchMode('forgot', 1)} className="text-[11px] text-primary hover:underline">
                         Forgot your password?
                       </button>
                     </div>
                     <div className="relative">
                       <Lock className="w-4 h-4 text-muted-foreground/60 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                      <Input type={showPwd ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} placeholder="Your password" required autoComplete="current-password" className="h-11 pl-10 pr-10" />
+                      <Input id="login-password" type={showPwd ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} placeholder="Your password" required autoComplete="current-password" className="h-11 pl-10 pr-10" />
                       <button type="button" onClick={() => setShowPwd(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors" tabIndex={-1} aria-label={showPwd ? 'Hide password' : 'Show password'}>
                         {showPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
@@ -489,8 +489,8 @@ const Login = () => {
 
                 <form onSubmit={handleForgotPassword} className="space-y-4">
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">E-mail</Label>
-                    <Input type="email" value={resetEmail} onChange={e => setResetEmail(e.target.value)} placeholder="jan@firma.pl" required autoComplete="email" autoFocus className="h-10" />
+                    <Label htmlFor="forgot-email" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">E-mail</Label>
+                    <Input id="forgot-email" type="email" value={resetEmail} onChange={e => setResetEmail(e.target.value)} placeholder="jan@firma.pl" required autoComplete="email" autoFocus className="h-10" />
                   </div>
 
                   <Button type="submit" className="w-full h-10 gap-2" disabled={resetLoading}>
@@ -522,10 +522,10 @@ const Login = () => {
 
                 <form onSubmit={handleSSOSignIn} className="space-y-4">
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Company domain</Label>
+                    <Label htmlFor="sso-domain" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Company domain</Label>
                     <div className="relative">
                       <Building2 className="w-4 h-4 text-muted-foreground/60 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                      <Input type="text" value={ssoDomain} onChange={e => setSsoDomain(e.target.value)} placeholder="your-company.com" required autoFocus className="h-11 pl-10" />
+                      <Input id="sso-domain" type="text" value={ssoDomain} onChange={e => setSsoDomain(e.target.value)} placeholder="your-company.com" required autoFocus className="h-11 pl-10" />
                     </div>
                   </div>
 
@@ -611,9 +611,10 @@ const Login = () => {
 
                 <form onSubmit={handleResetPassword} className="space-y-4">
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">New password</Label>
+                    <Label htmlFor="reset-new-password" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">New password</Label>
                     <div className="relative">
                       <Input
+                        id="reset-new-password"
                         type={showNewPwd ? 'text' : 'password'}
                         value={newPwd}
                         onChange={e => setNewPwd(e.target.value)}
@@ -650,8 +651,9 @@ const Login = () => {
                     )}
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Repeat password</Label>
+                    <Label htmlFor="reset-repeat-password" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Repeat password</Label>
                     <Input
+                      id="reset-repeat-password"
                       type={showNewPwd ? 'text' : 'password'}
                       value={newPwdConfirm}
                       onChange={e => setNewPwdConfirm(e.target.value)}

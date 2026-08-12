@@ -1,0 +1,33 @@
+import { test, expect } from './fixtures';
+
+// Public marketing pages need no auth and no mocked backend — sanity-check
+// that they render and stay free of console errors across the render.
+test.describe('Public pages', () => {
+  test.use({ storageState: { cookies: [], origins: [] } });
+
+  test('landing page renders the hero and navbar', async ({ page, consoleIssues }) => {
+    await page.goto('/');
+    // On mobile the navbar collapses "Sign in" behind a hamburger menu, so
+    // check for the wordmark instead — present in both layouts.
+    await expect(page.getByRole('link', { name: 'Presora — AI brand visibility' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    expect(consoleIssues, JSON.stringify(consoleIssues)).toEqual([]);
+  });
+
+  test('pricing page lists plans', async ({ page, consoleIssues }) => {
+    await page.goto('/pricing');
+    await expect(page.getByText(/free/i).first()).toBeVisible();
+    expect(consoleIssues, JSON.stringify(consoleIssues)).toEqual([]);
+  });
+
+  test('about page renders', async ({ page, consoleIssues }) => {
+    await page.goto('/about');
+    await expect(page.locator('body')).toBeVisible();
+    expect(consoleIssues, JSON.stringify(consoleIssues)).toEqual([]);
+  });
+
+  test('unauthenticated visitor is redirected away from a protected route', async ({ page }) => {
+    await page.goto('/dashboard');
+    await expect(page).toHaveURL(/\/login/);
+  });
+});
