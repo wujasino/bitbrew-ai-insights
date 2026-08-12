@@ -20,6 +20,14 @@ export const SEO_CONFIG: Record<string, SeoConfig> = {
     title: 'Pricing | Presora',
     description: 'Compare Presora plans — Free, Solo and Growth. Weekly AI visibility monitoring, competitor comparison, API access and alerts across ChatGPT, Claude and Gemini.',
   },
+  '/contact': {
+    title: 'Contact | Presora',
+    description: 'Get in touch with the Presora team — product questions, Enterprise plans, or support. We reply within 24 hours.',
+  },
+  '/status': {
+    title: 'System Status | Presora',
+    description: 'Live status of Presora\'s core dependencies — application and database/auth availability.',
+  },
   '/docs/api': {
     title: 'API & Webhooks Documentation | Presora',
     description: 'Integrate Presora into your stack with a REST API and webhooks. Run brand visibility scans, pull scores and automate AI monitoring programmatically.',

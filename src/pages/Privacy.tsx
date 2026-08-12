@@ -317,6 +317,54 @@ const Privacy = () => {
     <p>A ponadto: odpowiednie organy publiczne w zakresie, w jakim jesteśmy zobowiązani do udostępnienia im danych.</p>
   </section>
 
+  <section style="margin-bottom:2em;">
+    <h2 style="font-size:1.1em; margin-top:1.5em;">PODWYKONAWCY PRZETWARZANIA (SUBPROCESORZY)</h2>
+    <p>Konkretni dostawcy, z których korzystamy do świadczenia usługi, wraz z celem przetwarzania. Analiza marki (nazwa marki, wprowadzony przez Ciebie kontekst) jest przekazywana dostawcom modeli AI wyłącznie w celu wygenerowania wyniku analizy — nie jest wykorzystywana do trenowania ich modeli.</p>
+    <table style="width:100%;margin-top:1em;max-width:75em;border-collapse:collapse;">
+      <tr>
+        <th style="color:#F8FAFC;background-color:#1E293B;text-align:center;border:1px solid #334155;padding:0.5em 1em;">DOSTAWCA</th>
+        <th style="color:#F8FAFC;background-color:#1E293B;text-align:center;border:1px solid #334155;padding:0.5em 1em;">CEL PRZETWARZANIA</th>
+      </tr>
+      <tr>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">Supabase</td>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">baza danych, uwierzytelnianie, przechowywanie plików</td>
+      </tr>
+      <tr>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">Netlify</td>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">hosting aplikacji i funkcji serwerowych</td>
+      </tr>
+      <tr>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">Anthropic (Claude)</td>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">generowanie analizy widoczności marki, asystent czatu</td>
+      </tr>
+      <tr>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">Voyage AI</td>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">generowanie embeddingów dla wyszukiwania kontekstu marki (RAG)</td>
+      </tr>
+      <tr>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">ElevenLabs</td>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">generowanie głosowego odczytu raportów (opcjonalne)</td>
+      </tr>
+      <tr>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">Stripe</td>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">obsługa płatności i subskrypcji</td>
+      </tr>
+      <tr>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">Resend</td>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">wysyłka wiadomości transakcyjnych (potwierdzenia, resety hasła)</td>
+      </tr>
+      <tr>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">Mailchimp</td>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">wysyłka newslettera (tylko po dobrowolnym zapisie)</td>
+      </tr>
+      <tr>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">Google (OAuth)</td>
+        <td style="color:#F8FAFC;background-color:#111827;text-align:center;border:1px solid #334155;padding:0.5em 1em;">logowanie za pomocą konta Google (opcjonalne)</td>
+      </tr>
+    </table>
+    <p style="margin-top:1em;">Pełną, aktualną listę oraz warunki przetwarzania danych (DPA) możesz otrzymać, pisząc na <a href="mailto:contact.presora@gmail.com" style="color:#6366F1;">contact.presora@gmail.com</a>.</p>
+  </section>
+
 </div>
           `,
         }}

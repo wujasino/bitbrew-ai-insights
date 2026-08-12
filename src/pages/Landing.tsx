@@ -1,6 +1,6 @@
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Zap, Eye, BarChart3, Shield, ChevronDown, HelpCircle, Mail, TrendingUp, ArrowRight, Globe, Star, Quote, ShieldCheck, Clock, Search, PenLine, Sparkles, MessageSquare, Rocket, LineChart, Building2 } from 'lucide-react';
+import { Zap, Eye, BarChart3, Shield, ChevronDown, HelpCircle, Mail, TrendingUp, ArrowRight, Globe, ShieldCheck, Clock, Search, PenLine, Sparkles, MessageSquare, Rocket, LineChart, Building2 } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
@@ -28,26 +28,27 @@ const BEFORE = { mentions: '1 / 10', sentiment: '34', recommend: '8%' };
 const AFTER  = { mentions: '7 / 10', sentiment: '81', recommend: '63%' };
 
 /* ── Testimonials ─────────────────────────────────────────────────── */
-const TESTIMONIALS = [
+/* Verifiable facts about how the product actually works — not customer
+   quotes. Presora doesn't have public case studies yet, and inventing
+   testimonials to fill the space would be dishonest, so this trades a
+   "social proof" slot for a "how this actually works" one instead. */
+const TRUST_POINTS = [
   {
-    quote: 'We discovered ChatGPT was recommending our competitor for our own category. Two weeks after acting on Presora’s recommendations, we were the top answer.',
-    name: 'Sarah Lindqvist',
-    role: 'Head of Growth, Northwind SaaS',
-    initials: 'SL',
+    Icon: Shield,
+    title: 'Row-level security on every table',
+    desc: 'Your analyses, brand knowledge and account data are isolated by Postgres RLS policies, not just app-layer checks — enforced at the database itself.',
     iconBg: 'bg-indigo-400/10 border-indigo-400/20 text-indigo-400',
   },
   {
-    quote: 'Finally a number I can put in front of the board. Our AI visibility score went from 41 to 78 in a quarter — and I can prove exactly what moved it.',
-    name: 'Marcus Bishop',
-    role: 'CMO, Vellum Commerce',
-    initials: 'MB',
+    Icon: Eye,
+    title: 'Your data isn\'t used to train models',
+    desc: 'Brand context you provide is sent to AI providers only to generate your analysis, never to train their models, and never shared beyond what\'s required to run a scan.',
     iconBg: 'bg-primary/10 border-primary/20 text-primary',
   },
   {
-    quote: 'We run AI audits for 12 client brands from one dashboard. The white-label reports alone paid for the whole subscription in the first month.',
-    name: 'Priya Nandakumar',
-    role: 'Founder, Halo Digital Agency',
-    initials: 'PN',
+    Icon: ShieldCheck,
+    title: 'Full control over your data',
+    desc: 'Export or permanently delete your account and data at any time from Settings — no support ticket required.',
     iconBg: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500',
   },
 ];
@@ -755,51 +756,42 @@ const Landing = () => {
             className="text-center mb-12"
           >
             <span className="inline-block px-3 py-1 text-xs badge rounded-lg mb-4 font-data uppercase tracking-wider">
-              Loved by marketers
+              Trust & security
             </span>
             <h2 className="text-3xl sm:text-4xl font-display text-foreground mb-3">
-              Teams that stopped guessing
+              Built to be trusted with your brand data
             </h2>
             <p className="text-sm text-muted-foreground max-w-lg mx-auto">
-              Growth leads, brand managers and agencies use Presora to win the AI recommendation.
+              No case studies to show yet — here's exactly how your data is handled instead.
             </p>
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {TESTIMONIALS.map((t, i) => (
+            {TRUST_POINTS.map((t, i) => (
               <motion.div
-                key={t.name}
+                key={t.title}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
                 whileHover={{ y: -6, scale: 1.02, transition: { type: 'spring', stiffness: 300, damping: 20 } }}
                 whileTap={{ scale: 0.985 }}
-                className="rounded-2xl border border-[hsl(var(--glass-border))] p-7 flex flex-col gap-5 bg-card/60 backdrop-blur-sm shadow-lg shadow-primary/5"
+                className="rounded-2xl border border-[hsl(var(--glass-border))] p-7 flex flex-col gap-4 bg-card/60 backdrop-blur-sm shadow-lg shadow-primary/5"
               >
-                <div className="flex items-center justify-between">
-                  <div className={`inline-flex items-center justify-center w-12 h-12 rounded-xl border ${t.iconBg}`}>
-                    <Quote className="w-6 h-6" />
-                  </div>
-                  <div className="flex gap-0.5">
-                    {[0, 1, 2, 3, 4].map((s) => (
-                      <Star key={s} className="w-3.5 h-3.5 fill-primary text-primary" />
-                    ))}
-                  </div>
+                <div className={`inline-flex items-center justify-center w-12 h-12 rounded-xl border ${t.iconBg}`}>
+                  <t.Icon className="w-6 h-6" />
                 </div>
-                <p className="text-sm text-foreground/90 leading-relaxed flex-1">“{t.quote}”</p>
-                <div className="flex items-center gap-3 pt-2 border-t border-[hsl(var(--glass-border))]">
-                  <div className="w-10 h-10 rounded-full bg-primary/15 border border-primary/20 flex items-center justify-center text-xs font-semibold text-primary shrink-0">
-                    {t.initials}
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-foreground leading-tight">{t.name}</p>
-                    <p className="text-xs text-muted-foreground leading-tight">{t.role}</p>
-                  </div>
-                </div>
+                <h3 className="text-base font-semibold text-foreground">{t.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed flex-1">{t.desc}</p>
               </motion.div>
             ))}
           </div>
+
+          <p className="text-center text-xs text-muted-foreground/70 mt-8">
+            <Link to="/status" className="hover:text-foreground transition-colors underline underline-offset-2">Live system status</Link>
+            {' · '}
+            <Link to="/polityka-prywatnosci" className="hover:text-foreground transition-colors underline underline-offset-2">Privacy policy</Link>
+          </p>
         </div>
       </section>
 

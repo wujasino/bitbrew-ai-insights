@@ -26,6 +26,31 @@ test.describe('Public pages', () => {
     expect(consoleIssues, JSON.stringify(consoleIssues)).toEqual([]);
   });
 
+  test('contact page renders a working form', async ({ page, consoleIssues }) => {
+    await page.goto('/contact');
+    await expect(page.getByLabel('Full name *')).toBeVisible();
+    await expect(page.getByLabel('Email *')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Send message' })).toBeVisible();
+    expect(consoleIssues, JSON.stringify(consoleIssues)).toEqual([]);
+  });
+
+  test('status page reports live health check results', async ({ page, consoleIssues }) => {
+    await page.route('**/.netlify/functions/health*', route => route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        status: 'operational',
+        timestamp: new Date().toISOString(),
+        checks: { app: { status: 'operational' }, database: { status: 'operational', latencyMs: 42 } },
+      }),
+    }));
+
+    await page.goto('/status');
+    await expect(page.getByText('Operational').first()).toBeVisible();
+    await expect(page.getByText('42ms')).toBeVisible();
+    expect(consoleIssues, JSON.stringify(consoleIssues)).toEqual([]);
+  });
+
   test('unauthenticated visitor is redirected away from a protected route', async ({ page }) => {
     await page.goto('/dashboard');
     await expect(page).toHaveURL(/\/login/);

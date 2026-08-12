@@ -266,7 +266,7 @@ const Pricing = () => {
         { name: 'Slack & Teams integration', isIncluded: true },
         { name: 'Dedicated account manager', isIncluded: true },
         { name: 'White-label dashboard', isIncluded: true },
-        { name: 'SLA guarantee (99.9%)', isIncluded: true },
+        { name: 'SLA guarantee (99.9%, contract-based)', isIncluded: true },
       ],
     },
   ];
