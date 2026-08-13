@@ -1,13 +1,15 @@
-# Presora — E2E Test Suite for a Production SaaS I Built
+# Presora — E2E & API Test Suite for a Production SaaS I Built
 
 [Live product →](https://presora.app) · [Test runs →](https://github.com/wujasino/presora/actions)
 
 [Presora](https://presora.app) is a production SaaS that tracks brand visibility in
 AI-generated answers — built end-to-end by me, frontend through backend through
 infrastructure (see [What it does](#what-it-does) and [Tech stack](#tech-stack) below).
-This repo's other half is the Playwright E2E suite covering it: authentication, the
-dashboard's real data, subscription state in Settings, and the global command palette
-— see [Testing](#testing) for the full breakdown.
+This repo's other half is the Playwright test suite covering it: E2E coverage of
+authentication, the dashboard's real data, subscription state in Settings and the
+command palette, plus API contract tests against the serverless functions themselves
+(payload validation, rate limiting, error codes) — see [Testing](#testing) for the
+full breakdown and real numbers.
 
 **App stack:** React · TypeScript · Supabase · Netlify Functions · Stripe
 **Test stack:** Playwright · TypeScript · GitHub Actions
@@ -40,7 +42,7 @@ dashboard's real data, subscription state in Settings, and the global command pa
 | AI | Anthropic Claude (analysis + tool-calling assistant), Voyage AI embeddings, ElevenLabs TTS |
 | Payments | Stripe — checkout, customer portal, webhook-driven plan upgrades |
 | Email | Resend (transactional), Mailchimp (newsletter) |
-| Testing | Vitest + Testing Library (unit), Playwright (E2E) |
+| Testing | Vitest + Testing Library (unit), Playwright (E2E + API contract) |
 | Infra | Netlify CI/CD, custom domain & DNS, Google OAuth proxy redirect |
 
 ## Engineering highlights
@@ -101,28 +103,33 @@ npm run e2e # Playwright E2E — see "Testing" below for what's covered and how 
 
 ## Testing
 
-Presora is a production SaaS handling authentication, LLM-driven analysis pipelines and Stripe subscriptions, so the E2E suite is built around the paths where a regression costs real money: sign-in/sign-up, the dashboard's real data, and subscription state in Settings.
+Presora is a production SaaS handling authentication, LLM-driven analysis pipelines and Stripe subscriptions, so the suite is built around the paths where a regression costs real money: sign-in/sign-up, the dashboard's real data, subscription state in Settings, and the request contracts of the serverless functions everything else is built on.
+
+**72 tests, ~96–101s per CI shard** (measured on a real GitHub Actions run, 2-way sharded — [see the check runs](https://github.com/wujasino/presora/pull/121/checks)). Flake check: `npx playwright test --project=chromium --project=api --repeat-each=10` — **470 repeated runs (24 UI + 23 API tests × 10), 0 failures.**
 
 | Layer | Tool |
 |-------|------|
 | End-to-end (UI) | Playwright + TypeScript, Page Object Model |
+| API contract | Playwright's `request` fixture against the real Netlify Function handlers |
 | Unit | Vitest + Testing Library |
 | CI | GitHub Actions, 2-way sharded, manual dispatch + nightly schedule — never gates a merge or deploy |
 
-**What is covered** (45 tests × chromium + mobile-chrome, `e2e/`)
+**What is covered** (72 tests: 49 UI × chromium + mobile-chrome, 23 API contract — `e2e/`)
 
 - **Authentication** — successful login, rejection of bad credentials, required-field validation, the forgot-password → OTP-code flow, signup (success, password-mismatch validation, "already registered" failure), and unauthenticated visitors getting redirected off protected routes.
 - **Dashboard** — the real per-model AI confidence data (`analyses.sources`) rendering correctly, a `–` placeholder instead of a fabricated number when that data is missing, and the account menu/sign-out flow.
 - **Settings** — a canceled subscription showing its status and a working *Resume* button, an active subscription showing no cancellation banner, the referral panel (happy path and a failed lookup degrading to an inline error instead of a crash), and tab navigation.
 - **Command palette** — the ⌘K/Ctrl+K global search opens, filters, navigates, and closes on Escape, with an assertion that it never trips a Radix accessibility warning.
-- **Public pages** — Landing, Pricing, About render with zero console errors.
+- **Public pages** — Landing, Pricing, About, Contact, Status render with zero console errors.
+- **API contracts** (`e2e/api/`, against `contact.js`, `newsletter.js`, `newsletter-preference.js`) — method allow-lists (405), malformed-JSON and field validation (400), payload-size limits (413), auth requirements (401), rate limiting kicking in on the 6th request from one IP within the window (429), CORS never reflecting an untrusted `Origin`, and — the part that matters most — a real unreachable-Supabase-host failure degrading to a clean JSON error instead of crashing the handler.
 
 **Design decisions**
 
-- **No live backend or test account required.** The suite mocks Supabase Auth/REST and the Netlify Functions layer at the network level (`e2e/mocks/supabase.ts`) instead of hitting a real Supabase project — deterministic, runs in CI with zero secrets, and lets edge cases (a canceled subscription, a 500 from an API) be asserted directly rather than reproduced by hand. `auth.setup.ts` still drives the real login form once, against a mocked `/auth/v1/token` response, and persists the resulting session via `storageState` for every other spec to reuse.
-- **PostgREST-shape-aware mocks.** supabase-js sends a different `Accept` header for `.single()`/`.maybeSingle()` queries and expects a bare object back, not an array — the mocks inspect that header and respond with the shape the caller actually expects.
-- **Role-based locators first.** `getByRole` / `getByLabel` over CSS selectors, so the tests survive refactors and surface accessibility problems as failures — this is how two real bugs were found and fixed while building the suite (see below).
-- **No `waitForTimeout` anywhere.** The suite waits on element state, URL changes, and mocked network responses rather than fixed delays.
+- **No live backend or test account required.** UI tests mock Supabase Auth/REST and the Netlify Functions layer at the network level (`e2e/mocks/supabase.ts`) instead of hitting a real Supabase project — deterministic, runs in CI with zero secrets, and lets edge cases (a canceled subscription, a 500 from an API) be asserted directly rather than reproduced by hand. `auth.setup.ts` still drives the real login form once, against a mocked `/auth/v1/token` response, and persists the resulting session via `storageState` for every other UI spec to reuse.
+- **API tests run the real function code, not a mock.** `e2e/api/functionServer.ts` wraps each Netlify Function's actual `exports.handler` in a throwaway local HTTP server, so Playwright's `request` fixture hits genuine code — no `netlify dev`, no real Supabase/Stripe credentials, since the contracts under test (validation, rate limiting, method/CORS handling) all run before any real backend call. Where a test needs to see how the *real* backend call fails (an unreachable Supabase host), it points at one and lets the real network error happen.
+- **PostgREST-shape-aware mocks.** supabase-js sends a different `Accept` header for `.single()`/`.maybeSingle()` queries and expects a bare object back, not an array — the UI mocks inspect that header and respond with the shape the caller actually expects.
+- **Role-based locators first.** `getByRole` / `getByLabel` over CSS selectors, so the tests survive refactors and surface accessibility problems as failures — this is how two of the bugs below were found.
+- **No `waitForTimeout` anywhere.** Tests wait on element state, URL changes, and network responses (real or mocked) rather than fixed delays.
 - **Console-error fixture.** A shared `consoleIssues` fixture (`e2e/fixtures.ts`) collects uncaught page errors and `console.error` calls per test, so regressions that don't fail an assertion but do throw silently still get caught.
 - **Failures are debuggable.** Traces on first retry, screenshots and video on failure, all uploaded as CI artifacts.
 
@@ -130,6 +137,7 @@ Presora is a production SaaS handling authentication, LLM-driven analysis pipeli
 
 - `Login.tsx`/`Register.tsx` had `<Label>` elements never associated to their `<Input>` via `htmlFor`/`id` — invisible to `getByLabel()` and to screen readers alike, despite looking correctly labeled.
 - Signing out from a protected page could silently land on `/login` instead of the landing page: `signOut()` fires an auth-state-change partway through its own promise chain, which `ProtectedRoute` (still mounted at that moment) reacts to with its own redirect — a race the explicit `navigate('/')` call could lose non-deterministically.
+- `netlify/functions/*.js` is written in CommonJS (`exports.handler`), but the repo root's `package.json` says `"type": "module"` — Netlify's own bundler tolerates the mix, but any plain Node tooling (including this test suite's own function-server harness) tried to load the files as ES modules and got back an object with no `.handler`. Fixed with a nested `netlify/functions/package.json` declaring `{"type": "commonjs"}`, which is the standard fix for exactly this split and makes the functions loadable outside Netlify's bundler too.
 
 **Running locally**
 
@@ -142,12 +150,13 @@ npx playwright install --with-deps chromium
 echo 'VITE_SUPABASE_URL=https://placeholder.supabase.co
 VITE_SUPABASE_ANON_KEY=placeholder' > .env.local
 
-npm run e2e                        # everything (starts the dev server automatically)
+npm run e2e                        # everything: UI (chromium + mobile-chrome) + API contracts
+npm run e2e -- --project=api       # just the API contract tests — no browser, no dev server needed
 npm run e2e:ui                     # interactive runner
 npm run e2e:report                 # open the last HTML report
 ```
 
-Set `BASE_URL` to point the suite at a deployed preview instead of the local dev server.
+Set `BASE_URL` to point the UI projects at a deployed preview instead of the local dev server — the `api` project is unaffected, since it never talks to a URL at all, only to the function handlers directly.
 
 ## Security
 

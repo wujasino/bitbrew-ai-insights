@@ -37,6 +37,7 @@ export default defineConfig({
     },
     {
       name: 'chromium',
+      testIgnore: /e2e\/api\//,
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'e2e/.auth/user.json',
@@ -45,11 +46,20 @@ export default defineConfig({
     },
     {
       name: 'mobile-chrome',
+      testIgnore: /e2e\/api\//,
       use: {
         ...devices['Pixel 7'],
         storageState: 'e2e/.auth/user.json',
       },
       dependencies: ['setup'],
+    },
+    // API contract tests — no browser, no auth setup. Each spec spins up its
+    // target Netlify Function directly (see e2e/api/functionServer.ts) and
+    // hits it with Playwright's `request` fixture, so this project needs
+    // neither `devices` nor storageState.
+    {
+      name: 'api',
+      testMatch: /e2e\/api\/.*\.spec\.ts/,
     },
   ],
 
