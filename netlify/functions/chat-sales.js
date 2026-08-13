@@ -79,7 +79,7 @@ const callAnthropic = (messages) => fetchWithTimeout('https://api.anthropic.com/
     'anthropic-version': '2023-06-01',
   },
   body: JSON.stringify({
-    model: 'claude-sonnet-4-5',
+    model: 'claude-sonnet-5',
     max_tokens: 512,
     system: SALES_SYSTEM_PROMPT,
     messages,
