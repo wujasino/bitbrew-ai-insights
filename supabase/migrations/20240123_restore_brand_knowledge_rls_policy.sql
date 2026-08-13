@@ -11,10 +11,33 @@
 --   - netlify/functions/ingest-knowledge.js  INSERT (saves via the caller's
 --     own JWT, not the admin/service-role client)
 -- so nothing could be saved, listed or removed once that migration ran.
+--
+-- Split into one policy per command (rather than a single FOR ALL policy)
+-- to match what was actually applied to the live database while diagnosing
+-- this outage, so a fresh environment built from these migration files ends
+-- up in the same state as production instead of a redundant duplicate.
 
-create policy "own brand knowledge"
+create policy "brand_knowledge: select own"
   on public.brand_knowledge
-  for all
+  for select
+  to authenticated
+  using ((select auth.uid()) = user_id);
+
+create policy "brand_knowledge: insert own"
+  on public.brand_knowledge
+  for insert
+  to authenticated
+  with check ((select auth.uid()) = user_id);
+
+create policy "brand_knowledge: update own"
+  on public.brand_knowledge
+  for update
   to authenticated
   using ((select auth.uid()) = user_id)
   with check ((select auth.uid()) = user_id);
+
+create policy "brand_knowledge: delete own"
+  on public.brand_knowledge
+  for delete
+  to authenticated
+  using ((select auth.uid()) = user_id);
