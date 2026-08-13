@@ -12,6 +12,7 @@
  */
 const { createClient } = require('@supabase/supabase-js');
 const ws = require('ws');
+const { broadcastAnnouncement } = require('./_lib/broadcastAnnouncement');
 
 if (!globalThis.WebSocket) globalThis.WebSocket = ws;
 
@@ -49,21 +50,6 @@ const shouldRateLimit = (key) => {
   entry.count += 1;
   requestStore.set(key, entry);
   return entry.count > MAX_REQUESTS_PER_WINDOW;
-};
-
-const MAX_TITLE_LEN = 200;
-const MAX_BODY_LEN = 2000;
-
-// Display names shown in the admin form (and Pricing.tsx) → raw values
-// stored in profiles.plan. Growth's paid-plan display name is "Business"
-// (see PLAN_LABELS in useAccountInfo.ts) and Agency covers both the current
-// 'agency' and legacy 'enterprise' rows for that same tier.
-const PLAN_RAW_VALUES = {
-  Free: ['free'],
-  Starter: ['starter'],
-  Solo: ['solo'],
-  Business: ['growth'],
-  Agency: ['enterprise', 'agency'],
 };
 
 exports.handler = async (event) => {
@@ -109,56 +95,17 @@ exports.handler = async (event) => {
       return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid JSON' }) };
     }
 
-    const title = typeof payload.title === 'string' ? payload.title.trim() : '';
-    const bodyText = typeof payload.body === 'string' ? payload.body.trim() : '';
-    if (!title || title.length > MAX_TITLE_LEN) {
-      return { statusCode: 400, headers, body: JSON.stringify({ error: `"title" is required (max ${MAX_TITLE_LEN} chars)` }) };
+    const result = await broadcastAnnouncement(supabaseAdmin, {
+      title: payload.title,
+      body: payload.body,
+      planScope: payload.planScope,
+      expiresAt: payload.expiresAt,
+    });
+
+    if (!result.ok) {
+      return { statusCode: result.status, headers, body: JSON.stringify({ error: result.error }) };
     }
-    if (!bodyText || bodyText.length > MAX_BODY_LEN) {
-      return { statusCode: 400, headers, body: JSON.stringify({ error: `"body" is required (max ${MAX_BODY_LEN} chars)` }) };
-    }
-
-    const planScope = Array.isArray(payload.planScope) ? payload.planScope.filter((p) => typeof p === 'string') : [];
-    let rawPlanValues = null; // null = no filter, send to every account
-    if (planScope.length > 0) {
-      const invalid = planScope.filter((p) => !PLAN_RAW_VALUES[p]);
-      if (invalid.length > 0) {
-        return { statusCode: 400, headers, body: JSON.stringify({ error: `Unknown plan(s): ${invalid.join(', ')}` }) };
-      }
-      rawPlanValues = planScope.flatMap((p) => PLAN_RAW_VALUES[p]);
-    }
-
-    let expiresAt = null;
-    if (payload.expiresAt) {
-      const parsed = new Date(payload.expiresAt);
-      if (Number.isNaN(parsed.getTime()) || parsed.getTime() <= Date.now()) {
-        return { statusCode: 400, headers, body: JSON.stringify({ error: '"expiresAt" must be a valid future date' }) };
-      }
-      expiresAt = parsed.toISOString();
-    }
-
-    let targetQuery = supabaseAdmin.from('profiles').select('id');
-    if (rawPlanValues) targetQuery = targetQuery.in('plan', rawPlanValues);
-    const { data: targets, error: targetsError } = await targetQuery;
-    if (targetsError) throw targetsError;
-
-    if (!targets || targets.length === 0) {
-      return { statusCode: 200, headers, body: JSON.stringify({ sent: 0 }) };
-    }
-
-    const rows = targets.map((t) => ({
-      user_id: t.id,
-      type: 'announcement',
-      title,
-      body: bodyText,
-      data: planScope.length > 0 ? { planScope } : null,
-      expires_at: expiresAt,
-    }));
-
-    const { error: insertError } = await supabaseAdmin.from('notifications').insert(rows);
-    if (insertError) throw insertError;
-
-    return { statusCode: 200, headers, body: JSON.stringify({ sent: rows.length }) };
+    return { statusCode: 200, headers, body: JSON.stringify({ sent: result.sent }) };
   } catch (err) {
     console.error('send-announcement handler error:', err.message);
     return { statusCode: 500, headers, body: JSON.stringify({ error: 'Something went wrong. Please try again.' }) };
