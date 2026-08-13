@@ -12,8 +12,8 @@ export interface ModelDef {
 
 export const MODEL_CATALOG: ModelDef[] = [
   { id: 'openai/gpt-4o', label: 'GPT-4o', tier: 0 },
-  { id: 'anthropic/claude-sonnet-4.5', label: 'Claude', tier: 1 },
-  { id: 'google/gemini-2.5-flash', label: 'Gemini', tier: 1 },
+  { id: 'anthropic/claude-sonnet-5', label: 'Claude', tier: 1 },
+  { id: 'google/gemini-3.5-flash', label: 'Gemini', tier: 1 },
   { id: 'perplexity/sonar-pro', label: 'Perplexity', tier: 2 },
   { id: 'mistralai/mistral-large', label: 'Mistral', tier: 2 },
   { id: 'meta-llama/llama-3.3-70b-instruct', label: 'Llama 3', tier: 2 },
