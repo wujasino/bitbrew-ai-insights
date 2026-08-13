@@ -31,6 +31,7 @@ const Terms          = lazy(() => import("./pages/Terms"));
 const NewsletterTerms = lazy(() => import("./pages/NewsletterTerms"));
 const Settings       = lazy(() => import("./pages/Settings"));
 const Reports        = lazy(() => import("./pages/Reports"));
+const AuditReport    = lazy(() => import("./pages/AuditReport"));
 const Developers     = lazy(() => import("./pages/Developers"));
 const ApiDocs        = lazy(() => import("./pages/ApiDocs"));
 const NotFound       = lazy(() => import("./pages/NotFound"));
@@ -136,6 +137,17 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <AppShell><Reports /></AppShell>
+                </ProtectedRoute>
+              }
+            />
+            {/* No AppShell — this is a standalone, print-optimized view meant
+                to be exported as a PDF and handed to a client, not browsed
+                inside the app chrome. */}
+            <Route
+              path="/audit/:id"
+              element={
+                <ProtectedRoute>
+                  <AuditReport />
                 </ProtectedRoute>
               }
             />

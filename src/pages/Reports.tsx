@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FileText, Download, Trash2, Calendar, ArrowUp, ArrowDown, ChevronRight, Loader2 } from 'lucide-react';
+import { FileText, Download, Trash2, Calendar, ArrowUp, ArrowDown, ChevronRight, Loader2, Presentation } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 
@@ -226,6 +226,14 @@ const Reports = () => {
                   </div>
                 ) : (
                   <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      onClick={() => navigate(`/audit/${r.id}`)}
+                      title="Open as client-ready audit"
+                      aria-label="Open as client-ready audit"
+                      className="w-9 h-9 flex items-center justify-center rounded-lg border border-[hsl(var(--glass-border))] text-muted-foreground hover:text-primary hover:border-primary/30 transition-colors"
+                    >
+                      <Presentation className="w-4 h-4" />
+                    </button>
                     <button
                       onClick={() => downloadReport(r)}
                       title="Download report"
