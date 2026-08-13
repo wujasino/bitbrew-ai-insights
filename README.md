@@ -107,7 +107,7 @@ Presora is a production SaaS handling authentication, LLM-driven analysis pipeli
 |-------|------|
 | End-to-end (UI) | Playwright + TypeScript, Page Object Model |
 | Unit | Vitest + Testing Library |
-| CI | GitHub Actions, 2-way sharded, runs on every push and PR |
+| CI | GitHub Actions, 2-way sharded, manual dispatch + nightly schedule — never gates a merge or deploy |
 
 **What is covered** (45 tests × chromium + mobile-chrome, `e2e/`)
 

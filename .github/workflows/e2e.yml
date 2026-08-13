@@ -1,10 +1,13 @@
 name: E2E Tests
 
+# Deliberately NOT wired to push/pull_request on main — this suite must
+# never gate a merge or a production deploy. Run it on demand (Actions tab
+# → "Run workflow") or let the nightly schedule catch drift; either way a
+# failure here is a signal to look into, never a blocker.
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+  workflow_dispatch: {}
+  schedule:
+    - cron: '0 6 * * *'
 
 jobs:
   e2e:
