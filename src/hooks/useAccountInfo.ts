@@ -38,6 +38,16 @@ export const PLAN_TIER: Record<string, number> = {
 };
 export const tierOf = (plan: string) => PLAN_TIER[plan.toLowerCase()] ?? 0;
 
+/**
+ * True only for the Agency tier specifically — Growth/Business shares the
+ * same numeric PLAN_TIER (2) but doesn't unlock agency-only features like
+ * the client-ready audit export, so tierOf() alone can't gate this.
+ */
+export const isAgencyPlan = (plan: string) => {
+  const p = plan.toLowerCase();
+  return p === 'agency' || p === 'enterprise';
+};
+
 export interface SessionUser {
   id: string | null;
   email: string | null;

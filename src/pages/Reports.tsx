@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FileText, Download, Trash2, Calendar, ArrowUp, ArrowDown, ChevronRight, Loader2, Presentation } from 'lucide-react';
+import { FileText, Download, Trash2, Calendar, ArrowUp, ArrowDown, ChevronRight, Loader2, Presentation, Lock } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
+import { usePlan, isAgencyPlan } from '@/hooks/useAccountInfo';
 
 interface Report {
   id: string;
@@ -37,6 +38,8 @@ const Reports = () => {
   const [timeKey, setTimeKey] = useState<string>('30');
   const [sortDir, setSortDir] = useState<'desc' | 'asc'>('desc');
   const [confirmId, setConfirmId] = useState<string | null>(null);
+  const { data: plan = 'Free' } = usePlan();
+  const canCreateAudit = isAgencyPlan(plan);
 
   useEffect(() => {
     (async () => {
@@ -226,14 +229,25 @@ const Reports = () => {
                   </div>
                 ) : (
                   <div className="flex items-center gap-1 shrink-0">
-                    <button
-                      onClick={() => navigate(`/audit/${r.id}`)}
-                      title="Open as client-ready audit"
-                      aria-label="Open as client-ready audit"
-                      className="w-9 h-9 flex items-center justify-center rounded-lg border border-[hsl(var(--glass-border))] text-muted-foreground hover:text-primary hover:border-primary/30 transition-colors"
-                    >
-                      <Presentation className="w-4 h-4" />
-                    </button>
+                    {canCreateAudit ? (
+                      <button
+                        onClick={() => navigate(`/audit/${r.id}`)}
+                        title="Open as client-ready audit"
+                        aria-label="Open as client-ready audit"
+                        className="w-9 h-9 flex items-center justify-center rounded-lg border border-[hsl(var(--glass-border))] text-muted-foreground hover:text-primary hover:border-primary/30 transition-colors"
+                      >
+                        <Presentation className="w-4 h-4" />
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => navigate('/pricing')}
+                        title="Client-ready audit — Agency plan only"
+                        aria-label="Client-ready audit — Agency plan only"
+                        className="w-9 h-9 flex items-center justify-center rounded-lg border border-[hsl(var(--glass-border))] text-muted-foreground/50 hover:text-primary hover:border-primary/30 transition-colors"
+                      >
+                        <Lock className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                     <button
                       onClick={() => downloadReport(r)}
                       title="Download report"

@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ShieldCheck, Smile, Target, AtSign, Clock, Printer, ArrowLeft, Loader2, AlertTriangle, Sparkles, Mail } from 'lucide-react';
+import { ShieldCheck, Smile, Target, AtSign, Clock, Printer, ArrowLeft, Loader2, AlertTriangle, Sparkles, Mail, Lock } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { Wordmark } from '@/components/Wordmark';
 import { Button } from '@/components/ui/button';
+import { usePlan, isAgencyPlan } from '@/hooks/useAccountInfo';
 
 interface AnalysisRow {
   id: string;
@@ -50,10 +51,16 @@ const AuditReport = () => {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState('');
+  const { data: plan = 'Free' } = usePlan();
+  const canAccess = isAgencyPlan(plan);
 
   useEffect(() => {
     (async () => {
       if (!id) return;
+      // Client-ready audit export is an Agency-plan feature — direct-link
+      // access from a non-agency account stops here (server-side enforced
+      // too: generate-audit-summary.js rejects non-agency callers).
+      if (!canAccess) { setLoading(false); return; }
       const { data, error: fetchError } = await supabase
         .from('analyses')
         .select('id, brand_name, trust_score, authority, sentiment, recency, mentions, accuracy, created_at, sources, audit_summary')
@@ -92,12 +99,34 @@ const AuditReport = () => {
         }
       }
     })();
-  }, [id]);
+  }, [id, canAccess]);
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-6 h-6 text-muted-foreground animate-spin" />
+      </div>
+    );
+  }
+
+  if (!canAccess) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-4 px-4 text-center">
+        <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+          <Lock className="w-5 h-5 text-primary" />
+        </div>
+        <div>
+          <p className="text-sm font-medium text-foreground">Client-ready audits are an Agency-plan feature</p>
+          <p className="text-sm text-muted-foreground max-w-sm mt-1">
+            Upgrade to Agency to export a branded, print-ready AI visibility audit for your clients.
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Link to="/pricing" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity">
+            See Agency plan
+          </Link>
+          <Link to="/reports" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Back to reports</Link>
+        </div>
       </div>
     );
   }

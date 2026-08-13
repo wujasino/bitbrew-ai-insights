@@ -164,6 +164,18 @@ exports.handler = async (event) => {
       return { statusCode: 401, headers, body: JSON.stringify({ error: 'Unauthorized' }) };
     }
 
+    // Client-ready audit export is an Agency-plan feature — enforced here too,
+    // not just by hiding the button, so a direct call can't bypass it.
+    const { data: profile } = await supabaseAdmin
+      .from('profiles')
+      .select('plan')
+      .eq('id', user.id)
+      .single();
+    const plan = (profile?.plan || '').toLowerCase();
+    if (plan !== 'agency' && plan !== 'enterprise') {
+      return { statusCode: 403, headers, body: JSON.stringify({ error: 'The client-ready audit report is available on the Agency plan.' }) };
+    }
+
     if (shouldRateLimit(user.id)) {
       return { statusCode: 429, headers, body: JSON.stringify({ error: 'Too many requests. Please try again later.' }) };
     }
