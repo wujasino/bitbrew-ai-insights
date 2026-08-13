@@ -28,6 +28,10 @@ export const SEO_CONFIG: Record<string, SeoConfig> = {
     title: 'System Status | Presora',
     description: 'Live status of Presora\'s core dependencies — application and database/auth availability.',
   },
+  '/agencies': {
+    title: 'AI Visibility Audits for Agencies | Presora',
+    description: 'Run a Presora scan on a prospect\'s brand and export a client-ready AI visibility audit — executive summary, dimension breakdown and prioritized recommendations, ready to send.',
+  },
   '/docs/api': {
     title: 'API & Webhooks Documentation | Presora',
     description: 'Integrate Presora into your stack with a REST API and webhooks. Run brand visibility scans, pull scores and automate AI monitoring programmatically.',
@@ -61,6 +65,7 @@ export const SEO_CONFIG: Record<string, SeoConfig> = {
   '/profile':            { title: 'Profile | Presora', description: 'Presora profile.', noindex: true },
   '/settings':           { title: 'Settings | Presora', description: 'Presora settings.', noindex: true },
   '/reports':            { title: 'Reports | Presora', description: 'Presora reports.', noindex: true },
+  '/admin/announcements': { title: 'Send announcement | Presora', description: 'Presora admin.', noindex: true },
   '/developers':         { title: 'Developers | Presora', description: 'Presora developer tools.', noindex: true },
   '/reset-password':     { title: 'Reset Password | Presora', description: 'Reset your Presora password.', noindex: true },
   '/auth/confirm':       { title: 'Confirm Account | Presora', description: 'Confirm your Presora account.', noindex: true },

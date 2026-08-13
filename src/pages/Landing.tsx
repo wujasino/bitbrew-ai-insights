@@ -593,6 +593,7 @@ const Landing = () => {
                 tags: ['Multi-brand', 'API access', 'Competitor compare'],
                 iconBg: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500',
                 border: 'border-emerald-500/20 hover:border-emerald-500/40',
+                link: '/agencies',
               },
             ].map((card, i) => (
               <motion.div
@@ -624,6 +625,11 @@ const Landing = () => {
                     </span>
                   ))}
                 </div>
+                {card.link && (
+                  <Link to={card.link} className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:gap-1.5 transition-all">
+                    See the agency workflow <ArrowRight className="w-3 h-3" />
+                  </Link>
+                )}
               </motion.div>
             ))}
           </div>

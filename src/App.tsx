@@ -18,6 +18,7 @@ const AppShell = lazy(() =>
 const Landing        = lazy(() => import("./pages/Landing"));
 const About          = lazy(() => import("./pages/About"));
 const Contact        = lazy(() => import("./pages/Contact"));
+const Agencies       = lazy(() => import("./pages/Agencies"));
 const Status         = lazy(() => import("./pages/Status"));
 const Dashboard      = lazy(() => import("./pages/Dashboard"));
 const Automations    = lazy(() => import("./pages/Automations"));
@@ -31,6 +32,8 @@ const Terms          = lazy(() => import("./pages/Terms"));
 const NewsletterTerms = lazy(() => import("./pages/NewsletterTerms"));
 const Settings       = lazy(() => import("./pages/Settings"));
 const Reports        = lazy(() => import("./pages/Reports"));
+const AdminAnnouncements = lazy(() => import("./pages/AdminAnnouncements"));
+const AuditReport    = lazy(() => import("./pages/AuditReport"));
 const Developers     = lazy(() => import("./pages/Developers"));
 const ApiDocs        = lazy(() => import("./pages/ApiDocs"));
 const NotFound       = lazy(() => import("./pages/NotFound"));
@@ -81,6 +84,7 @@ const App = () => (
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/status" element={<Status />} />
+            <Route path="/agencies" element={<Agencies />} />
             <Route
               path="/dashboard"
               element={
@@ -136,6 +140,27 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <AppShell><Reports /></AppShell>
+                </ProtectedRoute>
+              }
+            />
+            {/* Further gated inside the page itself (useIsAdmin) — redirects
+                non-admins to /dashboard rather than just hiding the nav link. */}
+            <Route
+              path="/admin/announcements"
+              element={
+                <ProtectedRoute>
+                  <AppShell><AdminAnnouncements /></AppShell>
+                </ProtectedRoute>
+              }
+            />
+            {/* No AppShell — this is a standalone, print-optimized view meant
+                to be exported as a PDF and handed to a client, not browsed
+                inside the app chrome. */}
+            <Route
+              path="/audit/:id"
+              element={
+                <ProtectedRoute>
+                  <AuditReport />
                 </ProtectedRoute>
               }
             />
