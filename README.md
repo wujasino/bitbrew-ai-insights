@@ -1,13 +1,16 @@
-# Presora — E2E & API Test Suite
+# Presora — E2E Test Suite for a Production SaaS I Built
 
-[Test runs →](https://github.com/wujasino/presora/actions)
+[Live product →](https://presora.app) · [Test runs →](https://github.com/wujasino/presora/actions)
 
-Automated test suite for [Presora](https://presora.app), a production SaaS that
-tracks brand visibility in AI-generated answers. Covers authentication, the
-dashboard's real data, subscription state in Settings, and the global command
-palette — see [Testing](#testing) below for the full breakdown.
+[Presora](https://presora.app) is a production SaaS that tracks brand visibility in
+AI-generated answers — built end-to-end by me, frontend through backend through
+infrastructure (see [What it does](#what-it-does) and [Tech stack](#tech-stack) below).
+This repo's other half is the Playwright E2E suite covering it: authentication, the
+dashboard's real data, subscription state in Settings, and the global command palette
+— see [Testing](#testing) for the full breakdown.
 
-**Stack:** Playwright · TypeScript · GitHub Actions
+**App stack:** React · TypeScript · Supabase · Netlify Functions · Stripe
+**Test stack:** Playwright · TypeScript · GitHub Actions
 
 ---
 
