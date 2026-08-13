@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Bell, CheckCheck, TrendingDown } from "lucide-react"
+import { Bell, CheckCheck, TrendingDown, Megaphone } from "lucide-react"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -10,10 +10,24 @@ interface NotificationRow {
   id: string
   created_at: string
   read_at: string | null
+  type: string
   title: string
   body: string
   brand_name: string | null
+  data: { planScope?: string[] } | null
 }
+
+// Per-type look — score_alert (netlify/functions/check-score-alerts.js) was
+// the only kind ever written, so this used to be a hardcoded red
+// TrendingDown icon. `announcement` covers account-wide messages (pricing
+// changes, incidents, policy updates) that aren't about a specific brand's
+// score, so they get a distinct, non-alarming treatment instead of
+// borrowing the "something dropped" red styling.
+const NOTIFICATION_STYLE: Record<string, { Icon: typeof Bell; iconBg: string; iconColor: string }> = {
+  score_alert: { Icon: TrendingDown, iconBg: "bg-red-500/10 border-red-500/20", iconColor: "text-red-500" },
+  announcement: { Icon: Megaphone, iconBg: "bg-primary/10 border-primary/20", iconColor: "text-primary" },
+}
+const DEFAULT_STYLE = { Icon: Bell, iconBg: "bg-muted border-border", iconColor: "text-muted-foreground" }
 
 const timeAgo = (iso: string) => {
   const diffMs = Date.now() - new Date(iso).getTime()
@@ -43,7 +57,7 @@ export default function AvatarNotifications() {
     if (!userId) { setLoading(false); return }
     const { data, error } = await supabase
       .from('notifications')
-      .select('id, created_at, read_at, title, body, brand_name')
+      .select('id, created_at, read_at, type, title, body, brand_name, data')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .limit(20)
@@ -97,26 +111,37 @@ export default function AvatarNotifications() {
             </div>
           ) : (
             <ul className="divide-y divide-border">
-              {notifications.map((item) => (
-                <li
-                  key={item.id}
-                  onClick={() => markRead(item.id)}
-                  className={cn(
-                    "flex items-start gap-3 p-4 hover:bg-muted/50 transition cursor-pointer",
-                    !item.read_at && "bg-primary/[0.04]"
-                  )}
-                >
-                  <div className="w-7 h-7 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center shrink-0 mt-0.5">
-                    <TrendingDown className="h-3.5 w-3.5 text-red-500" />
-                  </div>
-                  <div className="flex flex-col text-sm min-w-0 flex-1">
-                    <span className={cn("font-medium truncate", !item.read_at && "text-foreground")}>{item.title}</span>
-                    <span className="text-muted-foreground text-xs mt-0.5 leading-relaxed">{item.body}</span>
-                    <span className="text-muted-foreground/70 text-[11px] mt-1">{timeAgo(item.created_at)}</span>
-                  </div>
-                  {!item.read_at && <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0 mt-1.5" />}
-                </li>
-              ))}
+              {notifications.map((item) => {
+                const { Icon, iconBg, iconColor } = NOTIFICATION_STYLE[item.type] ?? DEFAULT_STYLE
+                const planScope = item.data?.planScope
+                return (
+                  <li
+                    key={item.id}
+                    onClick={() => markRead(item.id)}
+                    className={cn(
+                      "flex items-start gap-3 p-4 hover:bg-muted/50 transition cursor-pointer",
+                      !item.read_at && "bg-primary/[0.04]"
+                    )}
+                  >
+                    <div className={cn("w-7 h-7 rounded-full border flex items-center justify-center shrink-0 mt-0.5", iconBg)}>
+                      <Icon className={cn("h-3.5 w-3.5", iconColor)} />
+                    </div>
+                    <div className="flex flex-col text-sm min-w-0 flex-1">
+                      <span className={cn("font-medium truncate", !item.read_at && "text-foreground")}>{item.title}</span>
+                      <span className="text-muted-foreground text-xs mt-0.5 leading-relaxed">{item.body}</span>
+                      <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                        <span className="text-muted-foreground/70 text-[11px]">{timeAgo(item.created_at)}</span>
+                        {planScope && planScope.length > 0 && (
+                          <span className="text-[10px] font-medium uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                            {planScope.join(' · ')}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    {!item.read_at && <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0 mt-1.5" />}
+                  </li>
+                )
+              })}
             </ul>
           )}
         </div>
