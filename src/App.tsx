@@ -32,6 +32,7 @@ const Terms          = lazy(() => import("./pages/Terms"));
 const NewsletterTerms = lazy(() => import("./pages/NewsletterTerms"));
 const Settings       = lazy(() => import("./pages/Settings"));
 const Reports        = lazy(() => import("./pages/Reports"));
+const AdminAnnouncements = lazy(() => import("./pages/AdminAnnouncements"));
 const AuditReport    = lazy(() => import("./pages/AuditReport"));
 const Developers     = lazy(() => import("./pages/Developers"));
 const ApiDocs        = lazy(() => import("./pages/ApiDocs"));
@@ -139,6 +140,16 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <AppShell><Reports /></AppShell>
+                </ProtectedRoute>
+              }
+            />
+            {/* Further gated inside the page itself (useIsAdmin) — redirects
+                non-admins to /dashboard rather than just hiding the nav link. */}
+            <Route
+              path="/admin/announcements"
+              element={
+                <ProtectedRoute>
+                  <AppShell><AdminAnnouncements /></AppShell>
                 </ProtectedRoute>
               }
             />

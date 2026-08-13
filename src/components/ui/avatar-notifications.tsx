@@ -15,6 +15,7 @@ interface NotificationRow {
   body: string
   brand_name: string | null
   data: { planScope?: string[] } | null
+  expires_at: string | null
 }
 
 // Per-type look — score_alert (netlify/functions/check-score-alerts.js) was
@@ -57,8 +58,12 @@ export default function AvatarNotifications() {
     if (!userId) { setLoading(false); return }
     const { data, error } = await supabase
       .from('notifications')
-      .select('id, created_at, read_at, type, title, body, brand_name, data')
+      .select('id, created_at, read_at, type, title, body, brand_name, data, expires_at')
       .eq('user_id', userId)
+      // Drop announcements past their expires_at (e.g. a "prices are
+      // changing" notice) so they stop showing without needing to be
+      // deleted — score alerts and any row with no expiry are unaffected.
+      .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
       .order('created_at', { ascending: false })
       .limit(20)
     if (!error) setNotifications(data || [])

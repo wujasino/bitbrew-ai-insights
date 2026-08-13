@@ -112,6 +112,28 @@ export const usePlan = () => {
   });
 };
 
+const fetchIsAdmin = async (userId: string) => {
+  const { data } = await supabase.from('profiles').select('is_admin').eq('id', userId).single();
+  return data?.is_admin ?? false;
+};
+
+/**
+ * Gates the /admin/announcements broadcast tool. Deliberately has no
+ * placeholderData (unlike usePlan's 'Free') — a `false` placeholder would
+ * be indistinguishable from a real "not admin" answer and would redirect
+ * an actual admin away before the real value loads. isLoading stays true
+ * (data stays undefined) until the query genuinely resolves.
+ */
+export const useIsAdmin = () => {
+  const { data: sessionUser, isLoading: userLoading } = useSessionUser();
+  const userId = sessionUser?.id ?? null;
+  return useQuery({
+    queryKey: ['profile-is-admin', userId],
+    queryFn: () => fetchIsAdmin(userId as string),
+    enabled: !userLoading && !!userId,
+  });
+};
+
 const fetchAnalysesUsedThisMonth = async (userId: string) => {
   const startOfMonth = new Date();
   startOfMonth.setDate(1);

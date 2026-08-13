@@ -65,6 +65,7 @@ export const SEO_CONFIG: Record<string, SeoConfig> = {
   '/profile':            { title: 'Profile | Presora', description: 'Presora profile.', noindex: true },
   '/settings':           { title: 'Settings | Presora', description: 'Presora settings.', noindex: true },
   '/reports':            { title: 'Reports | Presora', description: 'Presora reports.', noindex: true },
+  '/admin/announcements': { title: 'Send announcement | Presora', description: 'Presora admin.', noindex: true },
   '/developers':         { title: 'Developers | Presora', description: 'Presora developer tools.', noindex: true },
   '/reset-password':     { title: 'Reset Password | Presora', description: 'Reset your Presora password.', noindex: true },
   '/auth/confirm':       { title: 'Confirm Account | Presora', description: 'Confirm your Presora account.', noindex: true },
