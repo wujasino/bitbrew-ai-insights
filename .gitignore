@@ -38,3 +38,6 @@ e2e/.auth/
 test-results/
 playwright-report/
 blob-report/
+
+# Vitest coverage
+coverage/

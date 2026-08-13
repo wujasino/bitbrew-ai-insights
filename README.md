@@ -1,5 +1,10 @@
 # Presora — E2E & API Test Suite for a Production SaaS I Built
 
+[![E2E Tests](https://github.com/wujasino/presora/actions/workflows/e2e.yml/badge.svg)](https://github.com/wujasino/presora/actions/workflows/e2e.yml)
+![Node](https://img.shields.io/badge/node-22.x-339933?logo=node.js&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?logo=typescript&logoColor=white)
+![Playwright](https://img.shields.io/badge/Playwright-tests-2EAD33?logo=playwright&logoColor=white)
+
 [Live product →](https://presora.app) · [Test runs →](https://github.com/wujasino/presora/actions)
 
 [Presora](https://presora.app) is a production SaaS that tracks brand visibility in
@@ -106,6 +111,8 @@ npm run e2e # Playwright E2E — see "Testing" below for what's covered and how 
 Presora is a production SaaS handling authentication, LLM-driven analysis pipelines and Stripe subscriptions, so the suite is built around the paths where a regression costs real money: sign-in/sign-up, the dashboard's real data, subscription state in Settings, and the request contracts of the serverless functions everything else is built on.
 
 **72 tests, ~96–101s per CI shard** (measured on a real GitHub Actions run, 2-way sharded — [see the check runs](https://github.com/wujasino/presora/pull/121/checks)). Flake check: `npx playwright test --project=chromium --project=api --repeat-each=10` — **470 repeated runs (24 UI + 23 API tests × 10), 0 failures.**
+
+**Unit test coverage — the honest number:** `npm run test:coverage` measures **1.3% of `src/` by statement**. That's not a typo or a mistake to fix — Vitest here only has 2 files to run (`src/test/`), and they exercise one thing on purpose: `src/lib/locale.tsx`'s i18n logic (74% statement coverage on that file, 100% on the `en`/`pl`/`de` dictionaries). Everything a unit test would normally check on a page or component — does it render, does clicking a button do the right thing, does a bad API response degrade gracefully — is checked by the 72-test Playwright suite above instead, against real rendered output and real (or precisely mocked) network responses, which is a stronger guarantee for that kind of behavior than a component test with everything mocked out would be. A 1.3% unit-coverage number next to a 72-test integration/API suite is what that division of labor looks like measured honestly, not a gap to close.
 
 | Layer | Tool |
 |-------|------|
