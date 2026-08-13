@@ -18,6 +18,7 @@ const AppShell = lazy(() =>
 const Landing        = lazy(() => import("./pages/Landing"));
 const About          = lazy(() => import("./pages/About"));
 const Contact        = lazy(() => import("./pages/Contact"));
+const Agencies       = lazy(() => import("./pages/Agencies"));
 const Status         = lazy(() => import("./pages/Status"));
 const Dashboard      = lazy(() => import("./pages/Dashboard"));
 const Automations    = lazy(() => import("./pages/Automations"));
@@ -82,6 +83,7 @@ const App = () => (
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/status" element={<Status />} />
+            <Route path="/agencies" element={<Agencies />} />
             <Route
               path="/dashboard"
               element={

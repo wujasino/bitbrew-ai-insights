@@ -28,6 +28,10 @@ export const SEO_CONFIG: Record<string, SeoConfig> = {
     title: 'System Status | Presora',
     description: 'Live status of Presora\'s core dependencies — application and database/auth availability.',
   },
+  '/agencies': {
+    title: 'AI Visibility Audits for Agencies | Presora',
+    description: 'Run a Presora scan on a prospect\'s brand and export a client-ready AI visibility audit — executive summary, dimension breakdown and prioritized recommendations, ready to send.',
+  },
   '/docs/api': {
     title: 'API & Webhooks Documentation | Presora',
     description: 'Integrate Presora into your stack with a REST API and webhooks. Run brand visibility scans, pull scores and automate AI monitoring programmatically.',
