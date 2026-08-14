@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { PricingCards, type PricingTierCard } from '@/components/ui/pricing-cards';
 import { CreditsUsageWidget } from '@/components/CreditsUsageWidget';
 import { ContactForm } from '@/components/ui/contact-form';
+import { useSessionUser } from '@/hooks/useAccountInfo';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import {
@@ -37,15 +38,12 @@ const Pricing = () => {
   const [showDowngradeDialog, setShowDowngradeDialog] = useState(false);
   const [showContactSalesDialog, setShowContactSalesDialog] = useState(false);
   const [downgrading, setDowngrading] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
+  const { data: sessionUser } = useSessionUser();
+  const isLoggedIn = !!sessionUser?.id;
 
   const prices = USD;
   const period_month = '/month';
   const period_year  = '/year';
-
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => setIsLoggedIn(!!user));
-  }, []);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);

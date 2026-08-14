@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { FileText, Download, Trash2, Calendar, ArrowUp, ArrowDown, ChevronRight, Loader2, Presentation, Lock } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
-import { usePlan, isAgencyPlan } from '@/hooks/useAccountInfo';
+import { usePlan, isAgencyPlan, useSessionUser } from '@/hooks/useAccountInfo';
 
 interface Report {
   id: string;
@@ -40,20 +40,22 @@ const Reports = () => {
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const { data: plan = 'Free' } = usePlan();
   const canCreateAudit = isAgencyPlan(plan);
+  const { data: sessionUser, isLoading: userLoading } = useSessionUser();
+  const userId = sessionUser?.id ?? null;
 
   useEffect(() => {
+    if (userLoading) return;
+    if (!userId) { navigate('/login'); return; }
     (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { navigate('/login'); return; }
       const { data } = await supabase
         .from('analyses')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .order('created_at', { ascending: false });
       setReports((data as Report[]) ?? []);
       setLoading(false);
     })();
-  }, [navigate]);
+  }, [navigate, userId, userLoading]);
 
   const filtered = useMemo(() => {
     const f = TIME_FILTERS.find(t => t.key === timeKey) ?? TIME_FILTERS[3];

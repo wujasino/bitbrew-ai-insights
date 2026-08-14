@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 import { ScoreTrendChart } from '@/components/charts/ScoreTrendChart';
-import { usePlan, PLAN_LABELS, PLAN_LIMITS } from '@/hooks/useAccountInfo';
+import { usePlan, PLAN_LABELS, PLAN_LIMITS, useSessionUser } from '@/hooks/useAccountInfo';
 
 interface Analysis {
   id: string;
@@ -72,15 +72,17 @@ const Profile = () => {
     : 0;
   const bestBrand = analyses.reduce<Analysis | null>((best, a) => (a.trust_score > (best?.trust_score ?? 0) ? a : best), null);
 
+  const { data: sessionUser, isLoading: userLoading } = useSessionUser();
+
   useEffect(() => {
+    if (userLoading) return;
+    if (!sessionUser?.id) { navigate('/login'); return; }
+    const uid = sessionUser.id;
+    setEmail(sessionUser.email ?? '');
+    setAvatarUrl(sessionUser.avatar ?? null);
+
     (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { navigate('/login'); return; }
-
-      setEmail(user.email ?? '');
-      setAvatarUrl(user.user_metadata?.avatar_url ?? null);
-
-      const { data: profile } = await supabase.from('profiles').select('avatar_url, subscription_status').eq('id', user.id).single();
+      const { data: profile } = await supabase.from('profiles').select('avatar_url, subscription_status').eq('id', uid).single();
       if (profile?.avatar_url) setAvatarUrl(profile.avatar_url);
       if (profile?.subscription_status && profile.subscription_status in SUB_DOT) {
         setSubStatus(profile.subscription_status as SubStatus);
@@ -90,7 +92,7 @@ const Profile = () => {
       const { data } = await supabase
         .from('analyses')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', uid)
         .order('created_at', { ascending: false });
 
       if (data?.length) {
@@ -113,7 +115,7 @@ const Profile = () => {
         setHistory([...data].reverse());
       }
     })();
-  }, [navigate]);
+  }, [navigate, sessionUser, userLoading]);
 
   const downloadFile = (content: string, filename: string, mime: string) => {
     const blob = new Blob([content], { type: mime });

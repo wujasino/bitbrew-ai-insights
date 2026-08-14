@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { loadVoicePrefs, saveVoicePrefs, VoicePrefs, AVAILABLE_VOICES, fetchAvailableVoices, ElevenLabsVoice } from '@/hooks/useTTS';
 import { MODEL_CATALOG, loadModelPrefs, saveModelPrefs, ModelPrefs } from '@/lib/models';
-import { usePlan, tierOf, PLAN_LABELS } from '@/hooks/useAccountInfo';
+import { usePlan, tierOf, PLAN_LABELS, useSessionUser } from '@/hooks/useAccountInfo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -263,22 +263,29 @@ export default function Settings() {
   const [emailLoading, setEmailLoading] = useState(false);
   const [emailError, setEmailError] = useState('');
 
+  const { data: sessionUser, isLoading: userLoading } = useSessionUser();
+
   useEffect(() => {
     const storedHist = localStorage.getItem('subscriptionHistory');
     if (storedHist) {
       try { setSubHistory(JSON.parse(storedHist)); } catch { /* noop */ }
     }
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
-      if (!user) { navigate('/login'); return; }
-      setUserId(user.id);
-      setEmail(user.email ?? '');
-      setDisplayName(user.user_metadata?.full_name ?? '');
-      setAvatarUrl(user.user_metadata?.avatar_url ?? null);
+  }, []);
 
+  useEffect(() => {
+    if (userLoading) return;
+    if (!sessionUser?.id) { navigate('/login'); return; }
+    const uid = sessionUser.id;
+    setUserId(uid);
+    setEmail(sessionUser.email ?? '');
+    setDisplayName(sessionUser.name ?? '');
+    setAvatarUrl(sessionUser.avatar ?? null);
+
+    (async () => {
       const { data: profile } = await supabase
         .from('profiles')
         .select('subscription_status, current_period_end')
-        .eq('id', user.id)
+        .eq('id', uid)
         .maybeSingle();
       if (profile?.subscription_status) {
         setSubStatus(profile.subscription_status as typeof subStatus);
@@ -294,8 +301,8 @@ export default function Settings() {
           .then(data => { if (data) setNotifNewsletter(data.subscribed); })
           .catch(() => { /* leave default */ });
       }
-    });
-  }, [navigate]);
+    })();
+  }, [navigate, sessionUser, userLoading]);
 
   const SUB_DOT = {
     active: 'bg-emerald-400 ring-emerald-400/30',
