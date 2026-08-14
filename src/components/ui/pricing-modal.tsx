@@ -4,6 +4,7 @@ import { Zap, AlertTriangle, CreditCard, RefreshCw } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { PricingCards, type PricingTierCard } from '@/components/ui/pricing-cards';
+import { ContactForm } from '@/components/ui/contact-form';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 
@@ -27,6 +28,7 @@ export function PricingModal({ open, onClose, currentPlan = 'free' }: Props) {
   const [loadingCredits, setLoadingCredits] = useState<string | null>(null);
   const [message, setMessage] = useState('');
   const [showDowngrade, setShowDowngrade] = useState(false);
+  const [showContactSales, setShowContactSales] = useState(false);
   const [downgrading, setDowngrading] = useState(false);
 
   useEffect(() => { if (!open) setMessage(''); }, [open]);
@@ -39,7 +41,7 @@ export function PricingModal({ open, onClose, currentPlan = 'free' }: Props) {
     if (planId === currentPlan) return;
     if (planId === 'free') { setShowDowngrade(true); return; }
     if (planId === 'enterprise') {
-      window.location.href = 'mailto:contact.presora@gmail.com?subject=Custom Plan';
+      setShowContactSales(true);
       return;
     }
     setLoading(planId);
@@ -334,6 +336,19 @@ export function PricingModal({ open, onClose, currentPlan = 'free' }: Props) {
               {downgrading ? 'Canceling...' : 'Yes, switch to Free'}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Contact Sales — Agency plan */}
+      <Dialog open={showContactSales} onOpenChange={setShowContactSales}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Talk to sales about the Agency plan</DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">
+              Tell us about your agency and what you need — a real person replies within 24 hours.
+            </DialogDescription>
+          </DialogHeader>
+          <ContactForm defaultSubject="Agency plan inquiry" compact />
         </DialogContent>
       </Dialog>
     </>

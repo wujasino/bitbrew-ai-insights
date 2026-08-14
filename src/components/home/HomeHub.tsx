@@ -9,7 +9,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 import { CreditsUsageWidget } from '@/components/CreditsUsageWidget';
-import { usePlan, tierOf } from '@/hooks/useAccountInfo';
+import { usePlan, tierOf, useSessionUser } from '@/hooks/useAccountInfo';
 import { MODEL_CATALOG } from '@/lib/models';
 import { BrandScanInput } from '@/components/BrandScanInput';
 
@@ -153,28 +153,39 @@ const Delta = ({ value }: { value: number | null }) => {
 
 const HomeHub = () => {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
+  const [analysesLoading, setAnalysesLoading] = useState(true);
   const [analyses, setAnalyses] = useState<Analysis[]>([]);
   const { data: plan = 'Free' } = usePlan();
   const planTier = tierOf(plan);
   const visibleModels = MODEL_CATALOG.filter(m => m.tier <= planTier);
   const lockedModels = MODEL_CATALOG.filter(m => m.tier > planTier);
 
+  // Reuse the already-cached (react-query) session instead of calling
+  // supabase.auth.getUser() here — getUser() re-verifies the token with a
+  // network round trip to the Auth server on every mount, which was making
+  // this the slowest thing on the page. getSession() (what useSessionUser
+  // uses) reads the already-validated local session instead.
+  const { data: sessionUser, isLoading: userLoading } = useSessionUser();
+  const userId = sessionUser?.id ?? null;
+
   useEffect(() => {
+    if (userLoading) return;
+    if (!userId) { setAnalysesLoading(false); return; }
     let active = true;
-    (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { if (active) setLoading(false); return; }
-      const { data } = await supabase
-        .from('analyses')
-        .select('id, brand_name, trust_score, authority, sentiment, recency, mentions, accuracy, created_at, sources')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(10);
-      if (active) { setAnalyses((data as Analysis[]) ?? []); setLoading(false); }
-    })();
+    setAnalysesLoading(true);
+    supabase
+      .from('analyses')
+      .select('id, brand_name, trust_score, authority, sentiment, recency, mentions, accuracy, created_at, sources')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(10)
+      .then(({ data }) => {
+        if (active) { setAnalyses((data as Analysis[]) ?? []); setAnalysesLoading(false); }
+      });
     return () => { active = false; };
-  }, []);
+  }, [userId, userLoading]);
+
+  const loading = userLoading || analysesLoading;
 
   const latest = analyses[0] ?? null;
   const previous = analyses[1] ?? null;

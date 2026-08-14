@@ -589,7 +589,7 @@ const Landing = () => {
               {
                 icon: Building2,
                 title: 'Marketing Agencies',
-                desc: 'Offer clients a new service: AI visibility audit. Generate white-label reports and compare client brands against competitors.',
+                desc: 'Offer clients a new service: AI visibility audit. Generate branded reports and compare client brands against competitors.',
                 tags: ['Multi-brand', 'API access', 'Competitor compare'],
                 iconBg: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500',
                 border: 'border-emerald-500/20 hover:border-emerald-500/40',

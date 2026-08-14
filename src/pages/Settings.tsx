@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { loadVoicePrefs, saveVoicePrefs, VoicePrefs, AVAILABLE_VOICES, fetchAvailableVoices, ElevenLabsVoice } from '@/hooks/useTTS';
 import { MODEL_CATALOG, loadModelPrefs, saveModelPrefs, ModelPrefs } from '@/lib/models';
-import { usePlan, tierOf } from '@/hooks/useAccountInfo';
+import { usePlan, tierOf, PLAN_LABELS, useSessionUser } from '@/hooks/useAccountInfo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -263,22 +263,29 @@ export default function Settings() {
   const [emailLoading, setEmailLoading] = useState(false);
   const [emailError, setEmailError] = useState('');
 
+  const { data: sessionUser, isLoading: userLoading } = useSessionUser();
+
   useEffect(() => {
     const storedHist = localStorage.getItem('subscriptionHistory');
     if (storedHist) {
       try { setSubHistory(JSON.parse(storedHist)); } catch { /* noop */ }
     }
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
-      if (!user) { navigate('/login'); return; }
-      setUserId(user.id);
-      setEmail(user.email ?? '');
-      setDisplayName(user.user_metadata?.full_name ?? '');
-      setAvatarUrl(user.user_metadata?.avatar_url ?? null);
+  }, []);
 
+  useEffect(() => {
+    if (userLoading) return;
+    if (!sessionUser?.id) { navigate('/login'); return; }
+    const uid = sessionUser.id;
+    setUserId(uid);
+    setEmail(sessionUser.email ?? '');
+    setDisplayName(sessionUser.name ?? '');
+    setAvatarUrl(sessionUser.avatar ?? null);
+
+    (async () => {
       const { data: profile } = await supabase
         .from('profiles')
         .select('subscription_status, current_period_end')
-        .eq('id', user.id)
+        .eq('id', uid)
         .maybeSingle();
       if (profile?.subscription_status) {
         setSubStatus(profile.subscription_status as typeof subStatus);
@@ -294,8 +301,8 @@ export default function Settings() {
           .then(data => { if (data) setNotifNewsletter(data.subscribed); })
           .catch(() => { /* leave default */ });
       }
-    });
-  }, [navigate]);
+    })();
+  }, [navigate, sessionUser, userLoading]);
 
   const SUB_DOT = {
     active: 'bg-emerald-400 ring-emerald-400/30',
@@ -1148,7 +1155,9 @@ export default function Settings() {
                     <div className="flex items-center gap-3">
                       <span className={`inline-flex h-2.5 w-2.5 rounded-full ring-2 ${SUB_DOT[subStatus]} animate-pulse`} />
                       <div>
-                        <p className="text-sm font-medium text-foreground">{SUB_STATUS_LABEL[subStatus]}</p>
+                        <p className="text-sm font-medium text-foreground">
+                          {PLAN_LABELS[plan] ?? plan} <span className="text-muted-foreground font-normal">· {SUB_STATUS_LABEL[subStatus]}</span>
+                        </p>
                         <p className="text-xs text-muted-foreground mt-0.5">
                           {subStatus === 'canceled' && currentPeriodEnd
                             ? `Access continues until ${new Date(currentPeriodEnd).toLocaleDateString()}.`
@@ -1182,8 +1191,13 @@ export default function Settings() {
                   </div>
 
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground font-semibold">Billing history</p>
-                    <div className="flex items-center gap-2">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground font-semibold">Recent subscription activity</p>
+                      <p className="text-[11px] text-muted-foreground/70 mt-1">
+                        Changes made from this device — not a full invoice history. Every payment sends a VAT invoice to your email.
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
                       <select
                         value={exportFormat}
                         onChange={e => setExportFormat(e.target.value as 'csv' | 'json')}
@@ -1199,7 +1213,7 @@ export default function Settings() {
                   </div>
 
                   {subHistory.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">No history yet.</p>
+                    <p className="text-sm text-muted-foreground">No activity recorded on this device yet.</p>
                   ) : (
                     <div className="space-y-2">
                       {subHistory.map((item, i) => (

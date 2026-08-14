@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
+import { useSessionUser } from '@/hooks/useAccountInfo';
 
 // ── Types ───────────────────────────────────────────────────────
 type ApiKey = {
@@ -69,15 +70,15 @@ const Developers = () => {
   const [hooks, setHooks] = useState<Webhook[]>([]);
   const [deliveries, setDeliveries] = useState<Delivery[]>([]);
 
+  const { data: sessionUser } = useSessionUser();
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) return;
-      setUserId(user.id);
-      setKeys(load<ApiKey>(user.id, 'keys'));
-      setHooks(load<Webhook>(user.id, 'hooks'));
-      setDeliveries(load<Delivery>(user.id, 'deliveries'));
-    });
-  }, []);
+    const uid = sessionUser?.id;
+    if (!uid) return;
+    setUserId(uid);
+    setKeys(load<ApiKey>(uid, 'keys'));
+    setHooks(load<Webhook>(uid, 'hooks'));
+    setDeliveries(load<Delivery>(uid, 'deliveries'));
+  }, [sessionUser]);
 
   return (
     <div className="min-h-screen bg-background">

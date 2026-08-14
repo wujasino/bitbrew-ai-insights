@@ -4,6 +4,7 @@ import { BookOpen, Plus, Trash2, Loader2, CheckCircle2, AlertCircle, ChevronDown
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
+import { useSessionUser } from '@/hooks/useAccountInfo';
 
 interface Fragment {
   id: string;
@@ -30,23 +31,24 @@ export default function BrandKnowledgeForm({ brandName }: BrandKnowledgeFormProp
   );
   const [expandedFragment, setExpandedFragment] = useState<string | null>(null);
 
+  const { data: sessionUser } = useSessionUser();
+  const userId = sessionUser?.id ?? null;
+
   const loadFragments = useCallback(async () => {
-    if (!brandName.trim()) return;
+    if (!brandName.trim() || !userId) return;
     setLoadingFragments(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
       const { data } = await supabase
         .from('brand_knowledge')
         .select('id, content, created_at')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .eq('brand_name', brandName.trim())
         .order('created_at', { ascending: false });
       setFragments(data ?? []);
     } finally {
       setLoadingFragments(false);
     }
-  }, [brandName]);
+  }, [brandName, userId]);
 
   useEffect(() => {
     loadFragments();
