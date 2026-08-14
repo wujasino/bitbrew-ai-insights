@@ -195,6 +195,16 @@ const HomeHub = () => {
     [analyses]
   );
 
+  // Plan-unlocked models with no confidence data in the latest scan — either
+  // deselected in Settings' model picker, or (for older rows) the scan
+  // predates `sources` being persisted at all. Surfaced below so "why does
+  // this only show 3 of 6 models" is self-explanatory instead of a silent
+  // row of dashes.
+  const skippedVisibleModels = useMemo(
+    () => (latest ? visibleModels.filter(m => !latest.sources?.some(s => s.model === m.label)) : []),
+    [latest, visibleModels]
+  );
+
   const runScan = (raw: string) => {
     const v = raw.trim();
     if (!v) return;
@@ -293,6 +303,11 @@ const HomeHub = () => {
                   </Link>
                 ))}
               </div>
+              {skippedVisibleModels.length > 0 && lockedModels.length === 0 && (
+                <Link to="/settings?tab=account" className="mt-4 flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                  {skippedVisibleModels.length} of {visibleModels.length} available models weren't queried in this scan — review your selection in Settings <ArrowRight className="w-3 h-3" />
+                </Link>
+              )}
               {lockedModels.length > 0 && (
                 <Link to="/pricing" className="mt-4 inline-flex items-center gap-1 text-xs text-primary hover:underline">
                   Unlock all {MODEL_CATALOG.length} models <ArrowRight className="w-3 h-3" />
