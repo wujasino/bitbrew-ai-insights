@@ -88,13 +88,13 @@ const Landing = () => {
                 <Search className="w-3 h-3" /> For brands that want to be found
               </span>
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-display text-foreground mb-5 leading-[1.1]">
-                Understand your brand's{' '}
-                <span className="ai-presence-accent" data-text="AI presence">
-                  <span className="ai-presence-accent-text">AI presence</span>
+                Get your brand's{' '}
+                <span className="ai-presence-accent" data-text="AI visibility audit">
+                  <span className="ai-presence-accent-text">AI visibility audit</span>
                 </span>
               </h1>
               <p className="text-lg text-muted-foreground max-w-lg mx-auto mb-10">
-                Run a free AI visibility audit — see your brand's visibility, perception and competitive position across AI search, then get a clear, actionable plan to become the answer AI gives.
+                See your brand's visibility, perception and competitive position across AI search — then get a clear, actionable plan to become the answer AI gives.
               </p>
             </motion.div>
 
