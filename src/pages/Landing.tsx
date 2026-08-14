@@ -94,7 +94,7 @@ const Landing = () => {
                 </span>
               </h1>
               <p className="text-lg text-muted-foreground max-w-lg mx-auto mb-10">
-                Analyze your brand visibility, perception and competitive position across AI search — then get a clear, actionable plan to become the answer AI gives.
+                Run a free AI visibility audit — see your brand's visibility, perception and competitive position across AI search, then get a clear, actionable plan to become the answer AI gives.
               </p>
             </motion.div>
 
