@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Sparkles, TrendingUp, TrendingDown, Activity, Layers, Target, RefreshCw, Search, Lock, FileDown, Swords, X, Volume2, Square, Loader2 } from 'lucide-react';
+import { ArrowLeft, Sparkles, TrendingUp, TrendingDown, Activity, Layers, Target, RefreshCw, Search, Lock, FileDown, Swords, X, Volume2, Square, Loader2, Presentation } from 'lucide-react';
 import HomeHub from '@/components/home/HomeHub';
 import { useTranslation } from '@/lib/locale';
 import { BrewingProgress } from '@/components/BrewingState';
@@ -13,7 +13,7 @@ import { ResultsBreakdown } from '@/components/ResultsBreakdown';
 import BrandKnowledgeForm from '@/components/BrandKnowledgeForm';
 import { useBrewing } from '@/hooks/useBrewing';
 import { useTTS, loadVoicePrefs } from '@/hooks/useTTS';
-import { usePlan, tierOf, useSessionUser } from '@/hooks/useAccountInfo';
+import { usePlan, tierOf, useSessionUser, isAgencyPlan } from '@/hooks/useAccountInfo';
 import { ResultChatWidget } from '@/components/ui/result-chat-widget';
 import { cn } from '@/lib/utils';
 import { AnalysisResult } from '@/types/analysis';
@@ -361,6 +361,7 @@ const Dashboard = () => {
   };
   const canSeeCharts = planTier >= 1;
   const canSeeSources = planTier >= 2;
+  const canCreateAudit = isAgencyPlan(plan);
 
   useEffect(() => {
     if (analysisId) {
@@ -550,6 +551,17 @@ const Dashboard = () => {
                     <FileDown className="w-3.5 h-3.5" />
                     <span className="hidden sm:inline text-xs">{t('dashboard_export_pdf')}</span>
                   </button>
+                  {result?.id && (
+                    <button
+                      type="button"
+                      onClick={() => navigate(canCreateAudit ? `/audit/${result.id}` : '/pricing')}
+                      className="inline-flex items-center gap-1.5 bg-card/40 backdrop-blur-xl border border-[hsl(var(--glass-border))] text-foreground px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-card/60 transition-colors disabled:opacity-50"
+                      title={canCreateAudit ? 'Open as client-ready audit' : 'Client-ready audit — Agency plan only'}
+                    >
+                      {canCreateAudit ? <Presentation className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
+                      <span className="hidden sm:inline text-xs">Client audit</span>
+                    </button>
+                  )}
                 </>
               )}
             </form>
