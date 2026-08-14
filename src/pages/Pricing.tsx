@@ -4,6 +4,7 @@ import { Zap, AlertTriangle, Clock, Check } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { PricingCards, type PricingTierCard } from '@/components/ui/pricing-cards';
 import { CreditsUsageWidget } from '@/components/CreditsUsageWidget';
+import { ContactForm } from '@/components/ui/contact-form';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import {
@@ -34,6 +35,7 @@ const Pricing = () => {
   const [message, setMessage] = useState<string>('');
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
   const [showDowngradeDialog, setShowDowngradeDialog] = useState(false);
+  const [showContactSalesDialog, setShowContactSalesDialog] = useState(false);
   const [downgrading, setDowngrading] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
 
@@ -80,7 +82,7 @@ const Pricing = () => {
       return;
     }
     if (planId === 'enterprise') {
-      window.location.href = 'mailto:contact.presora@gmail.com?subject=Custom Plan';
+      setShowContactSalesDialog(true);
       return;
     }
 
@@ -317,6 +319,19 @@ const Pricing = () => {
               {downgrading ? 'Cancelling...' : 'Yes, switch to Free'}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Contact Sales dialog — Agency plan */}
+      <Dialog open={showContactSalesDialog} onOpenChange={setShowContactSalesDialog}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Talk to sales about the Agency plan</DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">
+              Tell us about your agency and what you need — a real person replies within 24 hours.
+            </DialogDescription>
+          </DialogHeader>
+          <ContactForm defaultSubject="Agency plan inquiry" compact />
         </DialogContent>
       </Dialog>
 

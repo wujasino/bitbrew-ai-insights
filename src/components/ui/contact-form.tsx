@@ -7,10 +7,18 @@ import { Label } from '@/components/ui/label';
 
 type Status = 'idle' | 'sending' | 'success' | 'error';
 
-export function ContactForm() {
+interface ContactFormProps {
+  /** Pre-fills the subject field — e.g. "Agency plan inquiry" from the pricing page. */
+  defaultSubject?: string;
+  /** Hides the left "Get in touch" info panel — for embedding inside a Dialog,
+      where that context is already obvious from the surrounding modal. */
+  compact?: boolean;
+}
+
+export function ContactForm({ defaultSubject = '', compact = false }: ContactFormProps) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [subject, setSubject] = useState('');
+  const [subject, setSubject] = useState(defaultSubject);
   const [message, setMessage] = useState('');
   const [status, setStatus] = useState<Status>('idle');
   const [errorMsg, setErrorMsg] = useState('');
@@ -28,7 +36,7 @@ export function ContactForm() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
       setStatus('success');
-      setName(''); setEmail(''); setSubject(''); setMessage('');
+      setName(''); setEmail(''); setSubject(defaultSubject); setMessage('');
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : 'Failed to send. Please try again.');
       setStatus('error');
@@ -36,8 +44,9 @@ export function ContactForm() {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
+    <div className={compact ? '' : 'grid grid-cols-1 lg:grid-cols-2 gap-10 items-start'}>
       {/* Left — info */}
+      {!compact && (
       <div className="space-y-6">
         <div>
           <h3 className="text-xl font-display text-foreground mb-2">
@@ -72,6 +81,7 @@ export function ContactForm() {
           ))}
         </div>
       </div>
+      )}
 
       {/* Right — form */}
       <div className="rounded-2xl border border-[hsl(var(--glass-border))] bg-card/60 backdrop-blur-sm shadow-lg shadow-primary/5 p-6">
