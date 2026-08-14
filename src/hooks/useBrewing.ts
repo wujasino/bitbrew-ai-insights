@@ -63,9 +63,10 @@ export const GUEST_LIMIT = 3;
 
 export function useBrewing() {
   const [progress, setProgress] = useState(0);
-  const [status, setStatus] = useState<'idle' | 'brewing' | 'loading' | 'completed'>('idle');
+  const [status, setStatus] = useState<'idle' | 'brewing' | 'loading' | 'completed' | 'error'>('idle');
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [guestLimitReached, setGuestLimitReached] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const startBrewing = useCallback(async (brandName: string) => {
     // Guest limit (no session) is enforced server-side by analyze.js itself
@@ -75,6 +76,7 @@ export function useBrewing() {
     setStatus('brewing');
     setProgress(0);
     setResult(null);
+    setError(null);
 
     let current = 0;
     const interval = setInterval(() => {
@@ -289,77 +291,17 @@ export function useBrewing() {
         setResult(analysisResult);
         setStatus('completed');
       }, 300);
-    } catch (error) {
+    } catch (err) {
       clearInterval(interval);
-      console.error('Analyze request failed:', error);
-
-      // Deterministic fallback based on brandName so different inputs show different results
-      const deterministicFallback = (seedStr: string) => {
-        const seed = String(seedStr || '').toLowerCase().trim();
-        let h = 2166136261 >>> 0;
-        for (let i = 0; i < seed.length; i++) {
-          h = Math.imul(h ^ seed.charCodeAt(i), 16777619) >>> 0;
-        }
-        const next = () => {
-          h = Math.imul(h ^ (h >>> 13), 1274126177);
-          return Math.round(((h % 66) + 66) % 66) + 30; // 30..95
-        };
-
-        const authority = next();
-        const sentiment = next();
-        const recency = next();
-        const mentions = next();
-        const accuracy = next();
-
-        const trust = Math.round((authority + sentiment + recency + mentions + accuracy) / 5);
-
-        const sentimentTrend = Array.from({ length: 7 }).map((_, i) => ({
-          date: new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toLocaleDateString(),
-          score: Math.max(0, Math.min(100, Math.round(sentiment + Math.round(Math.sin(i + authority) * 6))))
-        }));
-
-        const sourceBreakdown = [
-          { name: 'News', value: Math.max(20, Math.min(70, Math.round((authority + accuracy) / 2))), color: '#8B79F6' },
-          { name: 'Social', value: Math.max(10, Math.min(60, Math.round((mentions + sentiment) / 2))), color: '#60A5FA' },
-          { name: 'Blogs', value: Math.max(5, Math.min(40, Math.round((recency) / 2))), color: '#34D399' }
-        ];
-
-        const sources = [
-          { model: 'GPT-4o', sentiment: normalizeSentiment(sentiment > 60 ? 'Positive' : 'Neutral'), association: `${seed} product`, confidence: Math.max(30, Math.min(99, authority)) },
-          { model: 'Claude', sentiment: normalizeSentiment(sentiment > 55 ? 'Positive' : 'Neutral'), association: `${seed} brand`, confidence: Math.max(25, Math.min(95, accuracy)) },
-          { model: 'Gemini', sentiment: normalizeSentiment(mentions > 50 ? 'Positive' : 'Neutral'), association: `${seed} mentions`, confidence: Math.max(20, Math.min(92, mentions)) }
-        ];
-
-        const out = {
-          dimensions: { authority, sentiment, recency, mentions, accuracy },
-          trustScore: trust,
-          sentimentTrend,
-          sourceBreakdown,
-          sources
-        };
-
-        return out;
-      };
-
-      const fallback = deterministicFallback(brandName || 'unknown');
-
-      const demoResult: AnalysisResult = {
-        id: crypto.randomUUID(),
-        brandName,
-        timestamp: new Date().toISOString(),
-        dimensions: fallback.dimensions,
-        trustScore: fallback.trustScore,
-        sources: fallback.sources,
-        sentimentTrend: fallback.sentimentTrend,
-        sourceBreakdown: fallback.sourceBreakdown,
-        status: 'completed'
-      };
-
-      setProgress(100);
-      setTimeout(() => {
-        setResult(demoResult);
-        setStatus('completed');
-      }, 300);
+      console.error('Analyze request failed:', err);
+      // Previously this fabricated a deterministic fake result and showed it
+      // as a completed scan — indistinguishable from a real AI-generated
+      // report, with no indication the actual API call had failed. Show a
+      // real error instead so a user never mistakes a failed scan for data.
+      setProgress(0);
+      setResult(null);
+      setError(err instanceof Error ? err.message : 'Something went wrong while scanning. Please try again.');
+      setStatus('error');
     }
   }, []);
 
@@ -367,6 +309,7 @@ export function useBrewing() {
     setStatus('idle');
     setProgress(0);
     setResult(null);
+    setError(null);
   }, []);
 
   const loadStoredAnalysis = useCallback(async (id: string) => {
@@ -403,5 +346,5 @@ export function useBrewing() {
     return view;
   }, []);
 
-  return { progress, status, result, startBrewing, reset, loadStoredAnalysis, guestLimitReached };
+  return { progress, status, result, startBrewing, reset, loadStoredAnalysis, guestLimitReached, error };
 }

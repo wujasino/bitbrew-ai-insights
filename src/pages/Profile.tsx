@@ -106,7 +106,10 @@ const Profile = () => {
           if (!seen.has(k)) {
             seen.add(k);
             latest.push(a);
-          } else if (!second[k]) {
+          } else if (!(k in second)) {
+            // `in` rather than a falsy check — a legitimate trust_score of 0
+            // would otherwise keep getting overwritten by older duplicates
+            // instead of locking in the true second-latest score.
             second[k] = a.trust_score;
           }
         }

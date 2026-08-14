@@ -110,8 +110,12 @@ const SuccessScreen = ({ email }: { email: string }) => {
   const handleResend = async () => {
     setResending(true);
     setError('');
-    await supabase.auth.resend({ type: 'signup', email });
+    const { error: resendError } = await supabase.auth.resend({ type: 'signup', email });
     setResending(false);
+    if (resendError) {
+      setError(resendError.message || 'Failed to resend the code. Please try again.');
+      return;
+    }
     setResent(true);
   };
 
