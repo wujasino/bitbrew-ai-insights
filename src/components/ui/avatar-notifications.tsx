@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Bell, CheckCheck, TrendingDown, Megaphone } from "lucide-react"
+import { Bell, CheckCheck, TrendingDown, Megaphone, X } from "lucide-react"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -84,6 +84,11 @@ export default function AvatarNotifications() {
     await supabase.from('notifications').update({ read_at: new Date().toISOString() }).eq('id', id).is('read_at', null)
   }
 
+  const deleteNotification = async (id: string) => {
+    setNotifications(prev => prev.filter(n => n.id !== id))
+    await supabase.from('notifications').delete().eq('id', id)
+  }
+
   return (
     <Popover open={open} onOpenChange={(v) => { setOpen(v); if (v) load() }}>
       <PopoverTrigger asChild>
@@ -124,7 +129,7 @@ export default function AvatarNotifications() {
                     key={item.id}
                     onClick={() => markRead(item.id)}
                     className={cn(
-                      "flex items-start gap-3 p-4 hover:bg-muted/50 transition cursor-pointer",
+                      "group flex items-start gap-3 p-4 hover:bg-muted/50 transition cursor-pointer",
                       !item.read_at && "bg-primary/[0.04]"
                     )}
                   >
@@ -144,6 +149,14 @@ export default function AvatarNotifications() {
                       </div>
                     </div>
                     {!item.read_at && <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0 mt-1.5" />}
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); deleteNotification(item.id) }}
+                      aria-label="Delete notification"
+                      className="shrink-0 -mt-0.5 -mr-1 p-1 rounded-md text-muted-foreground/50 opacity-0 group-hover:opacity-100 hover:text-foreground hover:bg-muted transition"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
                   </li>
                 )
               })}
