@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Copy, Check, Terminal, Webhook, Key, Zap, ArrowRight, BookOpen } from 'lucide-react';
+import { Copy, Check, Terminal, Webhook, Key, Zap, ArrowRight, BookOpen, Info } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { cn } from '@/lib/utils';
@@ -125,6 +125,20 @@ const ApiDocs = () => {
           <main className="col-span-12 lg:col-span-9 max-w-3xl">
             {/* Overview */}
             <H id="overview">Wprowadzenie</H>
+
+            {/* This documents where the public API is headed, not what's live —
+                api.presora.app doesn't exist yet and no backend validates the
+                keys generated on /developers. Said plainly so a reader doesn't
+                follow the curl examples below expecting them to work today. */}
+            <div className="flex items-start gap-3 rounded-xl border border-amber-500/20 bg-amber-500/[0.06] px-4 py-3 mb-5">
+              <Info className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+              <p className="text-xs text-amber-700 dark:text-amber-300 leading-relaxed">
+                <strong>Podgląd.</strong> Publiczne API i dostarczanie webhooków nie są jeszcze wdrożone — poniższe
+                endpointy i przykłady opisują docelowy kształt API, nie działającą dziś usługę. Klucze generowane
+                w panelu <Link to="/developers" className="underline">Developers</Link> nie autoryzują jeszcze realnych żądań.
+              </p>
+            </div>
+
             <p className="text-sm text-muted-foreground leading-relaxed">
               Presora API to REST nad HTTPS z JSON-em w body i odpowiedziach. Bazowy URL:
             </p>

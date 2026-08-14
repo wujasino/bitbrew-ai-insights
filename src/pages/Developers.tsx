@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Key, Webhook, Copy, Trash2, Plus, Check, ExternalLink, Eye, EyeOff,
-  CircleCheck, CircleX, Loader2, BookOpen, Zap,
+  CircleCheck, CircleX, Loader2, BookOpen, Zap, Info,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -104,6 +104,20 @@ const Developers = () => {
             API Documentation
             <ExternalLink className="w-3 h-3" />
           </Link>
+        </div>
+
+        {/* Preview notice — keys/webhooks here are a local mockup of the
+            upcoming public API, not a live backend yet (no server verifies
+            these keys or delivers these webhooks for real). Making that
+            explicit here since generating a key and following the curl
+            examples in /docs/api would otherwise look like it should work. */}
+        <div className="flex items-start gap-3 rounded-xl border border-amber-500/20 bg-amber-500/[0.06] px-4 py-3 mb-6">
+          <Info className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+          <p className="text-xs text-amber-700 dark:text-amber-300 leading-relaxed">
+            <strong>Preview.</strong> The public API and webhook delivery aren't live yet — keys and webhook
+            configs created here are saved only in this browser and don't authorize real requests or send
+            real deliveries. This page previews what account-level API management will look like at launch.
+          </p>
         </div>
 
         {/* Tabs */}
