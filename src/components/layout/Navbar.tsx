@@ -128,6 +128,17 @@ export const Navbar = ({ showThemeToggle = false, landingCta = false }: NavbarPr
                   >
                     Contact
                   </a>
+                  <Link
+                    to="/agencies"
+                    onClick={() => setMobileOpen(false)}
+                    className={`px-3 py-2 rounded-md text-sm transition-colors ${
+                      location.pathname === '/agencies'
+                        ? 'text-primary bg-primary/10 font-medium'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                    }`}
+                  >
+                    Agencies
+                  </Link>
                   <div className="my-1 h-px bg-border" />
                   {!authLoading && (
                     isAuthed ? (
@@ -220,6 +231,20 @@ export const Navbar = ({ showThemeToggle = false, landingCta = false }: NavbarPr
                       </li>
                     </ul>
                   </NavigationMenuContent>
+                </NavigationMenuItem>
+
+                {/* Agencies */}
+                <NavigationMenuItem>
+                  <Link
+                    to="/agencies"
+                    className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                      location.pathname === '/agencies'
+                        ? 'text-primary bg-primary/10 font-medium'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                    }`}
+                  >
+                    Agencies
+                  </Link>
                 </NavigationMenuItem>
               </NavigationMenuList>
               <NavigationMenuViewport />
