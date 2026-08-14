@@ -72,7 +72,11 @@ const Agencies = () => {
                   See a sample audit
                 </button>
               </div>
-              <p className="text-xs text-muted-foreground/70 mt-4">Free to run. No card required.</p>
+              <p className="text-xs text-muted-foreground/70 mt-4">
+                Scanning is free, no card required. Exporting the client-ready PDF audit
+                needs the{' '}
+                <Link to="/pricing" className="text-primary hover:underline">Agency plan</Link>.
+              </p>
             </motion.div>
           </div>
         </section>
@@ -223,18 +227,26 @@ const Agencies = () => {
             <Presentation className="w-8 h-8 text-primary mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-foreground mb-3">Your next audit is one scan away</h2>
             <p className="text-muted-foreground text-sm mb-8">
-              Create a free account, run a scan on your next prospect, and open it as a
-              client-ready audit from Reports.
+              Create a free account and run a scan on your next prospect — then upgrade to
+              Agency to open it as a client-ready audit from Reports.
             </p>
-            <button
-              onClick={() => navigate('/register')}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
-            >
-              Start for free
-              <ArrowRight className="w-4 h-4" />
-            </button>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <button
+                onClick={() => navigate('/register')}
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
+              >
+                Start for free
+                <ArrowRight className="w-4 h-4" />
+              </button>
+              <Link
+                to="/pricing"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-border text-foreground text-sm font-medium hover:bg-accent transition-colors"
+              >
+                See Agency plan
+              </Link>
+            </div>
             <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 mt-6 text-xs text-muted-foreground">
-              <span className="inline-flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5 text-primary" /> No credit card required</span>
+              <span className="inline-flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5 text-primary" /> No credit card to start</span>
               <span className="inline-flex items-center gap-1.5"><FileText className="w-3.5 h-3.5 text-primary" /> Unlimited free scans</span>
             </div>
             <p className="text-xs text-muted-foreground/60 mt-8">
