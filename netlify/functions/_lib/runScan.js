@@ -16,8 +16,8 @@ const fetchWithTimeout = (url, options) => {
 // used for brand_monitors.models — the short codes a user picks via chat).
 export const OPENROUTER_MODELS = [
   { id: 'openai/gpt-4o', label: 'GPT-4o', tier: 0, shortCode: 'gpt-4o' },
-  { id: 'anthropic/claude-sonnet-4.5', label: 'Claude', tier: 1, shortCode: 'claude' },
-  { id: 'google/gemini-2.5-flash', label: 'Gemini', tier: 1, shortCode: 'gemini' },
+  { id: 'anthropic/claude-sonnet-5', label: 'Claude', tier: 1, shortCode: 'claude' },
+  { id: 'google/gemini-3.5-flash', label: 'Gemini', tier: 1, shortCode: 'gemini' },
   { id: 'perplexity/sonar-pro', label: 'Perplexity', tier: 2, shortCode: 'perplexity' },
   { id: 'mistralai/mistral-large', label: 'Mistral', tier: 2, shortCode: 'mistral' },
   { id: 'meta-llama/llama-3.3-70b-instruct', label: 'Llama 3', tier: 2, shortCode: 'llama' },
