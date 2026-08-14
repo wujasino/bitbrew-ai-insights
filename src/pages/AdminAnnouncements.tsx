@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Navigate } from 'react-router-dom';
-import { Megaphone, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Navigate, Link } from 'react-router-dom';
+import { Megaphone, Loader2, CheckCircle2, AlertCircle, Tag } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useIsAdmin } from '@/hooks/useAccountInfo';
 import { Button } from '@/components/ui/button';
@@ -160,6 +160,10 @@ const AdminAnnouncements = () => {
             Send announcement
           </Button>
         </div>
+
+        <Link to="/admin/pricing" className="mt-6 inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
+          <Tag className="w-3.5 h-3.5" /> Go to custom plan pricing
+        </Link>
       </div>
     </div>
   );
