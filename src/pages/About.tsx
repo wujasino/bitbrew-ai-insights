@@ -55,7 +55,7 @@ const About = () => (
 
       <h2 className="text-lg font-semibold text-foreground mb-3">Company</h2>
       <p className="text-base text-muted-foreground leading-relaxed mb-10">
-        Presora is operated by Patryk Rybacki. Get in touch at{' '}
+        Presora is an independently operated SaaS product. Get in touch at{' '}
         <a href="mailto:contact.presora@gmail.com" className="text-primary hover:underline">
           contact.presora@gmail.com
         </a>
