@@ -139,7 +139,7 @@ DROP POLICY IF EXISTS "Users manage own avatar"                      ON storage.
 DROP POLICY IF EXISTS "Users can change their own avatar (all ops)"  ON storage.objects;
 DROP POLICY IF EXISTS "Avatars are publicly accessible"              ON storage.objects;
 DROP POLICY IF EXISTS "Public read avatars"                          ON storage.objects;
-DROP POLICY IF EXISTS "Give users access to own folder"              ON storage.objects;
+DROP POLICY IF EXISTS "Give users access own folder"                 ON storage.objects;
 DROP POLICY IF EXISTS "Allow public read"                            ON storage.objects;
 
 -- ── 10. FUNKCJE ──────────────────────────────────────────────────
@@ -160,6 +160,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- Limit analiz wg planu
+-- Obsługuje wszystkie plany: free(3), starter(5), solo(10), growth(50), enterprise/agency(999999)
 CREATE OR REPLACE FUNCTION public.enforce_analysis_limit()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -181,11 +182,13 @@ BEGIN
 
   plan_limit := CASE user_plan
     WHEN 'free'         THEN 3
+    WHEN 'starter'      THEN 5
     WHEN 'solo'         THEN 10
     WHEN 'solo_brew'    THEN 10
     WHEN 'growth'       THEN 50
     WHEN 'growth_roast' THEN 50
     WHEN 'enterprise'   THEN 999999
+    WHEN 'agency'       THEN 999999
     ELSE 3
   END;
 
