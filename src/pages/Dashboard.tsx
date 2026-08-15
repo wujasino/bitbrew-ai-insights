@@ -513,9 +513,9 @@ const Dashboard = () => {
             {/* Search input */}
             <form
               onSubmit={handleSubmit}
-              className="flex items-center gap-2 sm:max-w-md w-full"
+              className="flex flex-wrap items-center gap-2 sm:max-w-md w-full"
             >
-              <div className="relative flex-1">
+              <div className="relative flex-1 min-w-[160px]">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <input
                   id="dashboard-brand-input"
