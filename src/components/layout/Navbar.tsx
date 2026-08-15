@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/navigation-menu';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Wordmark } from '@/components/Wordmark';
-import { logout } from '@/lib/auth';
+import { logoutAndClearSession } from '@/lib/auth';
 import { useSessionUser } from '@/hooks/useAccountInfo';
 
 interface NavbarProps {
@@ -46,7 +46,7 @@ export const Navbar = ({ showThemeToggle = false, landingCta = false }: NavbarPr
   const handleLogout = async () => {
     setAvatarOpen(false);
     try {
-      await logout();
+      await logoutAndClearSession();
       navigate('/');
     } catch (e) {
       console.error('Logout failed', e);

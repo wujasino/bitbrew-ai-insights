@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useTranslation } from '@/lib/locale';
 import { Eye, EyeOff, ArrowRight, Zap, BarChart3, Shield, Loader2, ArrowLeft, Mail, KeyRound, CheckCircle2, Circle, Lock, Sparkles, Building2 } from 'lucide-react';
-import { getAuthUser, loginUser } from '@/lib/auth';
+import { getAuthUser, loginUser, logoutAndClearSession } from '@/lib/auth';
 import { signInWithGoogle } from '@/lib/googleAuth';
 import { signInWithSSODomain } from '@/lib/samlAuth';
 import { supabase } from '@/lib/supabase';
@@ -221,9 +221,21 @@ const Login = () => {
     }
   };
 
+  // A session can already exist here — either this same user clicking a
+  // stale bookmark/link, or (on a shared machine) someone else's session
+  // left behind from before. Previously this silently navigate()'d away
+  // to `from`, which meant a second person trying to log in as themselves
+  // got hijacked straight into the first person's account and never even
+  // saw the form. Surface it instead and let them choose.
+  const [existingUser, setExistingUser] = useState<{ email: string } | null>(null);
   useEffect(() => {
-    getAuthUser().then(user => { if (user) navigate(from, { replace: true }); }).catch(() => {});
-  }, [from, navigate]);
+    getAuthUser().then(user => { if (user?.email) setExistingUser({ email: user.email }); }).catch(() => {});
+  }, []);
+
+  const handleSwitchAccount = async () => {
+    await logoutAndClearSession();
+    setExistingUser(null);
+  };
 
   useEffect(() => {
     try {
@@ -388,6 +400,22 @@ const Login = () => {
                   <h1 className="text-2xl font-display text-foreground">{t('login')}</h1>
                   <p className="text-sm text-muted-foreground mt-1">{t('login_subtitle')}</p>
                 </div>
+
+                {existingUser && (
+                  <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}
+                    className="text-sm bg-primary/10 border border-primary/20 rounded-xl px-4 py-3 space-y-2"
+                  >
+                    <p className="text-foreground">Already signed in as <strong>{existingUser.email}</strong>.</p>
+                    <div className="flex items-center gap-3">
+                      <button type="button" onClick={() => navigate(from, { replace: true })} className="text-primary font-medium hover:underline">
+                        Continue
+                      </button>
+                      <button type="button" onClick={handleSwitchAccount} className="text-muted-foreground hover:underline">
+                        Log out &amp; use a different account
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
 
                 {notice && (
                   <motion.p initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}
