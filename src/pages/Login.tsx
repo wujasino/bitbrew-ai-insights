@@ -232,6 +232,14 @@ const Login = () => {
     getAuthUser().then(user => { if (user?.email) setExistingUser({ email: user.email }); }).catch(() => {});
   }, []);
 
+  // Warm the post-login route's JS chunks while the person is still typing
+  // their credentials, so navigate() after a successful login doesn't have
+  // to wait on a fresh chunk fetch — this is what most people land on next.
+  useEffect(() => {
+    import('@/components/layout/AppShell');
+    import('./Dashboard');
+  }, []);
+
   const handleSwitchAccount = async () => {
     await logoutAndClearSession();
     setExistingUser(null);

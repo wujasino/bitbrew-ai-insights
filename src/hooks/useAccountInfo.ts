@@ -90,48 +90,48 @@ export const useSessionUser = () => {
   return query;
 };
 
-const fetchPlan = async (userId: string) => {
-  const { data } = await supabase.from('profiles').select('plan').eq('id', userId).single();
-  return data?.plan ? data.plan.charAt(0).toUpperCase() + data.plan.slice(1) : 'Free';
+const fetchProfileFlags = async (userId: string) => {
+  const { data } = await supabase.from('profiles').select('plan, is_admin').eq('id', userId).single();
+  return {
+    plan: data?.plan ? data.plan.charAt(0).toUpperCase() + data.plan.slice(1) : 'Free',
+    isAdmin: data?.is_admin ?? false,
+  };
 };
 
 /**
+ * usePlan and useIsAdmin used to each run their own `profiles` select —
+ * same row, two round-trips. They share this one query now; each hook
+ * below just projects the field it needs out of the shared result.
+ *
  * Waits for useSessionUser to resolve before firing — querying before the
  * session is known would otherwise get treated as "signed out" and that
  * wrong answer would stick in the react-query cache instead of
  * self-correcting on the next remount like the old per-component state did.
  */
-export const usePlan = () => {
+const useProfileFlags = () => {
   const { data: sessionUser, isLoading: userLoading } = useSessionUser();
   const userId = sessionUser?.id ?? null;
   return useQuery({
-    queryKey: ['profile-plan', userId],
-    queryFn: () => fetchPlan(userId as string),
+    queryKey: ['profile-flags', userId],
+    queryFn: () => fetchProfileFlags(userId as string),
     enabled: !userLoading && !!userId,
-    placeholderData: 'Free',
   });
 };
 
-const fetchIsAdmin = async (userId: string) => {
-  const { data } = await supabase.from('profiles').select('is_admin').eq('id', userId).single();
-  return data?.is_admin ?? false;
+export const usePlan = () => {
+  const query = useProfileFlags();
+  return { ...query, data: query.data?.plan ?? 'Free' };
 };
 
 /**
- * Gates the /admin/announcements broadcast tool. Deliberately has no
- * placeholderData (unlike usePlan's 'Free') — a `false` placeholder would
- * be indistinguishable from a real "not admin" answer and would redirect
- * an actual admin away before the real value loads. isLoading stays true
- * (data stays undefined) until the query genuinely resolves.
+ * Gates the /admin/announcements broadcast tool. `data` deliberately stays
+ * `undefined` until the underlying query genuinely resolves — a `false`
+ * fallback here would be indistinguishable from a real "not admin" answer
+ * and would redirect an actual admin away before the real value loads.
  */
 export const useIsAdmin = () => {
-  const { data: sessionUser, isLoading: userLoading } = useSessionUser();
-  const userId = sessionUser?.id ?? null;
-  return useQuery({
-    queryKey: ['profile-is-admin', userId],
-    queryFn: () => fetchIsAdmin(userId as string),
-    enabled: !userLoading && !!userId,
-  });
+  const query = useProfileFlags();
+  return { ...query, data: query.data?.isAdmin };
 };
 
 const fetchAnalysesUsedThisMonth = async (userId: string) => {
