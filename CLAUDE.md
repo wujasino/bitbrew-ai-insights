@@ -10,8 +10,45 @@ Netlify serverless functions, Supabase (Postgres + Auth + Storage).
 - Primary / CTA / logo `#6366F1`, hover `#4F46E5`
 - Secondary button (e.g. login) `#1E293B` bg + `#F8FAFC` text
 
-Tokens live in `src/index.css` under `.dark`. Logo mark is a single indigo
-glyph (`public/presora-mark-indigo.png`) — no more light/dark swap.
+Tokens live in `src/index.css` under `.dark`.
+
+Decorative/repeating chrome (`.hero`, `.badge`, `.cta-box` gradients in
+`src/index.css`, and `GradientMeshBg`'s hero orbs) was deliberately toned
+down from indigo/violet to neutral graphite — indigo stayed reserved for
+actionable elements: `--primary` (buttons, links, focus rings, the 1/2/3
+step-number circles on Landing) and `.ai-presence-accent` (the "AI
+visibility audit" chromatic hero accent, the one signature moment). Don't
+casually re-add indigo tints to background/wash classes; that's undoing an
+intentional "vivid identity in some places, neutral everywhere else" split.
+
+## Logo mark
+
+New as of the "ribbon P" redesign (replaced the old solid-indigo glyph).
+The source files the user provided (`public/presora-icon-512-dark.png`,
+`public/presora-icon-512-white.png`) are flat opaque squares with the
+glyph baked in at a dark charcoal color (~`rgb(50,51,56)`) — not directly
+usable as an app icon, and that charcoal reads at under 2:1 contrast
+against the app's dark backgrounds (effectively invisible).
+
+Derived, actually-used assets:
+- `public/presora-mark.png` — copy of `presora-icon-512-white.png`,
+  used only for the JSON-LD Organization `"logo"` field in `index.html`
+  (expects a plain/light background).
+- `public/presora-mark-new.png` — the glyph alpha-masked out to a
+  transparent PNG, original charcoal color. For light backgrounds.
+- `public/presora-mark-new-dark.png` — same transparent glyph, recolored
+  to `--foreground` (`#F8FAFC`). For dark backgrounds.
+- `Wordmark.tsx` renders both of the last two, toggled via Tailwind's
+  `dark:` variant (no theme hook needed) — mirrors `useFaviconTheme.ts`'s
+  light/dark favicon swap, which now also uses the new mark (composited
+  onto `#0F0F23` for the `-dark` favicon sizes, replacing the old
+  indigo-era ones).
+
+If new master logo files ever replace these again: re-extract the
+transparent variants the same way (alpha = luminance-based masking
+against the flat background) rather than trying to reuse the opaque
+squares directly — see git history around "Use the new logo mark in the
+navbar" for the exact approach.
 
 ## Landing page (`src/pages/Landing.tsx`)
 
@@ -19,10 +56,14 @@ Defaults to dark (via `ThemeProvider`'s `defaultTheme="dark"` in
 `main.tsx`, same as the rest of the app) but is now toggleable — the
 `Navbar` takes a `showThemeToggle` prop (only Landing passes it; other
 pages using the shared `Navbar` like Terms/Privacy have dark-hardcoded
-inline content and would break if toggled). Uses the same indigo palette
-as the rest of the app (see Brand palette above) plus an "indigo"
-`GradientMeshBg` orb variant for the hero. Uses Plus Jakarta Sans
-(`.font-landing` font scope).
+inline content and would break if toggled). Uses the same palette as the
+rest of the app (see Brand palette above, incl. the indigo-vs-neutral
+split) plus the `"mono"` `GradientMeshBg` orb variant for the hero
+(grayscale — was `"indigo"`, changed together with the palette toning).
+`.font-landing` sets Plus Jakarta Sans for body/paragraph text only;
+headings (`.font-display`) deliberately fall through to the app-wide
+Space Grotesk instead of being overridden, so headings read as the same
+family as the wordmark next to the logo mark.
 
 Landing-specific CSS classes with hand-picked colors (`.hero`, `.badge`,
 `.cta-box`, `.ai-presence-accent*` in `src/index.css`) each need both a
@@ -33,16 +74,17 @@ re-add hardcoded dark-only colors on Landing without a light pairing.
 
 ## Wordmark font
 
-`.font-wordmark` (in `src/index.css`) uses **Michroma** — a geometric,
-all-caps techno-sans, the closest free Google Fonts match to the
-Rimac Nevera logotype's squared-off letterforms (Nevera itself is a
-bespoke cut logotype, not a licensable font). Rendered uppercase via
-`Wordmark.tsx` (`uppercase tracking-wide font-normal` — Michroma only
-ships a single 400 weight, so don't add `font-bold`/`font-semibold` or
-the browser falls back silently, same failure mode as the earlier
-Fraunces attempt). Loaded via the main Google Fonts `<link>` in
-`index.html`. Previously tried Fraunces (Casko substitute) and Satoshi
-(via Fontshare) — both replaced.
+`.font-wordmark` (in `src/index.css`) uses **Space Grotesk** at semibold
+(600) — chosen to pair with the new "ribbon P" logo mark's geometric-but-
+fluid shape; Michroma's rigid, blocky letterforms (the previous choice,
+matched to the old Rimac-Nevera-style glyph) read as too robotic next to
+it. Space Grotesk is already loaded app-wide for `.font-display`
+(headings), so this doesn't add a new font fetch, and it now also drives
+the Landing hero headline (see Landing page section above) for a
+consistent mark+wordmark+headline family. Rendered uppercase via
+`Wordmark.tsx` (`uppercase tracking-wide font-semibold`). Loaded via the
+main Google Fonts `<link>` in `index.html`. Previously tried Michroma,
+Fraunces (Casko substitute) and Satoshi (via Fontshare) — all replaced.
 
 ## Social assets
 
