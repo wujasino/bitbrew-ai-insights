@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect } from 'react';
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from '@/lib/queryClient';
 import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
@@ -42,15 +43,6 @@ const ResetPassword  = lazy(() => import("./pages/ResetPassword"));
 const AuthConfirm    = lazy(() => import("./pages/AuthConfirm"));
 const Onboarding     = lazy(() => import("./pages/Onboarding"));
 const GoogleCallback = lazy(() => import("./pages/GoogleCallback"));
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 60_000,
-      retry: 1,
-    },
-  },
-});
 
 const PageTitle = () => {
   const { pathname } = useLocation();

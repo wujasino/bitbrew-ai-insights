@@ -2,7 +2,7 @@ import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 import { useTheme } from 'next-themes';
 import { LogOut, Settings, User, Code2, CreditCard, MessageSquare, Send, X, Bot, PanelLeftClose, PanelLeftOpen, Menu, Megaphone, Sun, Moon } from 'lucide-react';
-import { logout } from '@/lib/auth';
+import { logoutAndClearSession } from '@/lib/auth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import AvatarNotifications from '@/components/ui/avatar-notifications';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
@@ -240,19 +240,13 @@ export const AppNavbar = ({ collapsed = false, onToggle, onMobileToggle, chatOpe
               <button
                 onClick={async () => {
                   setOpen(false);
-                  await logout();
-                  // signOut() fires an auth-state-change partway through its
-                  // own promise chain, which ProtectedRoute (still mounted
-                  // here on /dashboard at that point) reacts to by
-                  // redirecting to /login. That redirect is a React state
-                  // update queued for the next render, so calling
-                  // navigate('/') synchronously right after `await logout()`
-                  // can still lose the race — React sometimes flushes
-                  // ProtectedRoute's pending /login redirect after this call
-                  // commits, silently overwriting it. Deferring to a macrotask
-                  // guarantees this runs after any such pending redirect has
-                  // already committed, so it reliably wins.
-                  setTimeout(() => navigate('/', { replace: true }), 0);
+                  // Clearing the query cache (not just signing out) makes
+                  // ProtectedRoute see a synchronously-empty session on its
+                  // next render instead of racing a pending auth-state-change
+                  // event, so this navigate() no longer needs to out-race
+                  // anything.
+                  await logoutAndClearSession();
+                  navigate('/', { replace: true });
                 }}
                 className="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-sm text-destructive hover:bg-destructive/10 transition-colors"
               >

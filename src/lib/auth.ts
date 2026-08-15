@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { queryClient } from './queryClient';
 
 export type AuthUser = {
   id: string;
@@ -41,4 +42,12 @@ export async function logout() {
   await supabase.auth.signOut();
 }
 
-export default { registerUser, loginUser, getAuthUser, isAuthenticated, logout };
+// Like logout(), but also drops every cached query (session-user, profile,
+// plan, etc.) so a stale account's data can't leak into the next login on
+// this browser — see Login.tsx's "already signed in" handling.
+export async function logoutAndClearSession() {
+  await supabase.auth.signOut();
+  queryClient.clear();
+}
+
+export default { registerUser, loginUser, getAuthUser, isAuthenticated, logout, logoutAndClearSession };

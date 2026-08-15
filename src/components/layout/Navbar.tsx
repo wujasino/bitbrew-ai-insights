@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/navigation-menu';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Wordmark } from '@/components/Wordmark';
-import { logout } from '@/lib/auth';
+import { logoutAndClearSession } from '@/lib/auth';
 import { useSessionUser } from '@/hooks/useAccountInfo';
 
 interface NavbarProps {
@@ -46,7 +46,7 @@ export const Navbar = ({ showThemeToggle = false, landingCta = false }: NavbarPr
   const handleLogout = async () => {
     setAvatarOpen(false);
     try {
-      await logout();
+      await logoutAndClearSession();
       navigate('/');
     } catch (e) {
       console.error('Logout failed', e);
@@ -149,31 +149,23 @@ export const Navbar = ({ showThemeToggle = false, landingCta = false }: NavbarPr
                         <LogOut className="w-4 h-4" />
                         Sign out
                       </button>
-                    ) : landingCta && isReturning ? (
-                      <>
-                        <Link
-                          to="/login?mode=forgot"
-                          onClick={() => setMobileOpen(false)}
-                          className="px-3 py-2 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-accent underline-offset-2 hover:underline"
-                        >
-                          Forgot password?
-                        </Link>
-                        <Link
-                          to="/login"
-                          onClick={() => setMobileOpen(false)}
-                          className="px-3 py-2 rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 text-center"
-                        >
-                          Log in
-                        </Link>
-                      </>
                     ) : (
                       <>
+                        {isReturning && (
+                          <Link
+                            to="/login?mode=forgot"
+                            onClick={() => setMobileOpen(false)}
+                            className="px-3 py-2 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-accent underline-offset-2 hover:underline"
+                          >
+                            Forgot password?
+                          </Link>
+                        )}
                         <Link
                           to="/login"
                           onClick={() => setMobileOpen(false)}
                           className="px-3 py-2 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-accent"
                         >
-                          Sign in
+                          Log in
                         </Link>
                         <Link
                           to="/register"
@@ -273,63 +265,50 @@ export const Navbar = ({ showThemeToggle = false, landingCta = false }: NavbarPr
                 <Button size="sm" asChild>
                   <Link to="/dashboard">Go to Dashboard</Link>
                 </Button>
-              ) : landingCta && isReturning ? (
-                <div className="hidden md:flex items-center gap-2">
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <button
-                        type="button"
-                        className="text-xs text-muted-foreground hover:text-foreground transition-colors underline-offset-2 hover:underline"
-                      >
-                        Forgot password?
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent align="end" className="w-72 p-4 space-y-3">
-                      <div className="flex items-center gap-2">
-                        <KeyRound className="w-4 h-4 text-primary" />
-                        <p className="text-sm font-medium text-foreground">Resetting your password</p>
-                      </div>
-                      <ol className="space-y-2 text-xs text-muted-foreground">
-                        <li className="flex items-start gap-2">
-                          <span className="shrink-0 w-4 h-4 rounded-full bg-primary/10 text-primary text-[10px] font-semibold flex items-center justify-center mt-0.5">1</span>
-                          Enter your account email
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="shrink-0 w-4 h-4 rounded-full bg-primary/10 text-primary text-[10px] font-semibold flex items-center justify-center mt-0.5">2</span>
-                          We'll email you a 6-digit code — check your inbox (and spam folder)
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="shrink-0 w-4 h-4 rounded-full bg-primary/10 text-primary text-[10px] font-semibold flex items-center justify-center mt-0.5">3</span>
-                          Enter the code and choose a new password
-                        </li>
-                      </ol>
-                      <Button size="sm" className="w-full gap-1.5" asChild>
-                        <Link to="/login?mode=forgot">
-                          <Mail className="w-3.5 h-3.5" /> Reset password <ArrowRight className="w-3.5 h-3.5" />
-                        </Link>
-                      </Button>
-                    </PopoverContent>
-                  </Popover>
-                  <Button size="sm" asChild>
-                    <Link to="/login">Log in</Link>
-                  </Button>
-                </div>
-              ) : landingCta ? (
-                <div className="hidden md:flex items-center gap-2">
-                  <Button variant="outline" size="sm" asChild>
-                    <Link to="/login">Sign in</Link>
-                  </Button>
-                  <Button size="sm" asChild>
-                    <Link to="/register">Start free trial</Link>
-                  </Button>
-                </div>
               ) : (
                 <div className="hidden md:flex items-center gap-2">
+                  {isReturning && (
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <button
+                          type="button"
+                          className="text-xs text-muted-foreground hover:text-foreground transition-colors underline-offset-2 hover:underline"
+                        >
+                          Forgot password?
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent align="end" className="w-72 p-4 space-y-3">
+                        <div className="flex items-center gap-2">
+                          <KeyRound className="w-4 h-4 text-primary" />
+                          <p className="text-sm font-medium text-foreground">Resetting your password</p>
+                        </div>
+                        <ol className="space-y-2 text-xs text-muted-foreground">
+                          <li className="flex items-start gap-2">
+                            <span className="shrink-0 w-4 h-4 rounded-full bg-primary/10 text-primary text-[10px] font-semibold flex items-center justify-center mt-0.5">1</span>
+                            Enter your account email
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <span className="shrink-0 w-4 h-4 rounded-full bg-primary/10 text-primary text-[10px] font-semibold flex items-center justify-center mt-0.5">2</span>
+                            We'll email you a 6-digit code — check your inbox (and spam folder)
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <span className="shrink-0 w-4 h-4 rounded-full bg-primary/10 text-primary text-[10px] font-semibold flex items-center justify-center mt-0.5">3</span>
+                            Enter the code and choose a new password
+                          </li>
+                        </ol>
+                        <Button size="sm" className="w-full gap-1.5" asChild>
+                          <Link to="/login?mode=forgot">
+                            <Mail className="w-3.5 h-3.5" /> Reset password <ArrowRight className="w-3.5 h-3.5" />
+                          </Link>
+                        </Button>
+                      </PopoverContent>
+                    </Popover>
+                  )}
                   <Button variant="outline" size="sm" asChild>
-                    <Link to="/login">Sign in</Link>
+                    <Link to="/login">Log in</Link>
                   </Button>
                   <Button size="sm" asChild>
-                    <Link to="/register">Sign up</Link>
+                    <Link to="/register">{landingCta ? 'Start free trial' : 'Sign up'}</Link>
                   </Button>
                 </div>
               )}
