@@ -19,14 +19,16 @@ export async function verifyApiKey(supabaseAdmin, authHeader) {
   const hash = sha256(raw);
   const { data: key, error } = await supabaseAdmin
     .from('api_keys')
-    .select('id, user_id, revoked_at')
+    .select('id, user_id, revoked_at, active')
     .eq('key_hash', hash)
     .maybeSingle();
-  if (error || !key || key.revoked_at) return null;
+  if (error || !key || key.revoked_at || !key.active) return null;
 
-  // Best-effort — a failed timestamp update should never block the request
-  // it's timing.
+  // Best-effort — a failed write here should never block the request it's
+  // timing/logging.
   supabaseAdmin.from('api_keys').update({ last_used_at: new Date().toISOString() }).eq('id', key.id)
+    .then(() => {}, () => {});
+  supabaseAdmin.from('api_key_usage').insert({ api_key_id: key.id, user_id: key.user_id })
     .then(() => {}, () => {});
 
   return { userId: key.user_id };

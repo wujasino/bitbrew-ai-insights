@@ -3,11 +3,15 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Key, Webhook, Copy, Trash2, Plus, Check, ExternalLink, Eye, EyeOff,
-  CircleCheck, CircleX, Loader2, BookOpen, Zap, AlertCircle,
+  CircleCheck, CircleX, Loader2, BookOpen, Zap, AlertCircle, MoreVertical,
+  Pencil, Activity as ActivityIcon, Ban, PlayCircle, X as XIcon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 import { useSessionUser } from '@/hooks/useAccountInfo';
@@ -17,9 +21,15 @@ type ApiKey = {
   id: string;
   name: string;
   prefix: string;
+  active: boolean;
   created_at: string;
   last_used_at: string | null;
   revoked_at: string | null;
+};
+type KeyUsage = {
+  id: string;
+  api_key_id: string;
+  created_at: string;
 };
 type WebhookEvent = 'analysis.completed' | 'analysis.failed' | 'sentiment.dropped' | 'score.changed';
 type WebhookRow = {
@@ -69,6 +79,7 @@ type Tab = 'keys' | 'webhooks';
 const Developers = () => {
   const [tab, setTab] = useState<Tab>('keys');
   const [keys, setKeys] = useState<ApiKey[]>([]);
+  const [usage, setUsage] = useState<KeyUsage[]>([]);
   const [hooks, setHooks] = useState<WebhookRow[]>([]);
   const [deliveries, setDeliveries] = useState<Delivery[]>([]);
   const [loading, setLoading] = useState(true);
@@ -84,6 +95,7 @@ const Developers = () => {
         authedFetch('/.netlify/functions/dev-webhooks'),
       ]);
       setKeys(keysRes.keys || []);
+      setUsage(keysRes.usage || []);
       setHooks(hooksRes.webhooks || []);
       setDeliveries(hooksRes.deliveries || []);
     } catch (err) {
@@ -157,7 +169,7 @@ const Developers = () => {
           </div>
         ) : (
           <>
-            {tab === 'keys' && <KeysSection keys={keys} onChange={refresh} />}
+            {tab === 'keys' && <KeysSection keys={keys} usage={usage} onChange={refresh} />}
             {tab === 'webhooks' && (
               <WebhooksSection hooks={hooks} deliveries={deliveries} onChange={refresh} />
             )}
@@ -169,11 +181,16 @@ const Developers = () => {
 };
 
 // ── Keys section ────────────────────────────────────────────────
-const KeysSection = ({ keys, onChange }: { keys: ApiKey[]; onChange: () => void }) => {
+const KeysSection = ({ keys, usage, onChange }: { keys: ApiKey[]; usage: KeyUsage[]; onChange: () => void }) => {
   const [name, setName] = useState('');
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState('');
   const [newSecret, setNewSecret] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState('');
+  const [activityId, setActivityId] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [rowError, setRowError] = useState<{ id: string; message: string } | null>(null);
 
   const create = async () => {
     if (!name.trim()) return;
@@ -195,12 +212,53 @@ const KeysSection = ({ keys, onChange }: { keys: ApiKey[]; onChange: () => void 
   };
 
   const revoke = async (id: string) => {
-    if (!confirm('Revoke this key? Apps using it will stop working.')) return;
+    if (!confirm('Revoke this key? Apps using it will stop working — this cannot be undone.')) return;
+    setBusyId(id);
     try {
       await authedFetch('/.netlify/functions/dev-keys', { method: 'DELETE', body: JSON.stringify({ id }) });
       onChange();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to revoke key.');
+      setRowError({ id, message: err instanceof Error ? err.message : 'Failed to revoke key.' });
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const toggleActive = async (key: ApiKey) => {
+    setBusyId(key.id);
+    try {
+      await authedFetch('/.netlify/functions/dev-keys', {
+        method: 'PATCH',
+        body: JSON.stringify({ id: key.id, active: !key.active }),
+      });
+      onChange();
+    } catch (err) {
+      setRowError({ id: key.id, message: err instanceof Error ? err.message : 'Failed to update key.' });
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const startEdit = (key: ApiKey) => {
+    setEditingId(key.id);
+    setEditName(key.name);
+    setActivityId(null);
+  };
+
+  const saveEdit = async (id: string) => {
+    if (!editName.trim()) return;
+    setBusyId(id);
+    try {
+      await authedFetch('/.netlify/functions/dev-keys', {
+        method: 'PATCH',
+        body: JSON.stringify({ id, name: editName.trim() }),
+      });
+      setEditingId(null);
+      onChange();
+    } catch (err) {
+      setRowError({ id, message: err instanceof Error ? err.message : 'Failed to rename key.' });
+    } finally {
+      setBusyId(null);
     }
   };
 
@@ -272,29 +330,110 @@ const KeysSection = ({ keys, onChange }: { keys: ApiKey[]; onChange: () => void 
           </div>
         ) : (
           <ul className="divide-y divide-[hsl(var(--glass-border))]">
-            {activeKeys.map((k) => (
-              <li key={k.id} className="px-5 py-3 flex items-center gap-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-foreground truncate">{k.name}</span>
-                    <code className="text-xs font-data px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
-                      {k.prefix}…
-                    </code>
+            {activeKeys.map((k) => {
+              const isEditing = editingId === k.id;
+              const isActivityOpen = activityId === k.id;
+              const keyUsage = usage.filter(u => u.api_key_id === k.id);
+              const busy = busyId === k.id;
+              return (
+                <li key={k.id} className="px-5 py-3">
+                  <div className="flex items-center gap-4">
+                    <div className="flex-1 min-w-0">
+                      {isEditing ? (
+                        <div className="flex items-center gap-2">
+                          <Input
+                            value={editName}
+                            onChange={(e) => setEditName(e.target.value)}
+                            onKeyDown={(e) => { if (e.key === 'Enter') saveEdit(k.id); if (e.key === 'Escape') setEditingId(null); }}
+                            className="h-8 text-sm max-w-xs"
+                            autoFocus
+                          />
+                          <Button size="sm" className="h-8 gap-1.5" disabled={!editName.trim() || busy} onClick={() => saveEdit(k.id)}>
+                            {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                          </Button>
+                          <button onClick={() => setEditingId(null)} className="p-1.5 text-muted-foreground hover:text-foreground">
+                            <XIcon className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-medium text-foreground truncate">{k.name}</span>
+                          <code className="text-xs font-data px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                            {k.prefix}…
+                          </code>
+                          {!k.active && (
+                            <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                              Disabled
+                            </span>
+                          )}
+                        </div>
+                      )}
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        Created {new Date(k.created_at).toLocaleDateString()} ·{' '}
+                        {k.last_used_at ? `Last used ${new Date(k.last_used_at).toLocaleDateString()}` : 'Never used'}
+                      </p>
+                      {rowError?.id === k.id && (
+                        <p className="text-[11px] text-destructive mt-1">{rowError.message}</p>
+                      )}
+                    </div>
+
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          className="p-2 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+                          aria-label="Key actions"
+                          disabled={busy}
+                        >
+                          {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <MoreVertical className="w-4 h-4" />}
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => startEdit(k)}>
+                          <Pencil className="w-3.5 h-3.5 mr-2" /> Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => { setActivityId(isActivityOpen ? null : k.id); setEditingId(null); }}>
+                          <ActivityIcon className="w-3.5 h-3.5 mr-2" /> Activity
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => toggleActive(k)}>
+                          {k.active ? <Ban className="w-3.5 h-3.5 mr-2" /> : <PlayCircle className="w-3.5 h-3.5 mr-2" />}
+                          {k.active ? 'Disable' : 'Enable'}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => revoke(k.id)} className="text-destructive focus:text-destructive">
+                          <Trash2 className="w-3.5 h-3.5 mr-2" /> Revoke
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">
-                    Created {new Date(k.created_at).toLocaleDateString()} ·{' '}
-                    {k.last_used_at ? `Last used ${new Date(k.last_used_at).toLocaleDateString()}` : 'Never used'}
-                  </p>
-                </div>
-                <button
-                  onClick={() => revoke(k.id)}
-                  className="p-2 text-muted-foreground hover:text-destructive transition-colors"
-                  aria-label="Delete key"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </li>
-            ))}
+
+                  <AnimatePresence>
+                    {isActivityOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="mt-3 rounded-xl border border-[hsl(var(--glass-border))] bg-muted/20 overflow-hidden"
+                      >
+                        {keyUsage.length === 0 ? (
+                          <p className="px-3 py-3 text-xs text-muted-foreground">
+                            No activity yet — shows the last 50 authorized requests once this key is used.
+                          </p>
+                        ) : (
+                          <ul className="divide-y divide-[hsl(var(--glass-border))] max-h-48 overflow-y-auto">
+                            {keyUsage.map(u => (
+                              <li key={u.id} className="px-3 py-2 text-xs text-muted-foreground flex items-center gap-2">
+                                <CircleCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                                Authorized request · {new Date(u.created_at).toLocaleString()}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>
