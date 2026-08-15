@@ -8,7 +8,7 @@ import AvatarNotifications from '@/components/ui/avatar-notifications';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { PLAN_LIMITS, PLAN_LABELS, usePlan, useAnalysesUsedThisMonth, useSessionUser } from '@/hooks/useAccountInfo';
+import { PLAN_LIMITS, PLAN_LABELS, usePlan, useAnalysesUsedThisMonth, useSessionUser, useAvatarUrl } from '@/hooks/useAccountInfo';
 
 const DropdownLink = ({ to, icon: Icon, label, onClick }: { to: string; icon: React.FC<{ className?: string }>; label: string; onClick?: () => void }) => (
   <Link
@@ -50,7 +50,7 @@ export const AppNavbar = ({ collapsed = false, onToggle, onMobileToggle, chatOpe
   const { data: sessionUser } = useSessionUser();
   const userEmail = sessionUser?.email ?? null;
   const userName = sessionUser?.name ?? null;
-  const userAvatar = sessionUser?.avatar ?? null;
+  const { data: userAvatar = null } = useAvatarUrl();
   const { data: plan = 'Free' } = usePlan();
   const { data: analysesUsed = 0 } = useAnalysesUsedThisMonth();
 

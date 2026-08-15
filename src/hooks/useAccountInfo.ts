@@ -52,14 +52,18 @@ export interface SessionUser {
   id: string | null;
   email: string | null;
   name: string | null;
-  avatar: string | null;
 }
 
+// Deliberately does NOT read user_metadata.avatar_url: Supabase overwrites
+// that field with the identity provider's photo (e.g. Google's `picture`
+// claim) on every OAuth sign-in, which would silently replace a custom
+// uploaded avatar — or impose Google's photo on someone who never chose
+// one. The app's own avatar (profiles.avatar_url, set only by the upload
+// flow in Settings.tsx) is the sole source of truth — see useAvatarUrl().
 const toSessionUser = (session: { user?: { id: string; email?: string | null; user_metadata?: Record<string, unknown> } } | null): SessionUser => ({
   id: session?.user?.id ?? null,
   email: session?.user?.email ?? null,
   name: (session?.user?.user_metadata?.full_name as string | undefined) ?? null,
-  avatar: (session?.user?.user_metadata?.avatar_url as string | undefined) ?? null,
 });
 
 const fetchSessionUser = async (): Promise<SessionUser> => {
@@ -91,17 +95,19 @@ export const useSessionUser = () => {
 };
 
 const fetchProfileFlags = async (userId: string) => {
-  const { data } = await supabase.from('profiles').select('plan, is_admin').eq('id', userId).single();
+  const { data } = await supabase.from('profiles').select('plan, is_admin, avatar_url').eq('id', userId).single();
   return {
     plan: data?.plan ? data.plan.charAt(0).toUpperCase() + data.plan.slice(1) : 'Free',
     isAdmin: data?.is_admin ?? false,
+    avatarUrl: data?.avatar_url ?? null,
   };
 };
 
 /**
- * usePlan and useIsAdmin used to each run their own `profiles` select —
- * same row, two round-trips. They share this one query now; each hook
- * below just projects the field it needs out of the shared result.
+ * usePlan, useIsAdmin and useAvatarUrl used to each run their own
+ * `profiles` select — same row, separate round-trips. They share this one
+ * query now; each hook below just projects the field it needs out of the
+ * shared result.
  *
  * Waits for useSessionUser to resolve before firing — querying before the
  * session is known would otherwise get treated as "signed out" and that
@@ -132,6 +138,17 @@ export const usePlan = () => {
 export const useIsAdmin = () => {
   const query = useProfileFlags();
   return { ...query, data: query.data?.isAdmin };
+};
+
+/**
+ * The account avatar shown in the navbar/profile — always
+ * `profiles.avatar_url`, set only by the upload flow in Settings.tsx.
+ * See the comment on toSessionUser() for why this deliberately isn't
+ * sourced from the auth session's user_metadata.
+ */
+export const useAvatarUrl = () => {
+  const query = useProfileFlags();
+  return { ...query, data: query.data?.avatarUrl ?? null };
 };
 
 const fetchAnalysesUsedThisMonth = async (userId: string) => {

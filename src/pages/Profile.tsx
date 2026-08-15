@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 import { ScoreTrendChart } from '@/components/charts/ScoreTrendChart';
-import { usePlan, PLAN_LABELS, PLAN_LIMITS, useSessionUser } from '@/hooks/useAccountInfo';
+import { usePlan, PLAN_LABELS, PLAN_LIMITS, useSessionUser, useAvatarUrl } from '@/hooks/useAccountInfo';
 
 interface Analysis {
   id: string;
@@ -51,7 +51,7 @@ const Profile = () => {
   const dateLocale = LOCALE_DATE_TAG[locale] ?? 'en-GB';
 
   const [email, setEmail] = useState('');
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const { data: avatarUrl = null } = useAvatarUrl();
   const { data: plan = 'Free' } = usePlan();
   const [analyses, setAnalyses] = useState<Analysis[]>([]);
   const [history, setHistory] = useState<Analysis[]>([]);
@@ -79,11 +79,9 @@ const Profile = () => {
     if (!sessionUser?.id) { navigate('/login'); return; }
     const uid = sessionUser.id;
     setEmail(sessionUser.email ?? '');
-    setAvatarUrl(sessionUser.avatar ?? null);
 
     (async () => {
-      const { data: profile } = await supabase.from('profiles').select('avatar_url, subscription_status').eq('id', uid).single();
-      if (profile?.avatar_url) setAvatarUrl(profile.avatar_url);
+      const { data: profile } = await supabase.from('profiles').select('subscription_status').eq('id', uid).single();
       if (profile?.subscription_status && profile.subscription_status in SUB_DOT) {
         setSubStatus(profile.subscription_status as SubStatus);
       }
