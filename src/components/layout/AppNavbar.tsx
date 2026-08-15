@@ -238,15 +238,19 @@ export const AppNavbar = ({ collapsed = false, onToggle, onMobileToggle, chatOpe
             {/* Sign out */}
             <div className="p-2">
               <button
-                onClick={async () => {
+                onClick={() => {
                   setOpen(false);
-                  // Clearing the query cache (not just signing out) makes
-                  // ProtectedRoute see a synchronously-empty session on its
-                  // next render instead of racing a pending auth-state-change
-                  // event, so this navigate() no longer needs to out-race
-                  // anything.
-                  await logoutAndClearSession();
+                  // Navigate first, synchronously, so ProtectedRoute (still
+                  // mounted here on an app route) unmounts before signing
+                  // out. Doing it in the other order — sign out, then
+                  // navigate — races ProtectedRoute's own redirect to
+                  // /login (triggered by the cache clearing to an empty
+                  // session) against this navigate('/'); whichever wins is
+                  // an implementation detail of react-query's notification
+                  // batching, not something to depend on, and losing it
+                  // means landing on /login instead of the intended '/'.
                   navigate('/', { replace: true });
+                  logoutAndClearSession();
                 }}
                 className="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-sm text-destructive hover:bg-destructive/10 transition-colors"
               >

@@ -43,14 +43,14 @@ export const Navbar = ({ showThemeToggle = false, landingCta = false }: NavbarPr
   const isReturning = (() => {
     try { return localStorage.getItem('rememberMe') === 'true'; } catch { return false; }
   })();
-  const handleLogout = async () => {
+  const handleLogout = () => {
     setAvatarOpen(false);
-    try {
-      await logoutAndClearSession();
-      navigate('/');
-    } catch (e) {
-      console.error('Logout failed', e);
-    }
+    // Navigate first, synchronously — see the comment on AppNavbar.tsx's
+    // sign-out handler for why the order matters (avoids a race against
+    // ProtectedRoute's own /login redirect on whatever app route this
+    // fires from).
+    navigate('/');
+    logoutAndClearSession().catch(e => console.error('Logout failed', e));
   };
 
   // Initials: from display name if set, otherwise first letter of email
