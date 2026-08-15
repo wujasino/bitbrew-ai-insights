@@ -236,12 +236,16 @@
 
   /* ── Wordmark ───────────────────────────────────────────────── */
   .font-wordmark {
-    font-family: 'Michroma', 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: 'Space Grotesk', 'Inter', system-ui, -apple-system, sans-serif;
   }
 
   /* ── Landing page ───────────────────────────────────────────── */
-  .font-landing,
-  .font-landing .font-display {
+  /* Body/paragraph text stays Plus Jakarta Sans (friendlier, humanist).
+     Headings (.font-display) deliberately fall through to the app-wide
+     .font-display rule (Space Grotesk) instead of being overridden here,
+     so the hero headline reads as the same family as the wordmark next
+     to the new logo mark — see Wordmark.tsx. */
+  .font-landing {
     font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
   }
 
