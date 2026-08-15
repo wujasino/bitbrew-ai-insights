@@ -6,6 +6,7 @@
  * check-score-alerts.js).
  */
 import crypto from 'crypto';
+import { assertPublicHttpsUrl } from './ssrfGuard.js';
 
 const DELIVERY_TIMEOUT_MS = 8000;
 
@@ -19,10 +20,21 @@ export async function deliverOne(supabaseAdmin, webhook, event, payload) {
   let ok = false;
   let error = null;
   try {
+    // Re-checked here, not just at webhook creation (dev-webhooks.js) — DNS
+    // can be repointed to an internal address after a webhook is registered
+    // (DNS rebinding), and this check runs on every real delivery, not just
+    // once.
+    await assertPublicHttpsUrl(webhook.url);
+
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), DELIVERY_TIMEOUT_MS);
     const res = await fetch(webhook.url, {
       method: 'POST',
+      // Manual redirect handling — a 3xx response is recorded as a failed
+      // delivery rather than transparently followed, which would otherwise
+      // let a URL that passed the SSRF check redirect the actual request to
+      // an internal address we never validated.
+      redirect: 'manual',
       headers: {
         'Content-Type': 'application/json',
         'X-Presora-Event': event,
