@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Sparkles, TrendingUp, TrendingDown, Activity, Layers, Target, RefreshCw, Search, Lock, FileDown, Swords, X, Volume2, Square, Loader2, Presentation } from 'lucide-react';
+import { ArrowLeft, Sparkles, TrendingUp, TrendingDown, Activity, Layers, Target, RefreshCw, Search, Lock, FileDown, Swords, X, Volume2, Square, Loader2, Presentation, AlertTriangle } from 'lucide-react';
 import HomeHub from '@/components/home/HomeHub';
 import { useTranslation } from '@/lib/locale';
 import { BrewingProgress } from '@/components/BrewingState';
@@ -320,7 +320,7 @@ const Dashboard = () => {
   const t = useTranslation().t;
   const analysisId = searchParams.get('id');
   const brandFromUrl = searchParams.get('brand') || '';
-  const { progress, status, result, startBrewing, reset, loadStoredAnalysis, guestLimitReached } = useBrewing();
+  const { progress, status, result, startBrewing, reset, loadStoredAnalysis, guestLimitReached, error: brewingError } = useBrewing();
   const displayBrand = result?.brandName || brandFromUrl;
   const [inputValue, setInputValue] = useState(brandFromUrl);
   const [moderationError, setModerationError] = useState('');
@@ -617,6 +617,28 @@ const Dashboard = () => {
         {status === 'loading' && (
           <div className="flex items-center justify-center min-h-[70vh]">
             <div className="w-6 h-6 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+          </div>
+        )}
+
+        {/* Error State — the scan itself failed; never fake a result here */}
+        {status === 'error' && (
+          <div className="flex flex-col items-center justify-center min-h-[50vh] text-center gap-4 px-4">
+            <div className="w-12 h-12 rounded-xl bg-destructive/10 border border-destructive/20 flex items-center justify-center">
+              <AlertTriangle className="w-5 h-5 text-destructive" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-foreground">Couldn't complete the scan</p>
+              <p className="text-sm text-muted-foreground max-w-sm mt-1">
+                {brewingError || 'Something went wrong while scanning. Please try again.'}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => startBrewing(displayBrand)}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
+            >
+              <RefreshCw className="w-3.5 h-3.5" /> Try again
+            </button>
           </div>
         )}
 

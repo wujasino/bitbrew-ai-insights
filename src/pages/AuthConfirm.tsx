@@ -15,10 +15,12 @@ export default function AuthConfirm() {
   const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
-    // Supabase appends token_hash + type to the URL for email confirmation
+    // Supabase appends token_hash + type to the URL for email confirmation —
+    // this shared endpoint also handles password-recovery links (type=recovery),
+    // not just signup confirmation, so `type` has to allow for that.
     const params = new URLSearchParams(window.location.search);
     const tokenHash = params.get('token_hash');
-    const type = params.get('type') as 'signup' | 'email' | null;
+    const type = params.get('type') as 'signup' | 'email' | 'recovery' | 'email_change' | 'invite' | null;
 
     const verifyToken = async () => {
       if (tokenHash && type) {
@@ -26,6 +28,13 @@ export default function AuthConfirm() {
         if (error) {
           setErrorMsg(error.message);
           setStatus('error');
+        } else if (type === 'recovery') {
+          // A recovery link just signed the user in via a one-time token —
+          // send them straight to setting a new password instead of the
+          // dashboard, or anyone who intercepts/reuses the link (or the user
+          // themselves, absent-mindedly) lands inside the account without
+          // ever being prompted to actually change the password they forgot.
+          navigate('/reset-password', { replace: true });
         } else {
           setStatus('success');
           setTimeout(() => navigate('/dashboard'), 3000);

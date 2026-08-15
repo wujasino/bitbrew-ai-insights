@@ -125,10 +125,11 @@ const ApiDocs = () => {
           <main className="col-span-12 lg:col-span-9 max-w-3xl">
             {/* Overview */}
             <H id="overview">Wprowadzenie</H>
+
             <p className="text-sm text-muted-foreground leading-relaxed">
               Presora API to REST nad HTTPS z JSON-em w body i odpowiedziach. Bazowy URL:
             </p>
-            <CodeBlock lang="http">{`https://api.presora.app/v1`}</CodeBlock>
+            <CodeBlock lang="http">{`https://www.presora.app/api/v1`}</CodeBlock>
             <p className="text-sm text-muted-foreground leading-relaxed">
               Wszystkie żądania wymagają nagłówka <code className="font-data px-1 py-0.5 rounded bg-muted text-foreground">Authorization</code> z kluczem API.
             </p>
@@ -152,90 +153,94 @@ const ApiDocs = () => {
             <p className="text-sm text-muted-foreground leading-relaxed">
               Wygeneruj klucz w panelu <Link to="/developers" className="text-primary hover:underline">Developers</Link> i wyślij go w nagłówku Bearer:
             </p>
-            <CodeBlock>{`curl https://api.presora.app/v1/analyses \\
-  -H "Authorization: Bearer bb_a1b2c3d4e5f6..."`}</CodeBlock>
+            <CodeBlock>{`curl https://www.presora.app/api/v1/analyses \\
+  -H "Authorization: Bearer bb_live_a1b2c3d4e5f6..."`}</CodeBlock>
             <p className="text-sm text-muted-foreground">
               Klucze są pokazywane tylko raz przy tworzeniu. Trzymaj je w bezpiecznym miejscu (Vault, sekret CI). Nigdy nie commituj do repo.
             </p>
 
             {/* POST /analyze */}
             <H id="analyze">Uruchom analizę</H>
-            <Endpoint method="POST" path="/v1/analyses" />
+            <Endpoint method="POST" path="/v1/analyze" />
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Tworzy nową analizę widoczności AI dla podanej marki. Operacja asynchroniczna — odpowiedź zawiera <code className="font-data text-foreground bg-muted px-1 rounded">id</code>, status zmieni się na <code className="font-data text-foreground bg-muted px-1 rounded">completed</code> po 8–15 sekundach. Możesz odpytywać status lub czekać na webhook.
+              Uruchamia analizę widoczności AI dla podanej marki i zwraca gotowy wynik w tej samej odpowiedzi —
+              synchronicznie, zwykle w 5–15 sekund (tyle co skan w aplikacji). Nie ma statusu pośredniego do odpytywania;
+              jeśli masz skonfigurowany webhook na <code className="font-data text-foreground bg-muted px-1 rounded">analysis.completed</code>,
+              dostaniesz też jego kopię tamtędy.
             </p>
 
             <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium mt-5 mb-1">Body</p>
             <CodeBlock lang="json">{`{
-  "brand": "Tesla",
-  "context": "Producent samochodów elektrycznych założony w 2003",
-  "models": ["gpt-4o", "claude-3-5-sonnet", "gemini-1.5-pro"]
+  "brand": "Tesla"
 }`}</CodeBlock>
 
             <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium mt-5 mb-1">Request</p>
-            <CodeBlock>{`curl -X POST https://api.presora.app/v1/analyses \\
-  -H "Authorization: Bearer bb_..." \\
+            <CodeBlock>{`curl -X POST https://www.presora.app/api/v1/analyze \\
+  -H "Authorization: Bearer bb_live_..." \\
   -H "Content-Type: application/json" \\
   -d '{"brand":"Tesla"}'`}</CodeBlock>
 
-            <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium mt-5 mb-1">Response 202</p>
+            <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium mt-5 mb-1">Response 200</p>
             <CodeBlock lang="json">{`{
-  "id": "anl_01H7K8Z3F9X2Q",
-  "brand": "Tesla",
-  "status": "brewing",
-  "created_at": "2026-06-10T14:32:11Z"
-}`}</CodeBlock>
-
-            {/* GET /analyses/{id} */}
-            <H id="get-analysis">Pobierz wynik</H>
-            <Endpoint method="GET" path="/v1/analyses/{id}" />
-            <p className="text-sm text-muted-foreground">
-              Zwraca pełny wynik analizy z wymiarami, sentymentem, trendem i źródłami.
-            </p>
-            <CodeBlock lang="json">{`{
-  "id": "anl_01H7K8Z3F9X2Q",
-  "brand": "Tesla",
-  "status": "completed",
-  "trust_score": 87,
-  "dimensions": {
-    "authority": 85, "sentiment": 78, "accuracy": 73,
-    "mentions": 70, "recency": 78
-  },
-  "sentiment_trend": [
-    { "date": "2026-06-04", "score": 76 },
-    { "date": "2026-06-10", "score": 87 }
-  ],
+  "id": "3f6b1e2a-...",
+  "brandName": "Tesla",
+  "createdAt": "2026-06-10T14:32:11Z",
+  "trustScore": 87,
+  "authority": 85,
+  "sentiment": 78,
+  "accuracy": 73,
+  "mentions": 70,
+  "recency": 78,
   "sources": [
     {
-      "model": "gpt-4o",
+      "model": "GPT-4o",
       "sentiment": "Positive",
       "association": "Tesla product",
       "confidence": 85
     }
   ]
 }`}</CodeBlock>
+            <p className="text-sm text-muted-foreground">
+              Liczba modeli faktycznie odpytanych (a więc długość <code className="font-data text-foreground bg-muted px-1 rounded">sources</code>) zależy od Twojego planu — tak samo jak przy skanie w aplikacji.
+            </p>
+
+            {/* GET /analyses/{id} */}
+            <H id="get-analysis">Pobierz wynik</H>
+            <Endpoint method="GET" path="/v1/analyses?id={id}" />
+            <p className="text-sm text-muted-foreground">
+              Zwraca jedną wcześniej zapisaną analizę (tej samej struktury co odpowiedź <code className="font-data text-foreground bg-muted px-1 rounded">POST /analyze</code>) — tylko jeśli należy do konta, którego kluczem się autoryzujesz.
+            </p>
+            <CodeBlock>{`curl "https://www.presora.app/api/v1/analyses?id=3f6b1e2a-..." \\
+  -H "Authorization: Bearer bb_live_..."`}</CodeBlock>
 
             {/* GET /analyses */}
             <H id="list">Lista analiz</H>
-            <Endpoint method="GET" path="/v1/analyses?limit=20&cursor=..." />
+            <Endpoint method="GET" path="/v1/analyses" />
             <p className="text-sm text-muted-foreground">
-              Stronicowanie kursorem. Domyślnie 20 elementów, max 100. Filtr <code className="font-data text-foreground bg-muted px-1 rounded">brand</code> i <code className="font-data text-foreground bg-muted px-1 rounded">status</code> dostępne jako query params.
+              Zwraca do 50 najnowszych analiz Twojego konta, najnowsze pierwsze. Bez stronicowania ani filtrów na razie —
+              jeśli potrzebujesz więcej niż 50, napisz do nas.
             </p>
+            <CodeBlock lang="json">{`{
+  "analyses": [
+    { "id": "3f6b1e2a-...", "brandName": "Tesla", "trustScore": 87, "...": "..." }
+  ]
+}`}</CodeBlock>
 
             {/* Webhooks */}
             <H id="webhooks">Webhooki</H>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Zarejestruj URL w panelu <Link to="/developers" className="text-primary hover:underline">Developers</Link>. Wysyłamy POST z JSON-em i nagłówkiem <code className="font-data text-foreground bg-muted px-1 rounded">Presora-Signature</code>. Spodziewamy się statusu 2xx w ciągu 5s. Przy błędzie ponawiamy z backoffem (1s, 5s, 30s, 5m, 1h).
+              Zarejestruj URL w panelu <Link to="/developers" className="text-primary hover:underline">Developers</Link> i
+              wybierz zdarzenia. Wysyłamy POST z JSON-em i nagłówkiem <code className="font-data text-foreground bg-muted px-1 rounded">X-Presora-Signature</code>. Jeden strzał na próbę — jeśli endpoint nie odpowie 2xx (timeout 8s), dostarczenie jest oznaczane jako nieudane; zobaczysz to na liście "Recent deliveries" w panelu. Automatyczne ponawianie jeszcze nie jest wdrożone.
             </p>
 
             <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium mt-5 mb-1">Przykładowy payload</p>
             <CodeBlock lang="json">{`{
   "event": "analysis.completed",
-  "delivered_at": "2026-06-10T14:32:23Z",
+  "timestamp": "2026-06-10T14:32:23Z",
   "data": {
-    "id": "anl_01H7K8Z3F9X2Q",
-    "brand": "Tesla",
-    "trust_score": 87
+    "id": "3f6b1e2a-...",
+    "brandName": "Tesla",
+    "trustScore": 87
   }
 }`}</CodeBlock>
 
@@ -268,15 +273,15 @@ const ApiDocs = () => {
             {/* Signature */}
             <H id="signature">Weryfikacja podpisu</H>
             <p className="text-sm text-muted-foreground">
-              Każdy webhook zawiera nagłówek <code className="font-data text-foreground bg-muted px-1 rounded">Presora-Signature: t=…,v1=…</code> z HMAC-SHA256 z surowego body i Twojego sekretu webhooka.
+              Każdy webhook zawiera nagłówek <code className="font-data text-foreground bg-muted px-1 rounded">X-Presora-Signature: sha256=…</code> — HMAC-SHA256 z surowego (nie sparsowanego) body żądania i sekretu tego webhooka, pokazanego raz przy jego utworzeniu w panelu Developers.
             </p>
             <CodeBlock lang="node">{`import crypto from 'node:crypto';
 
-const verify = (body, header, secret) => {
-  const [, t, , sig] = header.match(/t=(\\d+),v1=([a-f0-9]+)/);
+const verify = (rawBody, header, secret) => {
+  const sig = header.replace(/^sha256=/, '');
   const expected = crypto
     .createHmac('sha256', secret)
-    .update(\`\${t}.\${body}\`)
+    .update(rawBody)
     .digest('hex');
   return crypto.timingSafeEqual(
     Buffer.from(expected), Buffer.from(sig)
@@ -296,9 +301,8 @@ const verify = (body, header, secret) => {
                 <tbody className="divide-y divide-[hsl(var(--glass-border))]">
                   {[
                     [400, 'Nieprawidłowe body lub brak wymaganego pola'],
-                    [401, 'Brak lub nieprawidłowy klucz API'],
-                    [403, 'Plan nie obejmuje tej funkcji'],
-                    [404, 'Zasób nie istnieje'],
+                    [401, 'Brak, nieprawidłowy lub cofnięty klucz API'],
+                    [404, 'Zasób nie istnieje lub nie należy do Twojego konta'],
                     [429, 'Przekroczony rate limit'],
                     [500, 'Błąd po naszej stronie — ponów żądanie'],
                   ].map(([s, m]) => (
@@ -313,33 +317,14 @@ const verify = (body, header, secret) => {
 
             {/* Rate limits */}
             <H id="rate-limits">Limity szybkości</H>
-            <p className="text-sm text-muted-foreground">
-              Limity zależą od planu i są zwracane w nagłówkach <code className="font-data text-foreground bg-muted px-1 rounded">X-RateLimit-Limit</code>, <code className="font-data text-foreground bg-muted px-1 rounded">X-RateLimit-Remaining</code>, <code className="font-data text-foreground bg-muted px-1 rounded">X-RateLimit-Reset</code>.
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              <code className="font-data text-foreground bg-muted px-1 rounded">POST /analyze</code> jest ograniczone do{' '}
+              <strong className="text-foreground">10 żądań na minutę na konto</strong> (niezależnie od planu — to
+              samo, co pilnuje w aplikacji ręczny skan), zwraca <code className="font-data text-foreground bg-muted px-1 rounded">429</code> po przekroczeniu.
+              Miesięczny limit analiz jest ten sam co dla skanów w aplikacji i zależy od Twojego planu (zobacz{' '}
+              <Link to="/pricing" className="text-primary hover:underline">cennik</Link>). Nagłówki{' '}
+              <code className="font-data text-foreground bg-muted px-1 rounded">X-RateLimit-*</code> nie są jeszcze zwracane.
             </p>
-            <div className="rounded-2xl border border-[hsl(var(--glass-border))] overflow-hidden mt-3">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-muted/30 text-xs uppercase tracking-wider text-muted-foreground">
-                    <th className="px-4 py-2 text-left font-medium">Plan</th>
-                    <th className="px-4 py-2 text-left font-medium">Żądań / min</th>
-                    <th className="px-4 py-2 text-left font-medium">Analiz / mies.</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[hsl(var(--glass-border))]">
-                  {[
-                    ['Solo',       60,   10],
-                    ['Growth',     300,  50],
-                    ['Enterprise', '∞',  '∞'],
-                  ].map(([p, r, m]) => (
-                    <tr key={p as string}>
-                      <td className="px-4 py-2 text-foreground">{p}</td>
-                      <td className="px-4 py-2 text-muted-foreground font-data">{r}</td>
-                      <td className="px-4 py-2 text-muted-foreground font-data">{m}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
 
             <div className="mt-12 rounded-2xl border border-primary/20 bg-primary/5 p-6 flex items-center justify-between gap-4">
               <div>

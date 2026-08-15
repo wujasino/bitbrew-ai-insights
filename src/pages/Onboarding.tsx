@@ -38,6 +38,29 @@ export default function Onboarding() {
     );
   };
 
+  const handleSkip = async () => {
+    // Same onboarded=true write handleFinish does, minus the brand/goals —
+    // otherwise a Google-auth user who skips gets sent right back into this
+    // wizard on every subsequent login (GoogleCallback.tsx re-checks
+    // profiles.onboarded on each sign-in; email/password users only ever
+    // land here once, right after verifying their email, so they never hit
+    // this without a persisted flag either).
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('profiles').upsert({
+          id: user.id,
+          onboarded: true,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'id' });
+      }
+    } catch {
+      // non-fatal — still let them into the app
+    } finally {
+      navigate('/dashboard', { replace: true });
+    }
+  };
+
   const handleFinish = async () => {
     setSaving(true);
     try {
@@ -263,7 +286,7 @@ export default function Onboarding() {
         </div>
 
         <p className="text-center text-xs text-muted-foreground/40 mt-6">
-          Presora · <button className="hover:underline" onClick={() => navigate('/dashboard', { replace: true })}>Skip onboarding</button>
+          Presora · <button className="hover:underline" onClick={handleSkip}>Skip onboarding</button>
         </p>
       </div>
     </GradientMeshBg>
