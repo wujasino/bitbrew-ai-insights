@@ -16,7 +16,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Wordmark } from '@/components/Wordmark';
 import { logoutAndClearSession } from '@/lib/auth';
-import { useSessionUser } from '@/hooks/useAccountInfo';
+import { useSessionUser, useAvatarUrl } from '@/hooks/useAccountInfo';
 
 interface NavbarProps {
   /** Opt-in — only the landing page shows this; other pages using this navbar
@@ -36,7 +36,7 @@ export const Navbar = ({ showThemeToggle = false, landingCta = false }: NavbarPr
   const { data: sessionUser, isLoading: authLoading } = useSessionUser();
   const userEmail = sessionUser?.email ?? null;
   const userName = sessionUser?.name ?? null;
-  const userAvatar = sessionUser?.avatar ?? null;
+  const { data: userAvatar = null } = useAvatarUrl();
   const isAuthed = !!userEmail;
   // Signed out here, but "Remember me" was checked on a previous visit
   // (see Login.tsx) — a returning user, not a fresh prospect.

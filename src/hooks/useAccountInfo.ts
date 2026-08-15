@@ -52,14 +52,18 @@ export interface SessionUser {
   id: string | null;
   email: string | null;
   name: string | null;
-  avatar: string | null;
 }
 
+// Deliberately does NOT read user_metadata.avatar_url: Supabase overwrites
+// that field with the identity provider's photo (e.g. Google's `picture`
+// claim) on every OAuth sign-in, which would silently replace a custom
+// uploaded avatar — or impose Google's photo on someone who never chose
+// one. The app's own avatar (profiles.avatar_url, set only by the upload
+// flow in Settings.tsx) is the sole source of truth — see useAvatarUrl().
 const toSessionUser = (session: { user?: { id: string; email?: string | null; user_metadata?: Record<string, unknown> } } | null): SessionUser => ({
   id: session?.user?.id ?? null,
   email: session?.user?.email ?? null,
   name: (session?.user?.user_metadata?.full_name as string | undefined) ?? null,
-  avatar: (session?.user?.user_metadata?.avatar_url as string | undefined) ?? null,
 });
 
 const fetchSessionUser = async (): Promise<SessionUser> => {
@@ -90,48 +94,61 @@ export const useSessionUser = () => {
   return query;
 };
 
-const fetchPlan = async (userId: string) => {
-  const { data } = await supabase.from('profiles').select('plan').eq('id', userId).single();
-  return data?.plan ? data.plan.charAt(0).toUpperCase() + data.plan.slice(1) : 'Free';
+const fetchProfileFlags = async (userId: string) => {
+  const { data } = await supabase.from('profiles').select('plan, is_admin, avatar_url').eq('id', userId).single();
+  return {
+    plan: data?.plan ? data.plan.charAt(0).toUpperCase() + data.plan.slice(1) : 'Free',
+    isAdmin: data?.is_admin ?? false,
+    avatarUrl: data?.avatar_url ?? null,
+  };
 };
 
 /**
+ * usePlan, useIsAdmin and useAvatarUrl used to each run their own
+ * `profiles` select — same row, separate round-trips. They share this one
+ * query now; each hook below just projects the field it needs out of the
+ * shared result.
+ *
  * Waits for useSessionUser to resolve before firing — querying before the
  * session is known would otherwise get treated as "signed out" and that
  * wrong answer would stick in the react-query cache instead of
  * self-correcting on the next remount like the old per-component state did.
  */
-export const usePlan = () => {
+const useProfileFlags = () => {
   const { data: sessionUser, isLoading: userLoading } = useSessionUser();
   const userId = sessionUser?.id ?? null;
   return useQuery({
-    queryKey: ['profile-plan', userId],
-    queryFn: () => fetchPlan(userId as string),
+    queryKey: ['profile-flags', userId],
+    queryFn: () => fetchProfileFlags(userId as string),
     enabled: !userLoading && !!userId,
-    placeholderData: 'Free',
   });
 };
 
-const fetchIsAdmin = async (userId: string) => {
-  const { data } = await supabase.from('profiles').select('is_admin').eq('id', userId).single();
-  return data?.is_admin ?? false;
+export const usePlan = () => {
+  const query = useProfileFlags();
+  return { ...query, data: query.data?.plan ?? 'Free' };
 };
 
 /**
- * Gates the /admin/announcements broadcast tool. Deliberately has no
- * placeholderData (unlike usePlan's 'Free') — a `false` placeholder would
- * be indistinguishable from a real "not admin" answer and would redirect
- * an actual admin away before the real value loads. isLoading stays true
- * (data stays undefined) until the query genuinely resolves.
+ * Gates the /admin/announcements broadcast tool. `data` deliberately stays
+ * `undefined` until the underlying query genuinely resolves — a `false`
+ * fallback here would be indistinguishable from a real "not admin" answer
+ * and would redirect an actual admin away before the real value loads.
  */
 export const useIsAdmin = () => {
-  const { data: sessionUser, isLoading: userLoading } = useSessionUser();
-  const userId = sessionUser?.id ?? null;
-  return useQuery({
-    queryKey: ['profile-is-admin', userId],
-    queryFn: () => fetchIsAdmin(userId as string),
-    enabled: !userLoading && !!userId,
-  });
+  const query = useProfileFlags();
+  return { ...query, data: query.data?.isAdmin };
+};
+
+/**
+ * The account avatar shown in the navbar/profile — always
+ * `profiles.avatar_url`, set only by the upload flow in Settings.tsx.
+ * See the comment on toSessionUser() for why this deliberately isn't
+ * sourced from the auth session's user_metadata.
+ */
+export const useAvatarUrl = () => {
+  const query = useProfileFlags();
+  return { ...query, data: query.data?.avatarUrl ?? null };
 };
 
 const fetchAnalysesUsedThisMonth = async (userId: string) => {

@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { loadVoicePrefs, saveVoicePrefs, VoicePrefs, AVAILABLE_VOICES, fetchAvailableVoices, ElevenLabsVoice } from '@/hooks/useTTS';
 import { MODEL_CATALOG, loadModelPrefs, saveModelPrefs, ModelPrefs } from '@/lib/models';
-import { usePlan, tierOf, PLAN_LABELS, useSessionUser, type SessionUser } from '@/hooks/useAccountInfo';
+import { usePlan, tierOf, PLAN_LABELS, useSessionUser, useAvatarUrl, type SessionUser } from '@/hooks/useAccountInfo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -54,6 +54,15 @@ export default function Settings() {
   // stale in the navbar until the next full reload).
   const patchSessionUser = (patch: Partial<SessionUser>) => {
     queryClient.setQueryData<SessionUser>(['session-user'], (prev) => prev ? { ...prev, ...patch } : prev);
+  };
+  // Avatar lives in the profiles-derived 'profile-flags' cache (see
+  // useAvatarUrl), not on the auth session — see toSessionUser()'s comment
+  // on why it's kept separate from user_metadata.
+  const patchAvatarUrl = (avatarUrl: string | null) => {
+    queryClient.setQueriesData<{ plan: string; isAdmin: boolean; avatarUrl: string | null }>(
+      { queryKey: ['profile-flags'] },
+      (prev) => prev ? { ...prev, avatarUrl } : prev
+    );
   };
   const [activeTab, setActiveTab] = useState<Tab>(() => {
     const requested = new URLSearchParams(window.location.search).get('tab');
@@ -275,6 +284,7 @@ export default function Settings() {
   const [emailError, setEmailError] = useState('');
 
   const { data: sessionUser, isLoading: userLoading } = useSessionUser();
+  const { data: dbAvatarUrl } = useAvatarUrl();
 
   useEffect(() => {
     const storedHist = localStorage.getItem('subscriptionHistory');
@@ -284,13 +294,16 @@ export default function Settings() {
   }, []);
 
   useEffect(() => {
+    setAvatarUrl(dbAvatarUrl ?? null);
+  }, [dbAvatarUrl]);
+
+  useEffect(() => {
     if (userLoading) return;
     if (!sessionUser?.id) { navigate('/login'); return; }
     const uid = sessionUser.id;
     setUserId(uid);
     setEmail(sessionUser.email ?? '');
     setDisplayName(sessionUser.name ?? '');
-    setAvatarUrl(sessionUser.avatar ?? null);
 
     (async () => {
       const { data: profile } = await supabase
@@ -410,17 +423,11 @@ export default function Settings() {
       const { data } = supabase.storage.from('avatars').getPublicUrl(storagePath);
       const publicUrl = `${data.publicUrl}?t=${Date.now()}`;
 
-      const { error: authError } = await supabase.auth.updateUser({
-        data: { avatar_url: publicUrl },
-      });
-      if (authError) throw authError;
-
-      await supabase.auth.refreshSession();
       await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', userId);
 
       URL.revokeObjectURL(blobUrl);
       setAvatarUrl(publicUrl);
-      patchSessionUser({ avatar: publicUrl });
+      patchAvatarUrl(publicUrl);
     } catch (err) {
       console.error('Avatar upload error:', err);
       URL.revokeObjectURL(blobUrl);
@@ -441,11 +448,9 @@ export default function Settings() {
     if (!userId) return;
     setUploading(true);
     try {
-      await supabase.auth.updateUser({ data: { avatar_url: null } });
-      await supabase.auth.refreshSession();
       await supabase.from('profiles').update({ avatar_url: null }).eq('id', userId);
       setAvatarUrl(null);
-      patchSessionUser({ avatar: null });
+      patchAvatarUrl(null);
     } catch (err) {
       console.error('Avatar remove error:', err);
     } finally {
