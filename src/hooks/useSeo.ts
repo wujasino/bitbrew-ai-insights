@@ -1,3 +1,5 @@
+import seoConfigJson from '../../seo-config.json';
+
 const SITE_URL = 'https://www.presora.app';
 
 interface SeoConfig {
@@ -7,71 +9,12 @@ interface SeoConfig {
   noindex?: boolean;
 }
 
-export const SEO_CONFIG: Record<string, SeoConfig> = {
-  '/': {
-    title: 'Presora — AI Brand Visibility Scanner | ChatGPT, Claude, Gemini',
-    description: 'Presora checks whether ChatGPT, Claude and Gemini recommend your brand — or your competitors. Get your AI visibility score in 30 seconds. Built for agencies, brands and freelancers.',
-  },
-  '/about': {
-    title: 'About Presora | AI Brand Visibility Scanner',
-    description: 'Presora is a SaaS tool, founded in 2024, that measures how ChatGPT, Claude, Gemini and other AI models perceive a brand across 5 dimensions: authority, sentiment, accuracy, mentions and recency.',
-  },
-  '/pricing': {
-    title: 'Pricing | Presora',
-    description: 'Compare Presora plans — Free, Solo and Growth. Weekly AI visibility monitoring, competitor comparison, API access and alerts across ChatGPT, Claude and Gemini.',
-  },
-  '/contact': {
-    title: 'Contact | Presora',
-    description: 'Get in touch with the Presora team — product questions, Enterprise plans, or support. We reply within 24 hours.',
-  },
-  '/status': {
-    title: 'System Status | Presora',
-    description: 'Live status of Presora\'s core dependencies — application and database/auth availability.',
-  },
-  '/agencies': {
-    title: 'AI Visibility Audits for Agencies | Presora',
-    description: 'Run a Presora scan on a prospect\'s brand and export a client-ready AI visibility audit — executive summary, dimension breakdown and prioritized recommendations, ready to send.',
-  },
-  '/docs/api': {
-    title: 'API & Webhooks Documentation | Presora',
-    description: 'Integrate Presora into your stack with a REST API and webhooks. Run brand visibility scans, pull scores and automate AI monitoring programmatically.',
-  },
-  '/polityka-prywatnosci': {
-    title: 'Polityka Prywatności | Presora',
-    description: 'Polityka prywatności Presora — dowiedz się, jakie dane zbieramy, jak je przetwarzamy i jakie masz prawa jako użytkownik.',
-  },
-  '/regulamin': {
-    title: 'Regulamin | Presora',
-    description: 'Regulamin świadczenia usług Presora — zasady korzystania z platformy do monitorowania widoczności marki w AI.',
-  },
-  '/regulamin-newslettera': {
-    title: 'Regulamin Newslettera | Presora',
-    description: 'Regulamin newslettera Presora — zasady zapisu, wysyłki i rezygnacji z subskrypcji.',
-  },
-  '/login': {
-    title: 'Sign In | Presora',
-    description: 'Sign in to Presora to monitor how ChatGPT, Claude and Gemini describe and recommend your brand.',
-  },
-  '/register': {
-    title: 'Sign Up | Presora',
-    description: 'Create a free Presora account and get your first AI brand visibility score in 30 seconds.',
-  },
-  // Authenticated / transactional views — keep a title for the tab, but tell
-  // search engines not to index them (duplicate shells, gated or user-specific content).
-  '/dashboard':          { title: 'Dashboard | Presora', description: 'Presora dashboard.', noindex: true },
-  '/brand-visibility':   { title: 'Brand Scan | Presora', description: 'Presora brand scan.', noindex: true },
-  '/automations':        { title: 'Automations | Presora', description: 'Presora automations.', noindex: true },
-  '/changelog':          { title: "What's new | Presora", description: 'Presora changelog.', noindex: true },
-  '/profile':            { title: 'Profile | Presora', description: 'Presora profile.', noindex: true },
-  '/settings':           { title: 'Settings | Presora', description: 'Presora settings.', noindex: true },
-  '/reports':            { title: 'Reports | Presora', description: 'Presora reports.', noindex: true },
-  '/admin/announcements': { title: 'Send announcement | Presora', description: 'Presora admin.', noindex: true },
-  '/developers':         { title: 'Developers | Presora', description: 'Presora developer tools.', noindex: true },
-  '/reset-password':     { title: 'Reset Password | Presora', description: 'Reset your Presora password.', noindex: true },
-  '/auth/confirm':       { title: 'Confirm Account | Presora', description: 'Confirm your Presora account.', noindex: true },
-  '/auth/google/callback': { title: 'Signing in… | Presora', description: 'Completing Google sign-in.', noindex: true },
-  '/onboarding':         { title: 'Onboarding | Presora', description: 'Set up your Presora account.', noindex: true },
-};
+// Single source of truth, also read at build time by scripts/prerender-seo.mjs
+// to generate per-route static HTML (see that file for why: non-JS crawlers —
+// most AI bots, unlike Googlebot — never run this module, so without a static
+// snapshot per route they'd see the same generic homepage title/description/
+// canonical for every page on the site).
+export const SEO_CONFIG: Record<string, SeoConfig> = seoConfigJson;
 
 const DEFAULT_SEO: SeoConfig = { title: 'Presora', description: 'Presora — AI Brand Visibility Scanner.', noindex: true };
 
