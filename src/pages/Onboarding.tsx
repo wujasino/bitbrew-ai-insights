@@ -93,7 +93,7 @@ export default function Onboarding() {
   };
 
   return (
-    <GradientMeshBg className="min-h-screen flex flex-col items-center justify-center px-4 py-12">
+    <GradientMeshBg className="min-h-screen flex flex-col items-center justify-center px-4 py-12" variant="mono">
       <div className="w-full max-w-lg">
 
         {/* Logo */}

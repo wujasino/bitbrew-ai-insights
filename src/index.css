@@ -143,29 +143,33 @@
     box-shadow: 0 25px 50px -15px rgba(15,13,40,0.65);
   }
 
-  /* ── Hero section ───────────────────────────────────────────── */
+  /* ── Hero section — neutral graphite wash, not violet-tinted:
+     these are background chrome that repeats on every section, not the
+     "vivid brand moment" (that stays on buttons/links/step numbers via
+     --primary, and on .ai-presence-accent below). ── */
   .hero {
-    background: linear-gradient(180deg, #ffffff 0%, #F5F3FF 100%);
+    background: linear-gradient(180deg, #ffffff 0%, #F4F4F6 100%);
   }
   .dark .hero {
     background: linear-gradient(180deg, #111827 0%, #0B0F19 100%);
   }
 
-  /* ── Badge ──────────────────────────────────────────────────── */
+  /* ── Badge — same reasoning: this repeats ~10x per page as a section
+     eyebrow label, so it's graphite, not indigo. ── */
   .badge {
-    background: rgba(99, 102, 241, 0.10);
-    border: 1px solid rgba(99, 102, 241, 0.28);
-    color: #4F46E5;
+    background: rgba(100, 116, 139, 0.10);
+    border: 1px solid rgba(100, 116, 139, 0.24);
+    color: #475569;
   }
   .dark .badge {
-    background: rgba(99, 102, 241, 0.14);
-    border: 1px solid rgba(99, 102, 241, 0.35);
-    color: #A5B4FC;
+    background: rgba(148, 163, 184, 0.10);
+    border: 1px solid rgba(148, 163, 184, 0.24);
+    color: #CBD5E1;
   }
 
   /* ── CTA box ────────────────────────────────────────────────── */
   .cta-box {
-    background: linear-gradient(135deg, #ffffff, #F5F3FF);
+    background: linear-gradient(135deg, #ffffff, #F4F4F6);
   }
   .dark .cta-box {
     background: linear-gradient(135deg, #111827, #0B0F19);

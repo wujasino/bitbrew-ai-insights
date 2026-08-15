@@ -76,7 +76,7 @@ const Landing = () => {
       </div>
 
       {/* ── Hero + Why (shared animated background) ───────────────── */}
-      <GradientMeshBg className="relative" variant="indigo">
+      <GradientMeshBg className="relative" variant="mono">
         <section className="hero pt-24 sm:pt-32 pb-10 px-4">
           <div className="max-w-2xl mx-auto text-center">
             <motion.div
