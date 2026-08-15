@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import ws from 'ws';
 import { OPENROUTER_MODELS, runBrandScan } from './_lib/runScan.js';
+import { fireWebhooksForEvent } from './_lib/webhookDelivery.js';
 
 if (!globalThis.WebSocket) {
   globalThis.WebSocket = ws;
@@ -112,6 +113,22 @@ export const handler = async () => {
         sources: result.sources,
       });
 
+      fireWebhooksForEvent(admin, {
+        userId: monitor.user_id,
+        event: 'analysis.completed',
+        payload: { brandName: monitor.brand, ...result },
+      }).catch((err) => console.error('check-score-alerts: webhook firing failed:', err.message));
+
+      // ≥5 pts — a couple of points of natural LLM-output noise between
+      // re-scans shouldn't fire a webhook every single time.
+      if (previous && Math.abs(result.trustScore - previous.trust_score) >= 5) {
+        fireWebhooksForEvent(admin, {
+          userId: monitor.user_id,
+          event: 'score.changed',
+          payload: { brandName: monitor.brand, trustScore: result.trustScore, previousTrustScore: previous.trust_score },
+        }).catch((err) => console.error('check-score-alerts: webhook firing failed:', err.message));
+      }
+
       const column = METRIC_COLUMN[monitor.alert_metric];
       const currentValue = column === 'trust_score' ? result.trustScore : result[column];
       const previousValue = previous ? previous[column] : null;
@@ -133,6 +150,14 @@ export const handler = async () => {
           data: { currentValue, previousValue, threshold },
         });
         notified += 1;
+
+        if (monitor.alert_metric === 'sentiment') {
+          fireWebhooksForEvent(admin, {
+            userId: monitor.user_id,
+            event: 'sentiment.dropped',
+            payload: { brandName: monitor.brand, currentValue, previousValue, threshold },
+          }).catch((err) => console.error('check-score-alerts: webhook firing failed:', err.message));
+        }
       }
 
       await admin.from('brand_monitors').update({ last_checked_at: new Date().toISOString() }).eq('id', monitor.id);

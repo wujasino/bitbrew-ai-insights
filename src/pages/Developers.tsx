@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Key, Webhook, Copy, Trash2, Plus, Check, ExternalLink, Eye, EyeOff,
-  CircleCheck, CircleX, Loader2, BookOpen, Zap, Info,
+  CircleCheck, CircleX, Loader2, BookOpen, Zap, AlertCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,52 +12,55 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 import { useSessionUser } from '@/hooks/useAccountInfo';
 
-// ── Types ───────────────────────────────────────────────────────
+// ── Types — mirror the shape dev-keys.js / dev-webhooks.js return ──
 type ApiKey = {
   id: string;
   name: string;
   prefix: string;
-  secret: string;
-  createdAt: string;
-  lastUsed: string | null;
+  created_at: string;
+  last_used_at: string | null;
+  revoked_at: string | null;
 };
 type WebhookEvent = 'analysis.completed' | 'analysis.failed' | 'sentiment.dropped' | 'score.changed';
-type Webhook = {
+type WebhookRow = {
   id: string;
   url: string;
   events: WebhookEvent[];
   active: boolean;
-  createdAt: string;
+  secret: string;
+  created_at: string;
 };
 type Delivery = {
   id: string;
-  webhookId: string;
+  webhook_id: string;
   event: WebhookEvent;
-  status: number;
+  status_code: number | null;
   ok: boolean;
-  at: string;
+  error: string | null;
+  created_at: string;
 };
 
 const ALL_EVENTS: { id: WebhookEvent; label: string; desc: string }[] = [
   { id: 'analysis.completed', label: 'analysis.completed', desc: 'Sent when a brand analysis is completed' },
   { id: 'analysis.failed',    label: 'analysis.failed',    desc: 'Sent when an analysis fails' },
-  { id: 'sentiment.dropped',  label: 'sentiment.dropped',  desc: 'Sent when AI sentiment drops below threshold' },
-  { id: 'score.changed',      label: 'score.changed',      desc: 'Sent when the visibility score changes by ≥5 pts' },
+  { id: 'sentiment.dropped',  label: 'sentiment.dropped',  desc: 'Sent when a monitored brand\'s sentiment crosses below its alert threshold' },
+  { id: 'score.changed',      label: 'score.changed',      desc: 'Sent when a monitored brand\'s visibility score changes' },
 ];
 
-// ── localStorage stubs ──────────────────────────────────────────
-const keyOf = (uid: string, t: 'keys' | 'hooks' | 'deliveries') => `bb_dev_${t}_${uid}`;
-
-const load = <T,>(uid: string, t: 'keys' | 'hooks' | 'deliveries'): T[] => {
-  try { return JSON.parse(localStorage.getItem(keyOf(uid, t)) || '[]'); } catch { return []; }
-};
-const save = <T,>(uid: string, t: 'keys' | 'hooks' | 'deliveries', v: T[]) =>
-  localStorage.setItem(keyOf(uid, t), JSON.stringify(v));
-
-const genSecret = () => {
-  const arr = new Uint8Array(24);
-  crypto.getRandomValues(arr);
-  return Array.from(arr).map(b => b.toString(16).padStart(2, '0')).join('');
+const authedFetch = async (path: string, init: RequestInit = {}) => {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) throw new Error('You must be signed in.');
+  const res = await fetch(path, {
+    ...init,
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${session.access_token}`,
+      ...(init.headers || {}),
+    },
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data?.error || `Request failed (${res.status})`);
+  return data;
 };
 
 // ── Tabs ────────────────────────────────────────────────────────
@@ -65,20 +68,36 @@ type Tab = 'keys' | 'webhooks';
 
 const Developers = () => {
   const [tab, setTab] = useState<Tab>('keys');
-  const [userId, setUserId] = useState<string | null>(null);
   const [keys, setKeys] = useState<ApiKey[]>([]);
-  const [hooks, setHooks] = useState<Webhook[]>([]);
+  const [hooks, setHooks] = useState<WebhookRow[]>([]);
   const [deliveries, setDeliveries] = useState<Delivery[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
 
-  const { data: sessionUser } = useSessionUser();
+  const { data: sessionUser, isLoading: userLoading } = useSessionUser();
+
+  const refresh = useCallback(async () => {
+    setLoadError('');
+    try {
+      const [keysRes, hooksRes] = await Promise.all([
+        authedFetch('/.netlify/functions/dev-keys'),
+        authedFetch('/.netlify/functions/dev-webhooks'),
+      ]);
+      setKeys(keysRes.keys || []);
+      setHooks(hooksRes.webhooks || []);
+      setDeliveries(hooksRes.deliveries || []);
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : 'Failed to load.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
-    const uid = sessionUser?.id;
-    if (!uid) return;
-    setUserId(uid);
-    setKeys(load<ApiKey>(uid, 'keys'));
-    setHooks(load<Webhook>(uid, 'hooks'));
-    setDeliveries(load<Delivery>(uid, 'deliveries'));
-  }, [sessionUser]);
+    if (userLoading) return;
+    if (!sessionUser?.id) { setLoading(false); return; }
+    refresh();
+  }, [sessionUser, userLoading, refresh]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -106,20 +125,6 @@ const Developers = () => {
           </Link>
         </div>
 
-        {/* Preview notice — keys/webhooks here are a local mockup of the
-            upcoming public API, not a live backend yet (no server verifies
-            these keys or delivers these webhooks for real). Making that
-            explicit here since generating a key and following the curl
-            examples in /docs/api would otherwise look like it should work. */}
-        <div className="flex items-start gap-3 rounded-xl border border-amber-500/20 bg-amber-500/[0.06] px-4 py-3 mb-6">
-          <Info className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-          <p className="text-xs text-amber-700 dark:text-amber-300 leading-relaxed">
-            <strong>Preview.</strong> The public API and webhook delivery aren't live yet — keys and webhook
-            configs created here are saved only in this browser and don't authorize real requests or send
-            real deliveries. This page previews what account-level API management will look like at launch.
-          </p>
-        </div>
-
         {/* Tabs */}
         <div className="flex gap-1 mb-6 border-b border-[hsl(var(--glass-border))]">
           {([
@@ -142,17 +147,21 @@ const Developers = () => {
           ))}
         </div>
 
-        {userId && tab === 'keys' && (
-          <KeysSection userId={userId} keys={keys} setKeys={(k) => { setKeys(k); save(userId, 'keys', k); }} />
-        )}
-        {userId && tab === 'webhooks' && (
-          <WebhooksSection
-            userId={userId}
-            hooks={hooks}
-            setHooks={(h) => { setHooks(h); save(userId, 'hooks', h); }}
-            deliveries={deliveries}
-            setDeliveries={(d) => { setDeliveries(d); save(userId, 'deliveries', d); }}
-          />
+        {loading ? (
+          <div className="flex items-center justify-center py-16 text-sm text-muted-foreground gap-2">
+            <Loader2 className="w-4 h-4 animate-spin" /> Loading…
+          </div>
+        ) : loadError ? (
+          <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 rounded-xl px-4 py-3">
+            <AlertCircle className="w-4 h-4 shrink-0" /> {loadError}
+          </div>
+        ) : (
+          <>
+            {tab === 'keys' && <KeysSection keys={keys} onChange={refresh} />}
+            {tab === 'webhooks' && (
+              <WebhooksSection hooks={hooks} deliveries={deliveries} onChange={refresh} />
+            )}
+          </>
         )}
       </div>
     </div>
@@ -160,33 +169,42 @@ const Developers = () => {
 };
 
 // ── Keys section ────────────────────────────────────────────────
-const KeysSection = ({ userId, keys, setKeys }: { userId: string; keys: ApiKey[]; setKeys: (k: ApiKey[]) => void }) => {
+const KeysSection = ({ keys, onChange }: { keys: ApiKey[]; onChange: () => void }) => {
   const [name, setName] = useState('');
   const [creating, setCreating] = useState(false);
-  const [newSecret, setNewSecret] = useState<{ id: string; secret: string } | null>(null);
+  const [createError, setCreateError] = useState('');
+  const [newSecret, setNewSecret] = useState<string | null>(null);
 
-  const create = () => {
+  const create = async () => {
     if (!name.trim()) return;
     setCreating(true);
-    const secret = genSecret();
-    const key: ApiKey = {
-      id: crypto.randomUUID(),
-      name: name.trim(),
-      prefix: `bb_${secret.slice(0, 6)}`,
-      secret: `bb_${secret}`,
-      createdAt: new Date().toISOString(),
-      lastUsed: null,
-    };
-    setKeys([key, ...keys]);
-    setNewSecret({ id: key.id, secret: key.secret });
-    setName('');
-    setCreating(false);
+    setCreateError('');
+    try {
+      const key = await authedFetch('/.netlify/functions/dev-keys', {
+        method: 'POST',
+        body: JSON.stringify({ name: name.trim() }),
+      });
+      setNewSecret(key.secret);
+      setName('');
+      onChange();
+    } catch (err) {
+      setCreateError(err instanceof Error ? err.message : 'Failed to create key.');
+    } finally {
+      setCreating(false);
+    }
   };
 
-  const revoke = (id: string) => {
+  const revoke = async (id: string) => {
     if (!confirm('Revoke this key? Apps using it will stop working.')) return;
-    setKeys(keys.filter(k => k.id !== id));
+    try {
+      await authedFetch('/.netlify/functions/dev-keys', { method: 'DELETE', body: JSON.stringify({ id }) });
+      onChange();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to revoke key.');
+    }
   };
+
+  const activeKeys = keys.filter(k => !k.revoked_at);
 
   return (
     <div className="space-y-5">
@@ -204,10 +222,11 @@ const KeysSection = ({ userId, keys, setKeys }: { userId: string; keys: ApiKey[]
             className="flex-1"
           />
           <Button onClick={create} disabled={!name.trim() || creating} className="gap-2">
-            <Plus className="w-4 h-4" />
+            {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
             Generate key
           </Button>
         </div>
+        {createError && <p className="text-xs text-destructive mt-2">{createError}</p>}
       </div>
 
       {/* Newly created secret reveal */}
@@ -226,7 +245,7 @@ const KeysSection = ({ userId, keys, setKeys }: { userId: string; keys: ApiKey[]
                 <p className="text-xs text-muted-foreground mt-0.5 mb-3">
                   Copy it now — for security we will only show it once.
                 </p>
-                <SecretCopyBox secret={newSecret.secret} />
+                <SecretCopyBox secret={newSecret} />
                 <button
                   onClick={() => setNewSecret(null)}
                   className="text-xs text-muted-foreground hover:text-foreground mt-3"
@@ -243,17 +262,17 @@ const KeysSection = ({ userId, keys, setKeys }: { userId: string; keys: ApiKey[]
       <div className="rounded-2xl border border-[hsl(var(--glass-border))] bg-card/40 backdrop-blur-xl overflow-hidden">
         <div className="px-5 py-3 border-b border-[hsl(var(--glass-border))] flex items-center justify-between">
           <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium">
-            Your keys ({keys.length})
+            Your keys ({activeKeys.length})
           </p>
         </div>
-        {keys.length === 0 ? (
+        {activeKeys.length === 0 ? (
           <div className="px-5 py-10 text-center">
             <Key className="w-8 h-8 text-muted-foreground/40 mx-auto mb-3" />
             <p className="text-sm text-muted-foreground">No API keys. Generate your first one.</p>
           </div>
         ) : (
           <ul className="divide-y divide-[hsl(var(--glass-border))]">
-            {keys.map((k) => (
+            {activeKeys.map((k) => (
               <li key={k.id} className="px-5 py-3 flex items-center gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
@@ -263,8 +282,8 @@ const KeysSection = ({ userId, keys, setKeys }: { userId: string; keys: ApiKey[]
                     </code>
                   </div>
                   <p className="text-[11px] text-muted-foreground mt-0.5">
-                    Created {new Date(k.createdAt).toLocaleDateString()} ·{' '}
-                    {k.lastUsed ? `Last used ${new Date(k.lastUsed).toLocaleDateString()}` : 'Never used'}
+                    Created {new Date(k.created_at).toLocaleDateString()} ·{' '}
+                    {k.last_used_at ? `Last used ${new Date(k.last_used_at).toLocaleDateString()}` : 'Never used'}
                   </p>
                 </div>
                 <button
@@ -281,8 +300,9 @@ const KeysSection = ({ userId, keys, setKeys }: { userId: string; keys: ApiKey[]
       </div>
 
       <p className="text-xs text-muted-foreground">
-        Keys are used to authorize HTTP requests. Send them in the{' '}
-        <code className="font-data text-foreground bg-muted px-1.5 py-0.5 rounded">Authorization: Bearer …</code>
+        Keys authorize requests to the public API — send them in the{' '}
+        <code className="font-data text-foreground bg-muted px-1.5 py-0.5 rounded">Authorization: Bearer …</code> header.
+        See the <Link to="/docs/api" className="text-primary hover:underline">API docs</Link> for endpoints.
       </p>
     </div>
   );
@@ -312,62 +332,80 @@ const SecretCopyBox = ({ secret }: { secret: string }) => {
 };
 
 // ── Webhooks section ────────────────────────────────────────────
-const WebhooksSection = ({ userId, hooks, setHooks, deliveries, setDeliveries }: {
-  userId: string;
-  hooks: Webhook[];
-  setHooks: (h: Webhook[]) => void;
+const WebhooksSection = ({ hooks, deliveries, onChange }: {
+  hooks: WebhookRow[];
   deliveries: Delivery[];
-  setDeliveries: (d: Delivery[]) => void;
+  onChange: () => void;
 }) => {
   const [url, setUrl] = useState('');
   const [events, setEvents] = useState<WebhookEvent[]>(['analysis.completed']);
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState('');
   const [testing, setTesting] = useState<string | null>(null);
+  const [newSecret, setNewSecret] = useState<string | null>(null);
 
   const toggleEvent = (e: WebhookEvent) =>
     setEvents(prev => prev.includes(e) ? prev.filter(x => x !== e) : [...prev, e]);
 
   const isValidUrl = useMemo(() => {
-    try { new URL(url); return url.startsWith('https://'); } catch { return false; }
+    try { return new URL(url).protocol === 'https:'; } catch { return false; }
   }, [url]);
 
-  const create = () => {
+  const create = async () => {
     if (!isValidUrl || events.length === 0) return;
-    const hook: Webhook = {
-      id: crypto.randomUUID(),
-      url,
-      events,
-      active: true,
-      createdAt: new Date().toISOString(),
-    };
-    setHooks([hook, ...hooks]);
-    setUrl('');
-    setEvents(['analysis.completed']);
+    setCreating(true);
+    setCreateError('');
+    try {
+      const hook = await authedFetch('/.netlify/functions/dev-webhooks', {
+        method: 'POST',
+        body: JSON.stringify({ url, events }),
+      });
+      setNewSecret(hook.secret);
+      setUrl('');
+      setEvents(['analysis.completed']);
+      onChange();
+    } catch (err) {
+      setCreateError(err instanceof Error ? err.message : 'Failed to add webhook.');
+    } finally {
+      setCreating(false);
+    }
   };
 
-  const toggleActive = (id: string) =>
-    setHooks(hooks.map(h => h.id === id ? { ...h, active: !h.active } : h));
+  const toggleActive = async (hook: WebhookRow) => {
+    try {
+      await authedFetch('/.netlify/functions/dev-webhooks', {
+        method: 'PATCH',
+        body: JSON.stringify({ id: hook.id, active: !hook.active }),
+      });
+      onChange();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to update webhook.');
+    }
+  };
 
-  const remove = (id: string) => {
+  const remove = async (id: string) => {
     if (!confirm('Delete this webhook?')) return;
-    setHooks(hooks.filter(h => h.id !== id));
+    try {
+      await authedFetch('/.netlify/functions/dev-webhooks', { method: 'DELETE', body: JSON.stringify({ id }) });
+      onChange();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to delete webhook.');
+    }
   };
 
-  const test = async (hook: Webhook) => {
+  const test = async (hook: WebhookRow) => {
     setTesting(hook.id);
-    // Simulate sending a test event
-    await new Promise(r => setTimeout(r, 900));
-    const ok = Math.random() > 0.15;
-    const status = ok ? 200 : 500;
-    const delivery: Delivery = {
-      id: crypto.randomUUID(),
-      webhookId: hook.id,
-      event: hook.events[0],
-      status,
-      ok,
-      at: new Date().toISOString(),
-    };
-    setDeliveries([delivery, ...deliveries].slice(0, 25));
-    setTesting(null);
+    try {
+      await authedFetch('/.netlify/functions/dev-webhooks', {
+        method: 'POST',
+        body: JSON.stringify({ action: 'test', id: hook.id }),
+      });
+      onChange();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Test delivery failed.');
+    } finally {
+      setTesting(null);
+    }
   };
 
   return (
@@ -377,7 +415,7 @@ const WebhooksSection = ({ userId, hooks, setHooks, deliveries, setDeliveries }:
         <div>
           <h3 className="text-sm font-medium text-foreground mb-1">Add webhook</h3>
           <p className="text-xs text-muted-foreground">
-            We send a POST with JSON to the given URL when the selected event occurs.
+            We send a signed POST with JSON to the given URL when the selected event occurs.
           </p>
         </div>
 
@@ -429,11 +467,41 @@ const WebhooksSection = ({ userId, hooks, setHooks, deliveries, setDeliveries }:
           </div>
         </div>
 
-        <Button onClick={create} disabled={!isValidUrl || events.length === 0} className="gap-2">
-          <Plus className="w-4 h-4" />
+        <Button onClick={create} disabled={!isValidUrl || events.length === 0 || creating} className="gap-2">
+          {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
           Add webhook
         </Button>
+        {createError && <p className="text-xs text-destructive">{createError}</p>}
       </div>
+
+      {/* Newly created secret reveal */}
+      <AnimatePresence>
+        {newSecret && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="rounded-2xl border border-primary/40 bg-primary/5 p-5"
+          >
+            <div className="flex items-start gap-3">
+              <CircleCheck className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-foreground">Webhook added</p>
+                <p className="text-xs text-muted-foreground mt-0.5 mb-3">
+                  Signing secret — use it to verify the <code className="font-data">X-Presora-Signature</code> header on incoming deliveries.
+                </p>
+                <SecretCopyBox secret={newSecret} />
+                <button
+                  onClick={() => setNewSecret(null)}
+                  className="text-xs text-muted-foreground hover:text-foreground mt-3"
+                >
+                  I've saved the secret, close
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* List */}
       <div className="rounded-2xl border border-[hsl(var(--glass-border))] bg-card/40 backdrop-blur-xl overflow-hidden">
@@ -476,7 +544,7 @@ const WebhooksSection = ({ userId, hooks, setHooks, deliveries, setDeliveries }:
                     Test
                   </Button>
                   <button
-                    onClick={() => toggleActive(h.id)}
+                    onClick={() => toggleActive(h)}
                     className="px-2.5 py-2 text-xs text-muted-foreground hover:text-foreground"
                   >
                     {h.active ? 'Pause' : 'Resume'}
@@ -505,7 +573,7 @@ const WebhooksSection = ({ userId, hooks, setHooks, deliveries, setDeliveries }:
         ) : (
           <ul className="divide-y divide-[hsl(var(--glass-border))]">
             {deliveries.map(d => {
-              const hook = hooks.find(h => h.id === d.webhookId);
+              const hook = hooks.find(h => h.id === d.webhook_id);
               return (
                 <li key={d.id} className="px-5 py-3 flex items-center gap-3 text-sm">
                   {d.ok
@@ -517,10 +585,10 @@ const WebhooksSection = ({ userId, hooks, setHooks, deliveries, setDeliveries }:
                     'text-xs font-data font-medium',
                     d.ok ? 'text-emerald-400' : 'text-red-400'
                   )}>
-                    HTTP {d.status}
+                    {d.status_code ? `HTTP ${d.status_code}` : (d.error || 'Failed')}
                   </span>
                   <span className="text-[11px] text-muted-foreground">
-                    {new Date(d.at).toLocaleTimeString()}
+                    {new Date(d.created_at).toLocaleTimeString()}
                   </span>
                 </li>
               );

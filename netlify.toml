@@ -31,6 +31,22 @@
   status = 200
   force  = true
 
+# ── Public API (ApiDocs.tsx) — clean /api/v1/* paths over the actual
+#    Netlify Functions, so the documented base URL is real and stable even
+#    if the underlying function implementation moves. Must come before the
+#    SPA fallback below (redirects are first-match-wins).
+[[redirects]]
+  from   = "/api/v1/analyze"
+  to     = "/.netlify/functions/api-analyze"
+  status = 200
+  force  = true
+
+[[redirects]]
+  from   = "/api/v1/analyses"
+  to     = "/.netlify/functions/api-analyses"
+  status = 200
+  force  = true
+
 # ── SPA fallback — wszystkie trasy obsługuje React Router ────────────────────
 [[redirects]]
   from   = "/*"

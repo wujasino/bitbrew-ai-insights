@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import ws from "ws";
 import { OPENROUTER_MODELS, runBrandScan } from './_lib/runScan.js';
+import { fireWebhooksForEvent } from './_lib/webhookDelivery.js';
 
 if (!globalThis.WebSocket) {
   globalThis.WebSocket = ws;
@@ -138,9 +139,12 @@ export const handler = async (event) => {
     };
   }
 
+  // Declared outside the try so the catch block's analysis.failed webhook
+  // can still report which brand the failed scan was for.
+  let target = 'unknown brand';
   try {
     const { url, models: requestedModelIds } = JSON.parse(event.body || '{}');
-    const target = String(url || '').trim().slice(0, 500) || 'unknown brand';
+    target = String(url || '').trim().slice(0, 500) || 'unknown brand';
 
     let planTier = 0; // guests get the Free-equivalent roster
     if (authedUser) {
@@ -169,6 +173,17 @@ export const handler = async (event) => {
       userId: authedUser?.id || null,
     });
 
+    // Fire-and-forget (best-effort, awaited so it's recorded before the
+    // function exits, but never allowed to fail the actual scan response).
+    // Guests can't have webhooks configured, so only signed-in users hit this.
+    if (authedUser) {
+      fireWebhooksForEvent(supabaseAdmin, {
+        userId: authedUser.id,
+        event: 'analysis.completed',
+        payload: { brandName: target, ...result },
+      }).catch((err) => console.error('analyze: webhook firing failed:', err.message));
+    }
+
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
@@ -176,6 +191,13 @@ export const handler = async (event) => {
     };
   } catch (error) {
     console.error('analyze handler error:', error.message);
+    if (authedUser && supabaseAdmin) {
+      fireWebhooksForEvent(supabaseAdmin, {
+        userId: authedUser.id,
+        event: 'analysis.failed',
+        payload: { brandName: target, error: error.message },
+      }).catch(() => {});
+    }
     return {
       statusCode: 500,
       headers: { 'Content-Type': 'application/json' },
