@@ -45,6 +45,31 @@ const PRIORITY_STYLE: Record<string, string> = {
 const scoreColor = (s: number) =>
   s >= 75 ? 'text-emerald-500' : s >= 50 ? 'text-primary' : 'text-red-500';
 
+const scoreLabel = (s: number) => (s >= 75 ? 'Strong' : s >= 50 ? 'Developing' : 'Needs attention');
+
+// Same 75/50 bands as scoreColor(), applied to the dimension bars/icon chips
+// and the score's own "Strong/Developing/Needs attention" pill.
+const BAND_STYLE = {
+  strong: { bar: 'bg-emerald-500 print:bg-black/70', chip: 'bg-emerald-500/10 text-emerald-500 print:bg-transparent print:text-black/70', pill: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20', ring: 'border-emerald-500 text-emerald-500 print:border-black/20' },
+  mid: { bar: 'bg-primary print:bg-black/70', chip: 'bg-primary/10 text-primary print:bg-transparent print:text-black/70', pill: 'bg-primary/10 text-primary border-primary/20', ring: 'border-primary text-primary print:border-black/20' },
+  low: { bar: 'bg-red-500 print:bg-black/70', chip: 'bg-red-500/10 text-red-500 print:bg-transparent print:text-black/70', pill: 'bg-red-500/10 text-red-500 border-red-500/20', ring: 'border-red-500 text-red-500 print:border-black/20' },
+} as const;
+const bandOf = (s: number) => (s >= 75 ? BAND_STYLE.strong : s >= 50 ? BAND_STYLE.mid : BAND_STYLE.low);
+
+const SENTIMENT_STYLE: Record<string, string> = {
+  positive: 'text-emerald-500',
+  neutral: 'text-amber-500',
+  negative: 'text-red-500',
+};
+const sentimentDotClass = (sentiment: string) => {
+  const key = sentiment.toLowerCase();
+  return key.includes('positive') ? 'bg-emerald-500' : key.includes('negative') ? 'bg-red-500' : 'bg-amber-500';
+};
+const sentimentTextClass = (sentiment: string) => {
+  const key = sentiment.toLowerCase();
+  return SENTIMENT_STYLE[key] ?? (key.includes('positive') ? SENTIMENT_STYLE.positive : key.includes('negative') ? SENTIMENT_STYLE.negative : SENTIMENT_STYLE.neutral);
+};
+
 const AuditReport = () => {
   const { id } = useParams<{ id: string }>();
   const [analysis, setAnalysis] = useState<AnalysisRow | null>(null);
@@ -157,12 +182,13 @@ const AuditReport = () => {
 
       <main className="max-w-3xl mx-auto px-6 py-12 print:py-6 print:px-0">
         {/* Cover */}
-        <div className="flex items-center justify-between mb-10 print:mb-8">
+        <div className="flex items-center justify-between mb-6 print:mb-6">
           <Wordmark className="text-xl print:!text-black" />
           <p className="text-xs text-muted-foreground print:text-black/60">
             AI Visibility Audit · {new Date(analysis.created_at).toLocaleDateString(undefined, { day: '2-digit', month: 'long', year: 'numeric' })}
           </p>
         </div>
+        <div className="h-px bg-gradient-to-r from-primary/40 via-border to-transparent print:from-black/30 print:via-black/10 mb-8" />
 
         <h1 className="text-3xl sm:text-4xl font-display text-foreground print:text-black mb-2">
           {analysis.brand_name}
@@ -172,12 +198,18 @@ const AuditReport = () => {
         </p>
 
         {/* Headline score */}
-        <div className="rounded-2xl border border-border bg-card/60 print:bg-transparent print:border-black/15 p-6 mb-8 flex items-center gap-6">
-          <div className={`text-5xl font-display font-bold tabular-nums ${scoreColor(analysis.trust_score)}`}>
-            {analysis.trust_score}
+        <div className="relative overflow-hidden rounded-2xl border border-border bg-card/60 print:bg-transparent print:border-black/15 p-6 mb-8 flex items-center gap-6">
+          <div className={`print:hidden absolute -top-10 -right-10 w-40 h-40 rounded-full blur-3xl opacity-20 ${scoreColor(analysis.trust_score).replace('text-', 'bg-')}`} />
+          <div className={`relative shrink-0 w-24 h-24 rounded-full border-4 flex items-center justify-center ${bandOf(analysis.trust_score).ring}`}>
+            <span className="text-3xl font-display font-bold tabular-nums">{analysis.trust_score}</span>
           </div>
-          <div>
-            <p className="text-xs uppercase tracking-wider text-muted-foreground print:text-black/60">Trust score / 100</p>
+          <div className="relative">
+            <div className="flex items-center gap-2 mb-1">
+              <p className="text-xs uppercase tracking-wider text-muted-foreground print:text-black/60">Trust score / 100</p>
+              <span className={`text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border font-medium ${bandOf(analysis.trust_score).pill} print:border-black/20 print:bg-transparent print:text-black/70`}>
+                {scoreLabel(analysis.trust_score)}
+              </span>
+            </div>
             {generating ? (
               <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1.5">
                 <Loader2 className="w-3.5 h-3.5 animate-spin" /> Writing executive summary…
@@ -212,12 +244,15 @@ const AuditReport = () => {
           <div className="space-y-3">
             {DIMENSIONS.map(({ key, Icon, name }) => {
               const value = analysis[key] as number;
+              const band = bandOf(value);
               return (
                 <div key={key} className="flex items-center gap-3">
-                  <Icon className="w-4 h-4 text-muted-foreground print:text-black/60 shrink-0" />
+                  <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${band.chip}`}>
+                    <Icon className="w-3.5 h-3.5" />
+                  </div>
                   <span className="text-sm text-foreground print:text-black w-24 shrink-0">{name}</span>
                   <div className="flex-1 h-2 rounded-full bg-muted print:bg-black/10 overflow-hidden">
-                    <div className="h-full rounded-full bg-primary print:bg-black/70" style={{ width: `${value}%` }} />
+                    <div className={`h-full rounded-full ${band.bar}`} style={{ width: `${value}%` }} />
                   </div>
                   <span className="text-sm font-medium text-foreground print:text-black w-10 text-right tabular-nums">{value}</span>
                 </div>
@@ -232,9 +267,13 @@ const AuditReport = () => {
             <h2 className="text-xs uppercase tracking-wider text-muted-foreground print:text-black/60 mb-3">By AI model</h2>
             <div className="space-y-2">
               {analysis.sources.map(s => (
-                <div key={s.model} className="flex items-center justify-between text-sm py-1.5 border-b border-border/50 print:border-black/10">
-                  <span className="text-foreground print:text-black">{s.model}</span>
-                  <span className="text-muted-foreground print:text-black/60">{s.sentiment} · {Math.round(s.confidence)}% confidence</span>
+                <div key={s.model} className="flex items-center justify-between text-sm rounded-xl border border-border/60 print:border-black/10 px-4 py-3">
+                  <span className="text-foreground print:text-black font-medium">{s.model}</span>
+                  <span className="flex items-center gap-1.5 text-muted-foreground print:text-black/60">
+                    <span className={`w-1.5 h-1.5 rounded-full print:hidden ${sentimentDotClass(s.sentiment)}`} />
+                    <span className={`${sentimentTextClass(s.sentiment)} print:text-black/70 font-medium`}>{s.sentiment}</span>
+                    · {Math.round(s.confidence)}% confidence
+                  </span>
                 </div>
               ))}
             </div>
