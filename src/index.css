@@ -293,3 +293,16 @@
     opacity: 0.5;
   }
 }
+
+/* Printing a page taller than one screen (e.g. AuditReport.tsx) can get
+   stuck mid-scroll in some browsers' print preview: html/body inherit a
+   100vh-ish height from the app shell, and the print renderer clips to
+   that instead of laying out the full document and paginating it. Force
+   an auto height with visible overflow specifically for print so the
+   browser measures the real, full content height. */
+@media print {
+  html, body {
+    height: auto !important;
+    overflow: visible !important;
+  }
+}

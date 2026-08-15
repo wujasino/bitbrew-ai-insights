@@ -169,7 +169,7 @@ const AuditReport = () => {
   const summary = analysis.audit_summary;
 
   return (
-    <div className="min-h-screen bg-background print:bg-white">
+    <div className="min-h-screen print:min-h-0 print:h-auto bg-background print:bg-white">
       {/* Screen-only toolbar — hidden on print */}
       <div className="print:hidden sticky top-0 z-10 border-b border-border bg-background/95 backdrop-blur px-4 py-3 flex items-center justify-between">
         <Link to="/reports" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
