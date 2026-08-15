@@ -446,6 +446,9 @@ const Automations = () => {
             <div className="flex items-center gap-2 rounded-xl border border-border bg-background p-1.5 shadow-sm">
               <FrequencyDropdown value={config?.frequency ?? 'weekly'} onChange={setFrequency} disabled={savingFrequency} />
               <input
+                id="automations-chat-input"
+                name="message"
+                aria-label="Automation instruction"
                 className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground px-3 py-2 focus:outline-none disabled:opacity-50"
                 placeholder="e.g. track Tesla and Rivian daily"
                 value={input}

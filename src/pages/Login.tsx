@@ -76,10 +76,13 @@ const OtpInput = ({ value, onChange }: { value: string; onChange: (v: string) =>
       {digits.map((d, i) => (
         <input
           key={i}
+          id={`login-otp-digit-${i}`}
+          name={`otp-digit-${i}`}
           ref={el => { inputs.current[i] = el; }}
           type="text"
           inputMode="numeric"
           maxLength={1}
+          aria-label={`Digit ${i + 1} of verification code`}
           value={d}
           onChange={e => handleChange(i, e)}
           onKeyDown={e => handleKey(i, e)}
@@ -713,7 +716,10 @@ const Login = () => {
                 )}
 
                 <form onSubmit={handleTotpVerify} className="space-y-4">
+                  <Label htmlFor="login-totp-code" className="sr-only">Authenticator code</Label>
                   <Input
+                    id="login-totp-code"
+                    name="totp-code"
                     value={totpCode}
                     onChange={e => setTotpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                     placeholder="000000"

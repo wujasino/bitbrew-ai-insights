@@ -425,8 +425,11 @@ const Dashboard = () => {
               <div className="relative flex-1">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <input
+                  id="dashboard-brand-input-idle"
+                  name="brand"
                   type="text"
                   autoFocus
+                  aria-label="Brand name to analyze"
                   value={inputValue}
                   onChange={(e) => { setInputValue(e.target.value); setModerationError(''); }}
                   placeholder="e.g. Apple, Tesla, Nike…"
@@ -515,7 +518,10 @@ const Dashboard = () => {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <input
+                  id="dashboard-brand-input"
+                  name="brand"
                   type="text"
+                  aria-label="Brand name to analyze"
                   value={inputValue}
                   onChange={(e) => { setInputValue(e.target.value); setModerationError(''); }}
                   placeholder={t('placeholderExample')}
@@ -670,6 +676,9 @@ const Dashboard = () => {
                     <div className="relative flex-1 sm:max-w-xs">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
                       <input
+                        id="dashboard-competitor-input"
+                        name="competitor"
+                        aria-label="Competitor brand name"
                         value={competitorInput}
                         onChange={e => setCompetitorInput(e.target.value)}
                         onKeyDown={e => { if (e.key === 'Enter') runCompare(); }}

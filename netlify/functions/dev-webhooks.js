@@ -11,6 +11,7 @@ import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 import ws from 'ws';
 import { deliverOne } from './_lib/webhookDelivery.js';
+import { assertPublicHttpsUrl } from './_lib/ssrfGuard.js';
 
 if (!globalThis.WebSocket) globalThis.WebSocket = ws;
 
@@ -112,6 +113,11 @@ export const handler = async (event) => {
 
       const url = typeof payload.url === 'string' ? payload.url.trim() : '';
       if (!isValidUrl(url)) return { statusCode: 400, headers, body: JSON.stringify({ error: 'A valid HTTPS URL is required' }) };
+      try {
+        await assertPublicHttpsUrl(url);
+      } catch (err) {
+        return { statusCode: 400, headers, body: JSON.stringify({ error: err.message }) };
+      }
 
       const events = Array.isArray(payload.events) ? payload.events.filter((e) => ALLOWED_EVENTS.has(e)) : [];
       if (events.length === 0) return { statusCode: 400, headers, body: JSON.stringify({ error: 'Select at least one event' }) };

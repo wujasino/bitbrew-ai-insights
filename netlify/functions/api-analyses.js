@@ -8,7 +8,7 @@
  */
 import { createClient } from '@supabase/supabase-js';
 import ws from 'ws';
-import { verifyApiKey } from './_lib/apiKeyAuth.js';
+import { verifyApiKey, checkRateLimitAndLog } from './_lib/apiKeyAuth.js';
 
 if (!globalThis.WebSocket) globalThis.WebSocket = ws;
 
@@ -51,6 +51,11 @@ export const handler = async (event) => {
   const auth = await verifyApiKey(supabaseAdmin, event.headers.authorization || event.headers.Authorization);
   if (!auth) {
     return { statusCode: 401, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Invalid or revoked API key' }) };
+  }
+
+  const allowed = await checkRateLimitAndLog(supabaseAdmin, auth.keyId, auth.userId, { windowMs: 60_000, max: 60, kind: 'analyses' });
+  if (!allowed) {
+    return { statusCode: 429, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Rate limit exceeded' }) };
   }
 
   const id = event.queryStringParameters?.id;

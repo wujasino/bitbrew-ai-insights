@@ -31,7 +31,7 @@ try {
 const ALLOWED_ORIGINS = new Set(['https://presora.app', 'https://www.presora.app']);
 const corsHeaders = (origin) => ({
   'Access-Control-Allow-Origin': ALLOWED_ORIGINS.has(origin) ? origin : 'https://presora.app',
-  'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   'Content-Type': 'application/json',
   'Vary': 'Origin',
@@ -77,13 +77,22 @@ export const handler = async (event) => {
 
   try {
     if (event.httpMethod === 'GET') {
-      const { data, error } = await supabaseAdmin
-        .from('api_keys')
-        .select('id, name, prefix, created_at, last_used_at, revoked_at')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-      if (error) return { statusCode: 500, headers, body: JSON.stringify({ error: error.message }) };
-      return { statusCode: 200, headers, body: JSON.stringify({ keys: data || [] }) };
+      const [{ data: keys, error: keysError }, { data: usage, error: usageError }] = await Promise.all([
+        supabaseAdmin
+          .from('api_keys')
+          .select('id, name, prefix, active, created_at, last_used_at, revoked_at')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false }),
+        supabaseAdmin
+          .from('api_key_usage')
+          .select('id, api_key_id, created_at')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(50),
+      ]);
+      if (keysError) return { statusCode: 500, headers, body: JSON.stringify({ error: keysError.message }) };
+      if (usageError) return { statusCode: 500, headers, body: JSON.stringify({ error: usageError.message }) };
+      return { statusCode: 200, headers, body: JSON.stringify({ keys: keys || [], usage: usage || [] }) };
     }
 
     if (event.httpMethod === 'POST') {
@@ -112,6 +121,38 @@ export const handler = async (event) => {
 
       // The only time the plaintext secret ever leaves the server.
       return { statusCode: 200, headers, body: JSON.stringify({ ...data, secret }) };
+    }
+
+    if (event.httpMethod === 'PATCH') {
+      let payload;
+      try { payload = JSON.parse(event.body || '{}'); } catch { return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid JSON' }) }; }
+      const id = typeof payload.id === 'string' ? payload.id : '';
+      if (!id) return { statusCode: 400, headers, body: JSON.stringify({ error: 'id is required' }) };
+
+      const patch = {};
+      if (payload.name !== undefined) {
+        const name = typeof payload.name === 'string' ? payload.name.trim().slice(0, 80) : '';
+        if (!name) return { statusCode: 400, headers, body: JSON.stringify({ error: 'Name cannot be empty' }) };
+        patch.name = name;
+      }
+      if (payload.active !== undefined) {
+        if (typeof payload.active !== 'boolean') return { statusCode: 400, headers, body: JSON.stringify({ error: 'active must be a boolean' }) };
+        patch.active = payload.active;
+      }
+      if (Object.keys(patch).length === 0) {
+        return { statusCode: 400, headers, body: JSON.stringify({ error: 'Nothing to update' }) };
+      }
+
+      const { data, error } = await supabaseAdmin
+        .from('api_keys')
+        .update(patch)
+        .eq('id', id)
+        .eq('user_id', user.id)
+        .select('id, name, prefix, active, created_at, last_used_at, revoked_at')
+        .maybeSingle();
+      if (error) return { statusCode: 500, headers, body: JSON.stringify({ error: error.message }) };
+      if (!data) return { statusCode: 404, headers, body: JSON.stringify({ error: 'Key not found' }) };
+      return { statusCode: 200, headers, body: JSON.stringify(data) };
     }
 
     if (event.httpMethod === 'DELETE') {

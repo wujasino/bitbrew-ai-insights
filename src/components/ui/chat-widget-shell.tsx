@@ -120,10 +120,13 @@ export function ChatWidgetShell({
 
             <form onSubmit={handleSubmit} className="flex items-center gap-2 p-3 border-t border-[hsl(var(--glass-border))]">
               <input
+                id="chat-widget-input"
+                name="message"
                 type="text"
                 value={input}
                 onChange={e => onInputChange(e.target.value)}
                 placeholder="Ask a question…"
+                aria-label="Ask a question"
                 maxLength={2000}
                 className="flex-1 h-9 px-3 rounded-lg bg-background border border-[hsl(var(--glass-border))] text-sm text-foreground placeholder:text-muted-foreground/60 outline-none focus:border-primary transition-colors"
               />

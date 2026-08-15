@@ -13,7 +13,7 @@
 import { createClient } from '@supabase/supabase-js';
 import ws from 'ws';
 import { OPENROUTER_MODELS, runBrandScan } from './_lib/runScan.js';
-import { verifyApiKey } from './_lib/apiKeyAuth.js';
+import { verifyApiKey, checkRateLimitAndLog } from './_lib/apiKeyAuth.js';
 import { fireWebhooksForEvent } from './_lib/webhookDelivery.js';
 
 if (!globalThis.WebSocket) globalThis.WebSocket = ws;
@@ -22,21 +22,6 @@ const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
 
 const PLAN_TIER = { free: 0, starter: 1, solo: 1, growth: 2, enterprise: 2, agency: 2 };
-
-const RATE_LIMIT_WINDOW_MS = 60_000;
-const MAX_REQUESTS_PER_WINDOW = 10;
-const requestStore = new Map();
-const shouldRateLimit = (key) => {
-  const current = Date.now();
-  const entry = requestStore.get(key) || { count: 0, windowStart: current };
-  if (current - entry.windowStart > RATE_LIMIT_WINDOW_MS) {
-    entry.windowStart = current;
-    entry.count = 0;
-  }
-  entry.count += 1;
-  requestStore.set(key, entry);
-  return entry.count > MAX_REQUESTS_PER_WINDOW;
-};
 
 export const handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -61,7 +46,10 @@ export const handler = async (event) => {
     return { statusCode: 401, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Invalid or revoked API key' }) };
   }
 
-  if (shouldRateLimit(auth.userId)) {
+  // Persistent, DB-backed — see checkRateLimitAndLog's comment for why an
+  // in-memory counter doesn't actually bound anything on Netlify Functions.
+  const allowed = await checkRateLimitAndLog(supabaseAdmin, auth.keyId, auth.userId, { windowMs: 60_000, max: 10, kind: 'analyze' });
+  if (!allowed) {
     return { statusCode: 429, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Rate limit exceeded' }) };
   }
 

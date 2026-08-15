@@ -682,6 +682,8 @@ export default function Settings() {
                     </div>
 
                     <input
+                      id="settings-avatar-upload"
+                      name="avatar"
                       ref={fileInputRef}
                       type="file"
                       accept="image/*"
@@ -698,12 +700,12 @@ export default function Settings() {
 
                   <div className="space-y-4">
                     <div>
-                      <label className="text-sm font-medium text-foreground block mb-1.5">Display name</label>
-                      <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Your name" />
+                      <label htmlFor="settings-display-name" className="text-sm font-medium text-foreground block mb-1.5">Display name</label>
+                      <Input id="settings-display-name" name="displayName" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Your name" />
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-foreground block mb-1.5">Email</label>
-                      <Input value={email} disabled className="opacity-60" />
+                      <label htmlFor="settings-email" className="text-sm font-medium text-foreground block mb-1.5">Email</label>
+                      <Input id="settings-email" name="email" value={email} disabled className="opacity-60" />
                       <p className="text-xs text-muted-foreground mt-1">Email cannot be changed here</p>
                     </div>
                   </div>
@@ -761,9 +763,9 @@ export default function Settings() {
                           </div>
 
                           {deleteMethod === 'password' ? (
-                            <Input type="password" placeholder="Enter password" value={deletePassword} onChange={e => setDeletePassword(e.target.value)} />
+                            <Input id="delete-account-password" name="deletePassword" type="password" placeholder="Enter password" aria-label="Password" autoComplete="current-password" value={deletePassword} onChange={e => setDeletePassword(e.target.value)} />
                           ) : (
-                            <Input type="text" placeholder="Code from 2FA app (6 digits)" maxLength={6} value={deleteTotpCode} onChange={e => setDeleteTotpCode(e.target.value.replace(/\D/g, ''))} />
+                            <Input id="delete-account-totp" name="deleteTotpCode" type="text" placeholder="Code from 2FA app (6 digits)" aria-label="2FA code" maxLength={6} value={deleteTotpCode} onChange={e => setDeleteTotpCode(e.target.value.replace(/\D/g, ''))} />
                           )}
 
                           {deleteError && <p className="text-xs text-destructive">{deleteError}</p>}
@@ -1007,9 +1009,12 @@ export default function Settings() {
                         <div className="space-y-1.5">
                           <p className="text-xs text-muted-foreground">6-digit code from email</p>
                           <Input
+                            id="settings-pwd-otp"
+                            name="otp"
                             value={pwdOtp}
                             onChange={e => setPwdOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
                             placeholder="000000"
+                            aria-label="6-digit verification code"
                             inputMode="numeric"
                             maxLength={6}
                             className="h-10 text-center text-xl tracking-widest font-bold"
@@ -1032,10 +1037,13 @@ export default function Settings() {
                       <form onSubmit={handleSetNewPassword} className="space-y-3">
                         <div className="relative">
                           <Input
+                            id="settings-pwd-new"
+                            name="newPassword"
                             type={showPwdNew ? 'text' : 'password'}
                             value={pwdNew}
                             onChange={e => setPwdNew(e.target.value)}
                             placeholder="New password"
+                            aria-label="New password"
                             autoComplete="new-password"
                             className="h-10 pr-10"
                             autoFocus
@@ -1067,7 +1075,7 @@ export default function Settings() {
                           </div>
                         )}
 
-                        <Input type={showPwdNew ? 'text' : 'password'} value={pwdConfirm} onChange={e => setPwdConfirm(e.target.value)} placeholder="Repeat password" autoComplete="new-password" className="h-10" />
+                        <Input id="settings-pwd-confirm" name="confirmPassword" type={showPwdNew ? 'text' : 'password'} value={pwdConfirm} onChange={e => setPwdConfirm(e.target.value)} placeholder="Repeat password" aria-label="Repeat new password" autoComplete="new-password" className="h-10" />
                         {pwdConfirm.length > 0 && pwdNew !== pwdConfirm && (
                           <p className="text-[11px] text-red-400">Passwords do not match</p>
                         )}
@@ -1115,7 +1123,7 @@ export default function Settings() {
 
                     {emailStep === 'input' && (
                       <form onSubmit={handleChangeEmail} className="space-y-3">
-                        <Input type="email" value={newEmail} onChange={e => setNewEmail(e.target.value)} placeholder="new@email.com" autoComplete="email" className="h-10" autoFocus />
+                        <Input id="settings-new-email" name="newEmail" type="email" value={newEmail} onChange={e => setNewEmail(e.target.value)} placeholder="new@email.com" aria-label="New email address" autoComplete="email" className="h-10" autoFocus />
                         <div className="flex gap-2">
                           <Button type="button" size="sm" variant="ghost" onClick={() => { setEmailStep('idle'); setEmailError(''); }}>
                             <ArrowLeft className="w-3.5 h-3.5" />
@@ -1271,12 +1279,12 @@ export default function Settings() {
                           Fill in the form below. The declaration will be sent to <strong>contact.presora@gmail.com</strong>.
                         </p>
                         <div className="space-y-1.5">
-                          <label className="text-xs text-muted-foreground">Name of service you are withdrawing from *</label>
-                          <Input value={withdrawalService} onChange={e => setWithdrawalService(e.target.value)} placeholder="e.g. Solo / Growth / Enterprise subscription" className="text-sm" />
+                          <label htmlFor="withdrawal-service" className="text-xs text-muted-foreground">Name of service you are withdrawing from *</label>
+                          <Input id="withdrawal-service" name="withdrawalService" value={withdrawalService} onChange={e => setWithdrawalService(e.target.value)} placeholder="e.g. Solo / Growth / Enterprise subscription" className="text-sm" />
                         </div>
                         <div className="space-y-1.5">
-                          <label className="text-xs text-muted-foreground">Contract date *</label>
-                          <Input type="date" value={withdrawalDate} onChange={e => setWithdrawalDate(e.target.value)} className="text-sm" />
+                          <label htmlFor="withdrawal-date" className="text-xs text-muted-foreground">Contract date *</label>
+                          <Input id="withdrawal-date" name="withdrawalDate" type="date" value={withdrawalDate} onChange={e => setWithdrawalDate(e.target.value)} className="text-sm" />
                         </div>
                         {withdrawalStatus === 'error' && (
                           <p className="text-xs text-destructive">An error occurred while sending. Try again or write directly to <strong>contact.presora@gmail.com</strong>.</p>
@@ -1314,7 +1322,7 @@ export default function Settings() {
                           Share it — every friend who signs up counts toward your reward. Every {referral.milestoneSize} referrals unlocks 20% off your next invoice (or {FREE_PLAN_CREDIT_REWARD_LABEL} bonus analyses if you're on the free plan).
                         </p>
                         <div className="flex items-center gap-2">
-                          <Input readOnly value={referral.referralLink} className="text-xs font-mono" />
+                          <Input id="referral-link" name="referralLink" readOnly value={referral.referralLink} aria-label="Your referral link" className="text-xs font-mono" />
                           <Button size="sm" variant="outline" className="shrink-0 gap-1.5" onClick={copyReferralLink}>
                             {referralCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                             {referralCopied ? 'Copied' : 'Copy'}
