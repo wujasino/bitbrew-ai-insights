@@ -43,10 +43,13 @@ const OtpInput = ({ value, onChange }: { value: string; onChange: (v: string) =>
       {digits.map((d, i) => (
         <input
           key={i}
+          id={`register-otp-digit-${i}`}
+          name={`otp-digit-${i}`}
           ref={el => { inputs.current[i] = el; }}
           type="text"
           inputMode="numeric"
           maxLength={1}
+          aria-label={`Digit ${i + 1} of verification code`}
           value={d}
           onChange={e => handleChange(i, e)}
           onKeyDown={e => handleKey(i, e)}

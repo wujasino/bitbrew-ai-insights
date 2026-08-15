@@ -272,8 +272,11 @@ const KeysSection = ({ keys, usage, onChange }: { keys: ApiKey[]; usage: KeyUsag
         <p className="text-xs text-muted-foreground mb-4">
           Name the key so you can easily tell it apart (e.g. "Production", "Slack Backend").
         </p>
+        <Label htmlFor="new-key-name" className="sr-only">Key name</Label>
         <div className="flex flex-col sm:flex-row gap-2">
           <Input
+            id="new-key-name"
+            name="key-name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Key name"
@@ -341,7 +344,10 @@ const KeysSection = ({ keys, usage, onChange }: { keys: ApiKey[]; usage: KeyUsag
                     <div className="flex-1 min-w-0">
                       {isEditing ? (
                         <div className="flex items-center gap-2">
+                          <Label htmlFor={`edit-key-name-${k.id}`} className="sr-only">Key name</Label>
                           <Input
+                            id={`edit-key-name-${k.id}`}
+                            name="key-name"
                             value={editName}
                             onChange={(e) => setEditName(e.target.value)}
                             onKeyDown={(e) => { if (e.key === 'Enter') saveEdit(k.id); if (e.key === 'Escape') setEditingId(null); }}
@@ -559,8 +565,10 @@ const WebhooksSection = ({ hooks, deliveries, onChange }: {
         </div>
 
         <div className="space-y-1.5">
-          <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Endpoint URL</Label>
+          <Label htmlFor="webhook-url" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Endpoint URL</Label>
           <Input
+            id="webhook-url"
+            name="url"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             placeholder="https://your-domain.com/webhooks/presora"

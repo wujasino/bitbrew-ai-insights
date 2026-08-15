@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, BarChart3, Zap, Shield, Users, TrendingUp, CheckCircle2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { supabase } from '@/lib/supabase';
 import { GradientMeshBg } from '@/components/ui/gradient-mesh-bg';
 import { cn } from '@/lib/utils';
@@ -176,7 +177,10 @@ export default function Onboarding() {
                     </p>
                   </div>
                   <div className="space-y-2">
+                    <Label htmlFor="onboarding-brand" className="sr-only">Brand name</Label>
                     <Input
+                      id="onboarding-brand"
+                      name="brand"
                       value={brand}
                       onChange={e => setBrand(e.target.value)}
                       placeholder="e.g. Presora, Nike, Notion..."

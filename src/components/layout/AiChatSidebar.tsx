@@ -118,6 +118,9 @@ export const AiChatSidebar = ({ open, onClose }: AiChatSidebarProps) => {
           {/* Input */}
           <div className="flex items-center gap-2 px-3 py-3 border-t border-border shrink-0">
             <input
+              id="ai-chat-sidebar-input"
+              name="message"
+              aria-label="Type a message"
               className="flex-1 rounded-lg border border-border bg-background text-sm text-foreground placeholder:text-muted-foreground px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
               placeholder="Type a message..."
               value={input}

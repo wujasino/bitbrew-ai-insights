@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ShieldCheck, ShieldOff, Loader2, CheckCircle2, Copy, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { supabase } from '@/lib/supabase';
 
 type Step = 'idle' | 'qr' | 'verify' | 'done' | 'disabling';
@@ -155,7 +156,10 @@ export function TotpSetup({ onStatusChange }: Props) {
             <p className="text-sm text-foreground font-medium">Confirm disabling 2FA</p>
             <p className="text-xs text-muted-foreground">Enter the code from your authenticator app to disable protection.</p>
             <form onSubmit={handleDisable} className="space-y-3">
+              <Label htmlFor="totp-disable-code" className="sr-only">Authenticator code</Label>
               <Input
+                id="totp-disable-code"
+                name="totp-code"
                 value={code}
                 onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                 placeholder="000000"
@@ -227,7 +231,10 @@ export function TotpSetup({ onStatusChange }: Props) {
             <p className="text-sm font-medium text-foreground">Verification</p>
             <p className="text-xs text-muted-foreground">Enter the 6-digit code from your authenticator app to confirm setup.</p>
             <form onSubmit={handleVerify} className="space-y-3">
+              <Label htmlFor="totp-verify-code" className="sr-only">Authenticator code</Label>
               <Input
+                id="totp-verify-code"
+                name="totp-code"
                 value={code}
                 onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                 placeholder="000000"

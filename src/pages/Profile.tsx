@@ -291,6 +291,9 @@ const Profile = () => {
               <div className="relative flex-1 sm:w-52">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
                 <Input
+                  id="profile-search"
+                  name="search"
+                  aria-label={t('profile_search')}
                   value={query}
                   onChange={e => setQuery(e.target.value)}
                   placeholder={t('profile_search')}
