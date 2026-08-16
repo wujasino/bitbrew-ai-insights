@@ -209,6 +209,30 @@ Note the sandbox proxy blocks `openrouter.ai`, and `OPENROUTER_API_KEY` only
 exists in Netlify's environment, so the provider cannot be tested from here —
 read the recorded `lastError` instead of guessing.
 
+## Provider redundancy in `runBrandScan()`
+
+OpenRouter was a single point of failure with a single balance: when its
+credits ran out every model returned 402 and brand scanning — the product —
+stopped, with nothing in the code able to help.
+
+`runBrandScan()` now falls back to **Anthropic directly**
+(`api.anthropic.com/v1/messages`, `ANTHROPIC_API_KEY`, already used by
+`generate-audit-summary.js`, `assistant.js` and `chat.js`) whenever
+OpenRouter produced no result at all — including when `OPENROUTER_API_KEY`
+is absent entirely, which is why the fallback sits *outside* that key's
+branch. Same prompt, same JSON contract, so it's a genuine scan from one
+model rather than a degraded one. `usedFallbackProvider: true` marks it.
+
+It only runs when OpenRouter returned nothing, so a healthy scan never pays
+for a second provider, and a partial OpenRouter result is left alone.
+
+Verified across the matrix: OpenRouter OK / OpenRouter 402 + Anthropic OK /
+OpenRouter 402 with no Anthropic key / both 402 / no OpenRouter key at all.
+Only the cases where *every* provider fails still produce `isFallback`.
+
+The watchdog stays — but it can now only trip when every provider is down,
+which is a real outage rather than one vendor's billing.
+
 ## Read-only mode when scanning is paused
 
 `netlify/functions/scan-status.js` is a **public** GET returning only

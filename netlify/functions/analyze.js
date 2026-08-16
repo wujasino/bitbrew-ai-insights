@@ -432,6 +432,13 @@ export const handler = async (event) => {
       throw new Error(reason);
     }
 
+    // A scan that only completed because the direct-provider fallback ran is
+    // still a successful scan for the user, but it means the primary provider
+    // is down — worth a log line, not a failure count.
+    if (result?.usedFallbackProvider) {
+      console.warn(`analyze: OpenRouter unavailable, "${target}" served by the direct-provider fallback.`);
+    }
+
     // Clears a partial streak so unrelated flaky moments don't accumulate
     // toward the auto-disable threshold.
     await recordScanOutcome(supabaseAdmin, { ok: true, knownFailureCount: scanSettings.failureCount });
