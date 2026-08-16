@@ -419,6 +419,7 @@ export const handler = async (event) => {
         ok: false,
         knownFailureCount: scanSettings.failureCount,
         error: reason,
+        autoDisable: scanSettings.autoDisable,
       });
       // Once the watchdog trips, tell this caller it's paused rather than
       // handing them a generic failure — they'd otherwise be the one user

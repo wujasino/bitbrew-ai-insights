@@ -162,6 +162,12 @@ touch it.
 - In `analyze.js` the check sits *before* the guest-limit RPC on purpose, so
   a paused scanner never burns a visitor's free allowance. Verified: with
   the flag off, zero OpenRouter calls and the guest counter untouched.
+- **Auto-pause is OFF by default** (`auto_disable_enabled`, checkbox in
+  `/admin/settings`). Changed on the owner's explicit instruction: with an
+  outage that lasts — an unpaid balance rather than a blip — auto-pausing
+  turned every scan into "temporarily paused" and only an admin could undo
+  it. Failures are still counted and recorded; the flag only controls whether
+  the switch flips by itself. Turning it back on is one checkbox.
 - **Watchdog**: `recordScanOutcome()` counts consecutive all-models-failed
   scans in `provider_failures` and flips `scanning_enabled` off at
   `AUTO_DISABLE_THRESHOLD` (3), recording why in `scanning_disabled_reason`

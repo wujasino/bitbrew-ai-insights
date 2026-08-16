@@ -35,6 +35,7 @@ const AdminSettings = () => {
   const [failureCount, setFailureCount] = useState(0);
   const [lastError, setLastError] = useState<string | null>(null);
   const [lastFailureAt, setLastFailureAt] = useState<string | null>(null);
+  const [autoDisable, setAutoDisable] = useState(false);
   const [status, setStatus] = useState<'idle' | 'loading' | 'saving' | 'ok' | 'error'>('idle');
   const [message, setMessage] = useState('');
 
@@ -65,6 +66,7 @@ const AdminSettings = () => {
         setFailureCount(json.failureCount ?? 0);
         setLastError(json.lastError ?? null);
         setLastFailureAt(json.lastFailureAt ?? null);
+        setAutoDisable(json.autoDisable === true);
         setStatus('idle');
       })
       .catch((err) => {
@@ -247,6 +249,33 @@ const AdminSettings = () => {
                   </div>
                 </div>
               )}
+
+              {/* Off by default: a provider outage that lasts turns every scan
+                  into "temporarily paused", and only an admin here can undo
+                  it. Kept as a choice rather than removed outright. */}
+              <label className="mt-4 flex items-start gap-2.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  id="auto-disable"
+                  name="autoDisable"
+                  checked={autoDisable}
+                  onChange={async (e) => {
+                    const next = e.target.checked;
+                    setAutoDisable(next);
+                    try {
+                      await authedFetch({ method: 'POST', body: JSON.stringify({ autoDisable: next }) });
+                    } catch {
+                      setAutoDisable(!next);
+                    }
+                  }}
+                  className="mt-0.5 accent-primary"
+                />
+                <span className="text-xs text-muted-foreground">
+                  Pause scanning automatically after 3 failed scans in a row.
+                  Failures are recorded either way; this only controls whether the
+                  switch above flips by itself.
+                </span>
+              </label>
 
               {/* While a streak is building, the cause matters more than the
                   count — the count alone sent whoever saw it into the Netlify

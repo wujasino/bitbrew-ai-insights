@@ -76,7 +76,7 @@ exports.handler = async (event) => {
       const { data, error } = await supabaseAdmin
         .from('app_settings')
         .select('key, value, updated_at, updated_by')
-        .in('key', ['scanning_enabled', 'provider_failures', 'scanning_disabled_reason']);
+        .in('key', ['scanning_enabled', 'provider_failures', 'scanning_disabled_reason', 'auto_disable_enabled']);
       if (error) {
         return { statusCode: 500, headers, body: JSON.stringify({ error: error.message }) };
       }
@@ -101,6 +101,8 @@ exports.handler = async (event) => {
           // nothing about the cause.
           lastError: rows.provider_failures?.value?.lastError ?? null,
           lastFailureAt: rows.provider_failures?.value?.lastFailureAt ?? null,
+          // Defaults to false — see AUTO_DISABLE_DEFAULT in _lib/appSettings.js.
+          autoDisable: rows.auto_disable_enabled?.value === true,
         }),
       };
     }
@@ -110,6 +112,19 @@ exports.handler = async (event) => {
       payload = JSON.parse(event.body || '{}');
     } catch {
       return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid JSON' }) };
+    }
+
+    // Checked before `enabled` is required, so the watchdog preference can be
+    // changed on its own without also flipping the main switch.
+    if (typeof payload.autoDisable === 'boolean' && payload.enabled === undefined) {
+      const { error } = await supabaseAdmin.from('app_settings').upsert(
+        { key: 'auto_disable_enabled', value: payload.autoDisable, updated_at: new Date().toISOString(), updated_by: user.id },
+        { onConflict: 'key' },
+      );
+      if (error) {
+        return { statusCode: 500, headers, body: JSON.stringify({ error: error.message }) };
+      }
+      return { statusCode: 200, headers, body: JSON.stringify({ ok: true, autoDisable: payload.autoDisable }) };
     }
 
     if (typeof payload.enabled !== 'boolean') {

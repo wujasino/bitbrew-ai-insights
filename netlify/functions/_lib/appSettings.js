@@ -6,6 +6,20 @@
 // balance, where every single scan is guaranteed to fail.
 export const AUTO_DISABLE_THRESHOLD = 3;
 
+/**
+ * Whether the watchdog may flip `scanning_enabled` off by itself.
+ *
+ * Default **off**, by the owner's explicit call: with a provider outage that
+ * lasts (an unpaid balance rather than a blip) auto-pausing turns every scan
+ * into "temporarily paused" and the only way back is an admin visiting
+ * /admin/settings. They would rather see the real error and keep the switch
+ * under human control.
+ *
+ * Failures are still counted and recorded either way — the diagnostics in
+ * /admin/settings do not depend on this.
+ */
+const AUTO_DISABLE_DEFAULT = false;
+
 const truthy = (v) => v !== false && v !== 'false';
 
 /**
@@ -14,12 +28,12 @@ const truthy = (v) => v !== false && v !== 'false';
  * security controls, so a DB hiccup must never take scanning down by itself.
  */
 export async function getScanSettings(supabaseAdmin) {
-  const fallback = { enabled: true, failureCount: 0, disabledReason: null };
+  const fallback = { enabled: true, failureCount: 0, disabledReason: null, autoDisable: AUTO_DISABLE_DEFAULT };
   try {
     const { data, error } = await supabaseAdmin
       .from('app_settings')
       .select('key, value')
-      .in('key', ['scanning_enabled', 'provider_failures', 'scanning_disabled_reason']);
+      .in('key', ['scanning_enabled', 'provider_failures', 'scanning_disabled_reason', 'auto_disable_enabled']);
 
     if (error) {
       console.warn('getScanSettings: query failed, assuming enabled:', error.message);
@@ -32,6 +46,9 @@ export async function getScanSettings(supabaseAdmin) {
       enabled: byKey.scanning_enabled === undefined ? true : truthy(byKey.scanning_enabled),
       failureCount: Number(byKey.provider_failures?.count) || 0,
       disabledReason: byKey.scanning_disabled_reason ?? null,
+      autoDisable: byKey.auto_disable_enabled === undefined
+        ? AUTO_DISABLE_DEFAULT
+        : truthy(byKey.auto_disable_enabled),
     };
   } catch (err) {
     console.warn('getScanSettings: unexpected failure, assuming enabled:', err.message);
@@ -66,7 +83,7 @@ const writeSetting = (supabaseAdmin, key, value) =>
  * @param {number} knownFailureCount count already read via getScanSettings,
  *   so the happy path costs no extra read.
  */
-export async function recordScanOutcome(supabaseAdmin, { ok, knownFailureCount = 0, error = null }) {
+export async function recordScanOutcome(supabaseAdmin, { ok, knownFailureCount = 0, error = null, autoDisable = AUTO_DISABLE_DEFAULT }) {
   try {
     if (ok) {
       // Only write when there's something to clear.
@@ -83,7 +100,8 @@ export async function recordScanOutcome(supabaseAdmin, { ok, knownFailureCount =
       lastFailureAt: new Date().toISOString(),
     });
 
-    if (count >= AUTO_DISABLE_THRESHOLD) {
+    // Counting always happens; flipping the switch is opt-in.
+    if (autoDisable && count >= AUTO_DISABLE_THRESHOLD) {
       await writeSetting(supabaseAdmin, 'scanning_enabled', false);
       await writeSetting(supabaseAdmin, 'scanning_disabled_reason', {
         source: 'auto',
