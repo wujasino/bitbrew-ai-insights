@@ -75,21 +75,26 @@ exports.handler = async (event) => {
     if (event.httpMethod === 'GET') {
       const { data, error } = await supabaseAdmin
         .from('app_settings')
-        .select('value, updated_at, updated_by')
-        .eq('key', 'scanning_enabled')
-        .maybeSingle();
+        .select('key, value, updated_at, updated_by')
+        .in('key', ['scanning_enabled', 'provider_failures', 'scanning_disabled_reason']);
       if (error) {
         return { statusCode: 500, headers, body: JSON.stringify({ error: error.message }) };
       }
+      const rows = Object.fromEntries((data || []).map((r) => [r.key, r]));
+      const flag = rows.scanning_enabled;
       return {
         statusCode: 200,
         headers,
         body: JSON.stringify({
           // Missing row means "never configured" — scanning is on by default,
-          // matching isScanningEnabled()'s fail-open behaviour.
-          enabled: data ? data.value !== false && data.value !== 'false' : true,
-          updatedAt: data?.updated_at ?? null,
-          updatedBy: data?.updated_by ?? null,
+          // matching getScanSettings()'s fail-open behaviour.
+          enabled: flag ? flag.value !== false && flag.value !== 'false' : true,
+          updatedAt: flag?.updated_at ?? null,
+          updatedBy: flag?.updated_by ?? null,
+          // So the admin UI can say "you paused this" vs "the watchdog did,
+          // after N failures, and here's the provider's last error".
+          reason: rows.scanning_disabled_reason?.value ?? null,
+          failureCount: Number(rows.provider_failures?.value?.count) || 0,
         }),
       };
     }
@@ -117,6 +122,18 @@ exports.handler = async (event) => {
     if (upsertError) {
       return { statusCode: 500, headers, body: JSON.stringify({ error: upsertError.message }) };
     }
+
+    // Turning it back on clears the watchdog's streak, otherwise the very
+    // next failure would immediately re-trip the threshold. Also records who
+    // last flipped it, so the UI can distinguish manual from automatic.
+    await supabaseAdmin.from('app_settings').upsert([
+      { key: 'provider_failures', value: { count: 0 }, updated_at: new Date().toISOString() },
+      {
+        key: 'scanning_disabled_reason',
+        value: payload.enabled ? null : { source: 'manual', at: new Date().toISOString(), by: user.id },
+        updated_at: new Date().toISOString(),
+      },
+    ], { onConflict: 'key' });
 
     console.log(`toggle-scanning: scanning ${payload.enabled ? 'ENABLED' : 'DISABLED'} by ${user.id}`);
     return { statusCode: 200, headers, body: JSON.stringify({ ok: true, enabled: payload.enabled }) };

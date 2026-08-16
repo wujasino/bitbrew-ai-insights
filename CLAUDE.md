@@ -132,6 +132,32 @@ touch it.
 - In `analyze.js` the check sits *before* the guest-limit RPC on purpose, so
   a paused scanner never burns a visitor's free allowance. Verified: with
   the flag off, zero OpenRouter calls and the guest counter untouched.
+- **Watchdog**: `recordScanOutcome()` counts consecutive all-models-failed
+  scans in `provider_failures` and flips `scanning_enabled` off at
+  `AUTO_DISABLE_THRESHOLD` (3), recording why in `scanning_disabled_reason`
+  (`source: 'auto' | 'manual'`). A success resets the streak. It never
+  re-enables itself — auto-recovery would flap (enable → fail → disable) and
+  each cycle costs real users a broken scan; an admin turns it back on once
+  the cause is fixed, which also clears the counter.
+- `getScanSettings()` reads all three keys in one query and hands the count
+  to `recordScanOutcome()`, so the happy path adds no extra round-trip.
+
+## Admin account management
+
+`/admin/settings` (`AdminSettings.tsx`) → `admin-update-user.js`: look an
+account up by email and change `plan`, `credits`, or reset the monthly usage
+counter. All three are service-role-only writes gated on the caller's
+`profiles.is_admin`.
+
+**Why they're service-role-only** (migration `20240134`): `profiles`' UPDATE
+policy is `USING (auth.uid() = id)` with no column restriction, and
+`protect_plan_changes()` originally guarded only `plan`/`is_admin`/the price
+columns. `credits` (bought via Stripe payment links, granted by referrals)
+and `analyses_this_month`/`analyses_reset_at` (what
+`enforce_analysis_limit()` meters against) were left open — any signed-in
+user could grant themselves credits or zero their usage from the browser
+console. The trigger now guards all of them. Don't add a new paid-usage
+column to `profiles` without adding it to that trigger too.
 
 ## Known sandbox limitations
 
