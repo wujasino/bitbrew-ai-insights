@@ -1,23 +1,41 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { useMemo } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from '@/lib/locale';
-import { Sparkles, Zap } from 'lucide-react';
+import { Check, Loader2, MessageSquareText, X } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+interface ModelRef {
+  id: string;
+  label: string;
+}
 
 interface BrewingProgressProps {
   progress: number;
   brandName: string;
+  /** The exact models being queried for this scan — the single source of
+   *  truth for every count/label on this screen, so the node graph, the
+   *  caption and the footer counter can never disagree with each other. */
+  models: ModelRef[];
+  onCancel?: () => void;
 }
 
-const MODELS = [
-  { name: 'GPT-4o',     color: '#10A37F' },
-  { name: 'Claude',     color: '#D97757' },
-  { name: 'Gemini',     color: '#4285F4' },
-  { name: 'Perplexity', color: '#20B2AA' },
-  { name: 'Mistral',    color: '#FA5515' },
-  { name: 'Llama',      color: '#8B5CF6' },
-];
+type ModelStatus = 'pending' | 'querying' | 'done';
 
-export const BrewingProgress = ({ progress, brandName }: BrewingProgressProps) => {
+/**
+ * Was a circular "neural network" animation with a giant 0-99% number in
+ * the exact type treatment as the final trust score, a hardcoded 6-node
+ * ring that didn't match whichever models were actually being queried, and
+ * "Brewing" coffee-shop copy on a product that sells a reputation audit.
+ *
+ * All three read as the same bug: this screen showed things that LOOKED
+ * authoritative (a big percent, a brand-colored status ring, a specific
+ * model count) without actually being tied to what was happening — the
+ * same "presented-as-real but isn't" problem this codebase has hit before
+ * with fabricated scan data. Rebuilt around one real fact this screen does
+ * have: which models were asked, and what they were asked. No progress
+ * number is ever shown at the size or style used for an actual score.
+ */
+export const BrewingProgress = ({ progress, brandName, models, onCancel }: BrewingProgressProps) => {
   const { t } = useTranslation();
 
   const stages = [
@@ -28,239 +46,119 @@ export const BrewingProgress = ({ progress, brandName }: BrewingProgressProps) =
     { threshold: 90, label: t('stage_4') },
   ];
   const currentStage = [...stages].reverse().find(s => progress >= s.threshold);
-  const currentStageIndex = stages.findIndex(s => s.label === currentStage?.label);
 
-  // Each model "activates" sequentially as progress advances
-  const activeModelCount = Math.min(MODELS.length, Math.ceil((progress / 100) * MODELS.length));
+  const total = models.length || 1;
+  // How many models have been reached so far — the same value drives the
+  // node list, the "N / total" counter and the aria-live text, so they
+  // can't drift apart the way the old caption/footer/graph trio did.
+  const reachedCount = Math.min(models.length, Math.max(1, Math.ceil((progress / 100) * models.length)));
+  const statusOf = (i: number): ModelStatus => {
+    if (progress >= 100 || i < reachedCount - 1) return 'done';
+    if (i === reachedCount - 1) return 'querying';
+    return 'pending';
+  };
 
-  // Position model nodes on a circle
-  const radius = 170;
-  const center = 220;
-  const modelPositions = useMemo(
-    () =>
-      MODELS.map((m, i) => {
-        const angle = (i / MODELS.length) * Math.PI * 2 - Math.PI / 2;
-        return {
-          ...m,
-          x: center + Math.cos(angle) * radius,
-          y: center + Math.sin(angle) * radius,
-          angle,
-        };
-      }),
-    []
-  );
+  const [elapsedSec, setElapsedSec] = useState(0);
+  const startedAtRef = useRef(Date.now());
+  useEffect(() => {
+    const id = setInterval(() => {
+      setElapsedSec(Math.round((Date.now() - startedAtRef.current) / 1000));
+    }, 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const activeModel = models[reachedCount - 1];
+  const ariaText = `${currentStage?.label ?? ''} ${reachedCount} of ${total} models queried, ${elapsedSec}s elapsed.`;
 
   return (
-    <div className="relative flex flex-col items-center justify-center min-h-[70vh] overflow-hidden">
+    <div className="relative flex flex-col items-center justify-center min-h-[60vh] py-10 overflow-hidden">
+      {/* Screen-reader-only running status — every visual cue here (color,
+          animation, position) is otherwise conveyed with nothing else. */}
+      <div aria-live="polite" className="sr-only">{ariaText}</div>
+
       {/* Atmospheric glow */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-primary/5 blur-[120px]" />
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-primary/5 blur-[100px]" />
       </div>
 
-      {/* Status pill */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="relative z-10 mb-8 inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary/30 bg-primary/5 backdrop-blur-sm"
-      >
-        <span className="relative flex h-1.5 w-1.5">
-          <span className="absolute inline-flex h-full w-full rounded-full bg-primary animate-ping opacity-75" />
-          <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-primary" />
-        </span>
-        <span className="text-[10px] uppercase tracking-[0.25em] text-primary font-data">
-          {t('brewing_label')} · LIVE
-        </span>
-      </motion.div>
+      <div className="relative z-10 w-full max-w-md flex flex-col items-center">
+        {/* Status pill — no coffee-shop language. */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6 inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary/30 bg-primary/5 backdrop-blur-sm"
+        >
+          <span className="relative flex h-1.5 w-1.5">
+            <span className="absolute inline-flex h-full w-full rounded-full bg-primary animate-ping opacity-75" />
+            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-primary" />
+          </span>
+          <span className="text-[10px] uppercase tracking-[0.25em] text-primary font-data">
+            {t('brewing_label')} · LIVE
+          </span>
+        </motion.div>
 
-      {/* Neural network visualization */}
-      <div className="relative w-[440px] h-[440px]">
-        <svg viewBox="0 0 440 440" className="w-full h-full">
-          <defs>
-            <radialGradient id="coreGlow" cx="50%" cy="50%" r="50%">
-              <stop offset="0%"   stopColor="#8B79F6" stopOpacity="0.9" />
-              <stop offset="60%"  stopColor="#8B79F6" stopOpacity="0.25" />
-              <stop offset="100%" stopColor="#8B79F6" stopOpacity="0" />
-            </radialGradient>
-            <linearGradient id="connectionLive" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="#8B79F6" stopOpacity="0" />
-              <stop offset="50%" stopColor="#8B79F6" stopOpacity="1" />
-              <stop offset="100%" stopColor="#8B79F6" stopOpacity="0" />
-            </linearGradient>
-            <filter id="modelGlow" x="-50%" y="-50%" width="200%" height="200%">
-              <feGaussianBlur stdDeviation="3" result="blur" />
-              <feMerge>
-                <feMergeNode in="blur" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
-          </defs>
-
-          {/* Orbital rings */}
-          {[1, 2, 3].map(i => (
-            <motion.circle
-              key={i}
-              cx={center}
-              cy={center}
-              r={50 + i * 40}
-              fill="none"
-              stroke="hsl(45, 100%, 50%)"
-              strokeOpacity={0.04 + (4 - i) * 0.02}
-              strokeWidth={0.5}
-              animate={{ rotate: 360 }}
-              transition={{ duration: 60 / i, repeat: Infinity, ease: 'linear' }}
-              style={{ transformOrigin: `${center}px ${center}px` }}
-            />
-          ))}
-
-          {/* Pulse rings emitting from center */}
-          {[0, 1, 2].map(i => (
-            <motion.circle
-              key={`pulse-${i}`}
-              cx={center}
-              cy={center}
-              r={30}
-              fill="none"
-              stroke="#8B79F6"
-              strokeWidth={1}
-              initial={{ scale: 1, opacity: 0.6 }}
-              animate={{ scale: 6, opacity: 0 }}
-              transition={{
-                duration: 3,
-                repeat: Infinity,
-                delay: i * 1,
-                ease: 'easeOut',
-              }}
-              style={{ transformOrigin: `${center}px ${center}px` }}
-            />
-          ))}
-
-          {/* Connections center → models */}
-          {modelPositions.map((m, i) => {
-            const isActive = i < activeModelCount;
-            return (
-              <g key={`conn-${m.name}`}>
-                {/* base line */}
-                <line
-                  x1={center} y1={center}
-                  x2={m.x} y2={m.y}
-                  stroke="hsl(45, 100%, 50%)"
-                  strokeOpacity={isActive ? 0.25 : 0.06}
-                  strokeWidth={1}
-                />
-                {/* animated traveling pulse */}
-                {isActive && (
-                  <motion.circle
-                    r={3}
-                    fill="#8B79F6"
-                    filter="url(#modelGlow)"
-                    initial={{ cx: center, cy: center, opacity: 0 }}
-                    animate={{
-                      cx: [center, m.x],
-                      cy: [center, m.y],
-                      opacity: [0, 1, 1, 0],
-                    }}
-                    transition={{
-                      duration: 1.4,
-                      repeat: Infinity,
-                      delay: i * 0.2,
-                      ease: 'easeInOut',
-                    }}
-                  />
-                )}
-              </g>
-            );
-          })}
-
-          {/* Center brand core */}
-          <circle cx={center} cy={center} r={70} fill="url(#coreGlow)" />
-          <motion.circle
-            cx={center} cy={center}
-            r={32}
-            fill="hsl(240, 4%, 10%)"
-            stroke="#8B79F6"
-            strokeWidth={1.5}
-            // Explicit `initial` for every animated SVG attribute: without a
-            // starting value framer-motion reads it back off the element, and
-            // on the first frame the attribute isn't set yet — it resolves to
-            // undefined and the browser rejects it ("<circle> attribute r:
-            // Expected length, undefined").
-            initial={{ strokeOpacity: 0.5, r: 32 }}
-            animate={{
-              strokeOpacity: [0.5, 1, 0.5],
-              r: [32, 34, 32],
-            }}
-            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-          />
-
-          {/* Model nodes */}
-          {modelPositions.map((m, i) => {
-            const isActive = i < activeModelCount;
-            return (
-              <g key={`node-${m.name}`}>
-                {isActive && (
-                  <motion.circle
-                    cx={m.x} cy={m.y}
-                    r={20}
-                    fill={m.color}
-                    fillOpacity={0.15}
-                    // See the center core above — animated SVG attributes need
-                    // an explicit initial value or framer-motion resolves the
-                    // first frame to undefined.
-                    initial={{ r: 18, fillOpacity: 0.1 }}
-                    animate={{ r: [18, 24, 18], fillOpacity: [0.1, 0.25, 0.1] }}
-                    transition={{ duration: 2, repeat: Infinity, delay: i * 0.15 }}
-                  />
-                )}
-                <circle
-                  cx={m.x} cy={m.y}
-                  r={6}
-                  fill={isActive ? m.color : 'hsl(240, 4%, 18%)'}
-                  stroke={isActive ? m.color : 'hsl(240, 4%, 25%)'}
-                  strokeWidth={1.5}
-                />
-                <text
-                  x={m.x}
-                  y={m.y + (m.y > center ? 22 : -16)}
-                  textAnchor="middle"
-                  fill={isActive ? '#E6E6E6' : 'hsl(240, 5%, 35%)'}
-                  fontSize="10"
-                  fontWeight="500"
-                  style={{ letterSpacing: '0.03em' }}
-                >
-                  {m.name}
-                </text>
-              </g>
-            );
-          })}
-        </svg>
-      </div>
-
-      {/* Progress + stage console */}
-      <div className="relative z-10 mt-2 w-full max-w-md flex flex-col items-center">
-        {/* Big % */}
-        <div className="flex items-baseline gap-1 font-display">
-          <motion.span
-            key={progress}
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-5xl font-light text-foreground tabular-nums"
-          >
-            {progress}
-          </motion.span>
-          <span className="text-xl text-muted-foreground">%</span>
+        {/* The real question being sent — this is the differentiator (raw
+            model answers behind every score), shown honestly: it's the
+            actual prompt used, not a per-model fabricated exchange. */}
+        <div className="w-full rounded-xl border border-[hsl(var(--glass-border))] bg-muted/10 p-4 mb-5">
+          <div className="flex items-start gap-2.5">
+            <MessageSquareText className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+            <p className="text-sm text-foreground/80 leading-relaxed">
+              Asking every model the same question: rate{' '}
+              <span className="text-primary font-medium">{brandName}</span> 0–100 on authority,
+              sentiment, recency, mentions and accuracy, then summarize how they'd describe it.
+            </p>
+          </div>
         </div>
 
-        {/* Progress bar */}
-        <div className="mt-4 w-full h-[2px] bg-muted/40 rounded-full overflow-hidden">
+        {/* Model list — one explicit status system (pending / querying /
+            done), not brand color standing in for status. A red node used
+            to read as "this model failed" even though it just meant
+            Mistral's brand color. */}
+        <div className="w-full rounded-xl border border-[hsl(var(--glass-border))] divide-y divide-[hsl(var(--glass-border))] overflow-hidden">
+          {models.map((m, i) => {
+            const status = statusOf(i);
+            return (
+              <div key={m.id} className="flex items-center gap-3 px-4 py-2.5">
+                <span className="shrink-0 w-4 h-4 flex items-center justify-center">
+                  {status === 'done' && <Check className="w-3.5 h-3.5 text-emerald-500" />}
+                  {status === 'querying' && <Loader2 className="w-3.5 h-3.5 text-primary animate-spin" />}
+                  {status === 'pending' && <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30" />}
+                </span>
+                <span className={cn(
+                  'text-sm flex-1',
+                  status === 'pending' ? 'text-muted-foreground/50' : 'text-foreground'
+                )}>
+                  {m.label}
+                </span>
+                <span className={cn(
+                  'text-xs font-data',
+                  status === 'done' ? 'text-emerald-500'
+                  : status === 'querying' ? 'text-primary'
+                  : 'text-muted-foreground/40'
+                )}>
+                  {status === 'done' ? 'Done' : status === 'querying' ? 'Waiting for response…' : 'Queued'}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Thin progress bar — no percentage number anywhere near it. A
+            large "90%" in the same type treatment as the final score was
+            the actual problem this screen had: users couldn't tell a
+            progress figure from a result, and a mistimed screenshot of it
+            reads as a real (wrong) score. */}
+        <div className="mt-5 w-full h-[3px] bg-muted/40 rounded-full overflow-hidden">
           <motion.div
             className="h-full bg-gradient-to-r from-primary/60 via-primary to-primary/60"
-            style={{ width: `${progress}%` }}
+            animate={{ width: `${Math.min(progress, 100)}%` }}
             transition={{ duration: 0.4, ease: 'easeOut' }}
           />
         </div>
 
-        {/* Stage line */}
-        <div className="mt-5 h-5">
+        {/* Stage caption */}
+        <div className="mt-3 h-5">
           <AnimatePresence mode="wait">
             <motion.p
               key={currentStage?.label}
@@ -268,52 +166,36 @@ export const BrewingProgress = ({ progress, brandName }: BrewingProgressProps) =
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
               transition={{ duration: 0.25 }}
-              className="text-sm text-foreground/80 flex items-center gap-2"
+              className="text-sm text-foreground/80"
             >
-              <Sparkles className="w-3.5 h-3.5 text-primary" />
               {currentStage?.label}
             </motion.p>
           </AnimatePresence>
         </div>
 
-        {/* Brand line */}
-        <p className="mt-2 text-xs text-muted-foreground/70 font-data">
-          {(() => {
-            const parts = t('analyzing_across').split('{brand}');
-            return (
-              <>
-                {parts[0]} <span className="text-primary">{brandName}</span> {parts[1]}
-              </>
-            );
-          })()}
-        </p>
-
-        {/* Stage dots */}
-        <div className="mt-6 flex gap-2">
-          {stages.map((_, i) => (
-            <div
-              key={i}
-              className="flex items-center"
-            >
-              <motion.div
-                className="h-1 rounded-full"
-                animate={{
-                  width: i <= currentStageIndex ? 24 : 8,
-                  backgroundColor: i <= currentStageIndex
-                    ? 'hsl(45, 100%, 50%)'
-                    : 'hsl(240, 4%, 22%)',
-                }}
-                transition={{ duration: 0.3 }}
-              />
-            </div>
-          ))}
+        {/* Counter + elapsed time — replaces the old fake percentage as the
+            actual progress signal, and answers "how much longer" (missing
+            before) without promising an exact number. */}
+        <div className="mt-4 flex items-center gap-3 text-[11px] text-muted-foreground font-data">
+          <span>{reachedCount} / {total} models queried</span>
+          <span className="text-muted-foreground/30">·</span>
+          <span>{elapsedSec}s elapsed (usually ~15s)</span>
         </div>
 
-        {/* Models scanned counter */}
-        <div className="mt-6 inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground/60 font-data">
-          <Zap className="w-3 h-3 text-primary/60" />
-          {activeModelCount} / {MODELS.length} models active
-        </div>
+        {activeModel && (
+          <p className="mt-1 text-[11px] text-muted-foreground/60">
+            Currently: {activeModel.label}
+          </p>
+        )}
+
+        {onCancel && (
+          <button
+            onClick={onCancel}
+            className="mt-5 inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <X className="w-3.5 h-3.5" /> Cancel
+          </button>
+        )}
       </div>
     </div>
   );

@@ -945,7 +945,7 @@ export default function Settings() {
               {activeTab === 'notifications' && (
                 <div className="space-y-4">
                   {[
-                    { label: 'Brew complete', desc: 'Get notified when your brand analysis is ready', value: notifBrewComplete, set: setNotifBrewComplete, saving: false },
+                    { label: 'Scan complete', desc: 'Get notified when your brand analysis is ready', value: notifBrewComplete, set: setNotifBrewComplete, saving: false },
                     { label: 'Newsletter', desc: 'Receive our weekly digest — turn off to unsubscribe', value: notifNewsletter, set: toggleNewsletter, saving: notifNewsletterSaving },
                     { label: 'Product updates', desc: 'News about new features and offers', value: notifMarketing, set: setNotifMarketing, saving: false },
                   ].map((item) => (
