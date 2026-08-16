@@ -4,6 +4,7 @@ import ws from 'ws';
 
 import { OPENROUTER_MODELS, runBrandScan } from './_lib/runScan.js';
 import { fireWebhooksForEvent } from './_lib/webhookDelivery.js';
+import { isScanningEnabled } from './_lib/appSettings.js';
 
 // supabase-js reaches for a global WebSocket (realtime) that Node doesn't
 // provide — without this the client construction throws in the Netlify
@@ -265,6 +266,15 @@ export const handler = async (event) => {
 
   try {
     supabaseAdmin = createAdminClient();
+
+    // Checked before the guest-limit counter below, so a disabled scanner
+    // never burns someone's free allowance on a scan that can't run.
+    if (!(await isScanningEnabled(supabaseAdmin))) {
+      return jsonResponse(503, {
+        error: 'Scanning is temporarily paused. Please check back shortly.',
+        scansDisabled: true,
+      });
+    }
 
     if (token) {
       const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);

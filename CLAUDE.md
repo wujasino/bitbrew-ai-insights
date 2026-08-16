@@ -114,6 +114,25 @@ project needs the SSO add-on enabled (Team/Enterprise), then run
 credentials — not doable from this sandbox (no CLI auth, no real project
 ref access beyond what's hardcoded in `netlify.toml`'s redirect).
 
+## Feature flags (`app_settings`)
+
+Runtime toggles an admin flips without a redeploy, in `public.app_settings`
+(key/jsonb, migration `20240133`). RLS is on with **no policies** — it's
+unreachable with an anon/authenticated JWT; only service-role Functions
+touch it.
+
+- `scanning_enabled` — master kill-switch for brand scanning. Read via
+  `netlify/functions/_lib/appSettings.js`'s `isScanningEnabled()` in
+  `analyze.js`, `api-analyze.js` and `check-score-alerts.js`; written only
+  by `toggle-scanning.js` (verifies `profiles.is_admin`). UI at
+  `/admin/settings`.
+- `isScanningEnabled()` **fails open** on a missing row or query error —
+  it's a deliberate off-switch, not a security control, so a DB hiccup must
+  never take scanning down by itself.
+- In `analyze.js` the check sits *before* the guest-limit RPC on purpose, so
+  a paused scanner never burns a visitor's free allowance. Verified: with
+  the flag off, zero OpenRouter calls and the guest counter untouched.
+
 ## Known sandbox limitations
 
 - No real internet in this dev/test sandbox except through the proxy —

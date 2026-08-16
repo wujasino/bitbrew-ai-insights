@@ -35,6 +35,7 @@ const Settings       = lazy(() => import("./pages/Settings"));
 const Reports        = lazy(() => import("./pages/Reports"));
 const AdminAnnouncements = lazy(() => import("./pages/AdminAnnouncements"));
 const AdminPricing   = lazy(() => import("./pages/AdminPricing"));
+const AdminSettings  = lazy(() => import("./pages/AdminSettings"));
 const AuditReport    = lazy(() => import("./pages/AuditReport"));
 const Developers     = lazy(() => import("./pages/Developers"));
 const ApiDocs        = lazy(() => import("./pages/ApiDocs"));
@@ -152,6 +153,15 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <AppShell><AdminPricing /></AppShell>
+                </ProtectedRoute>
+              }
+            />
+            {/* Also gated inside the page itself (useIsAdmin). */}
+            <Route
+              path="/admin/settings"
+              element={
+                <ProtectedRoute>
+                  <AppShell><AdminSettings /></AppShell>
                 </ProtectedRoute>
               }
             />

@@ -67,6 +67,10 @@ export function useBrewing() {
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [guestLimitReached, setGuestLimitReached] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Scanning deliberately paused by an admin (503 + scansDisabled from
+  // analyze.js) — a maintenance state, not a failure, so the UI can say so
+  // calmly instead of showing the red "something went wrong" treatment.
+  const [scansDisabled, setScansDisabled] = useState(false);
 
   const startBrewing = useCallback(async (brandName: string) => {
     // Guest limit (no session) is enforced server-side by analyze.js itself
@@ -77,6 +81,7 @@ export function useBrewing() {
     setProgress(0);
     setResult(null);
     setError(null);
+    setScansDisabled(false);
 
     let current = 0;
     const interval = setInterval(() => {
@@ -109,6 +114,13 @@ export function useBrewing() {
         if (data?.guestLimitReached) {
           setGuestLimitReached(true);
           setStatus('idle');
+          setProgress(0);
+          return;
+        }
+        if (data?.scansDisabled) {
+          setScansDisabled(true);
+          setError(data?.error || 'Scanning is temporarily paused.');
+          setStatus('error');
           setProgress(0);
           return;
         }
@@ -310,6 +322,7 @@ export function useBrewing() {
     setProgress(0);
     setResult(null);
     setError(null);
+    setScansDisabled(false);
   }, []);
 
   const loadStoredAnalysis = useCallback(async (id: string) => {
@@ -346,5 +359,5 @@ export function useBrewing() {
     return view;
   }, []);
 
-  return { progress, status, result, startBrewing, reset, loadStoredAnalysis, guestLimitReached, error };
+  return { progress, status, result, startBrewing, reset, loadStoredAnalysis, guestLimitReached, error, scansDisabled };
 }

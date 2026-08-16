@@ -15,6 +15,7 @@ import ws from 'ws';
 import { OPENROUTER_MODELS, runBrandScan } from './_lib/runScan.js';
 import { verifyApiKey, checkRateLimitAndLog } from './_lib/apiKeyAuth.js';
 import { fireWebhooksForEvent } from './_lib/webhookDelivery.js';
+import { isScanningEnabled } from './_lib/appSettings.js';
 
 if (!globalThis.WebSocket) globalThis.WebSocket = ws;
 
@@ -65,6 +66,12 @@ export const handler = async (event) => {
   }
 
   try {
+    // Same admin kill-switch analyze.js honours — don't charge an API
+    // call against a scan that can't run.
+    if (!(await isScanningEnabled(supabaseAdmin))) {
+      return { statusCode: 503, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Scanning is temporarily paused. Please try again later.' }) };
+    }
+
     const { data: profile } = await supabaseAdmin.from('profiles').select('plan').eq('id', auth.userId).single();
     const planTier = PLAN_TIER[String(profile?.plan || 'free').toLowerCase()] ?? 0;
     const models = OPENROUTER_MODELS.filter((m) => m.tier <= planTier);
