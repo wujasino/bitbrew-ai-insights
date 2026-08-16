@@ -274,13 +274,21 @@ ${brandContext || '(no stored knowledge for this brand)'}
   // and using it is the difference between a working product and a paused
   // one. Only reached when OpenRouter produced no result, so a healthy scan
   // never pays for a second provider.
-  if (!parsed && process.env.ANTHROPIC_API_KEY) {
-    try {
-      parsed = buildResult([await queryAnthropicDirect()]);
-      usedFallbackProvider = true;
-      console.warn('OpenRouter served nothing; scan completed via the direct Anthropic fallback.');
-    } catch (err) {
-      failures.push(err.message);
+  if (!parsed) {
+    if (process.env.ANTHROPIC_API_KEY) {
+      try {
+        parsed = buildResult([await queryAnthropicDirect()]);
+        usedFallbackProvider = true;
+        console.warn('OpenRouter served nothing; scan completed via the direct Anthropic fallback.');
+      } catch (err) {
+        failures.push(err.message);
+      }
+    } else {
+      // Said out loud rather than skipped in silence. Without this line a
+      // recorded failure looks identical whether the fallback ran and was
+      // rejected, or never ran because no second provider is configured —
+      // and those need different fixes (top up / add a key).
+      failures.push('No fallback provider: ANTHROPIC_API_KEY is not set on this deploy');
     }
   }
 

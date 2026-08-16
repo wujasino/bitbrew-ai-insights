@@ -248,6 +248,20 @@ again" (retrying cannot help), and links to Reports and Home.
 Worth remembering after any cleanup of `analyses`: deleting rows invalidates
 every bookmark and history entry pointing at them.
 
+## Which provider keys are actually configured
+
+A quick, non-invasive check without access to the Netlify environment: the
+stored `audit_summary` headlines. `generate-audit-summary.js` only falls back
+to `deterministicSummary()` when `ANTHROPIC_API_KEY` is unset, and that
+template always reads `"<brand>'s AI visibility is <tier> — trust score
+<n>/100"`. Every stored summary matching that shape means the key is missing,
+not that Claude wrote a dull headline.
+
+Confirmed that way on 2026-08-16: **ANTHROPIC_API_KEY is not set on the
+deploy**, which is also why the direct-Anthropic scan fallback never ran —
+`runBrandScan` now records "No fallback provider: ANTHROPIC_API_KEY is not
+set on this deploy" instead of skipping it in silence.
+
 ## Read-only mode when scanning is paused
 
 `netlify/functions/scan-status.js` is a **public** GET returning only
