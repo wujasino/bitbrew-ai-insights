@@ -71,6 +71,14 @@ export const handler = async (event) => {
 
     const result = await runBrandScan({ supabaseAdmin, target: brandName, models, userId: auth.userId });
 
+    // A fallback result is fabricated (deterministic, not from any real
+    // model) — never save/return that as a genuine analysis via the public
+    // API. Throw into the catch block below so it's a 500, not a paid API
+    // call silently billed against fake data.
+    if (result.isFallback) {
+      throw new Error('All model providers failed or OPENROUTER_API_KEY is not configured');
+    }
+
     const { data: saved, error: insertError } = await supabaseAdmin
       .from('analyses')
       .insert({

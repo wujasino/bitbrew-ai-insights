@@ -91,8 +91,11 @@ const deterministicResult = (seedStr) => {
  * Scores a brand across the 5 dimensions by querying `models` (array of
  * { id, label } from OPENROUTER_MODELS) in parallel, with brand-context RAG
  * when `userId` is given. Falls back to a deterministic (fake but stable)
- * result when OPENROUTER_API_KEY isn't configured or every model call fails
- * — same graceful-degradation behavior analyze.js has always had.
+ * result — tagged `isFallback: true` — when OPENROUTER_API_KEY isn't
+ * configured or every model call fails, so callers can tell fabricated
+ * data apart from a real analysis instead of silently presenting it as
+ * genuine (see analyze.js / api-analyze.js / check-score-alerts.js, which
+ * all treat isFallback as a failure rather than a degraded-but-OK result).
  */
 export async function runBrandScan({ supabaseAdmin, target, models, userId }) {
   let parsed = null;
@@ -169,6 +172,7 @@ ${brandContext || '(no stored knowledge for this brand)'}
             association: String(result.association || `${target} brand`).slice(0, 200),
             confidence: Math.max(0, Math.min(100, Math.round(Number(result.trustScore) || 50))),
           })),
+          isFallback: false,
         };
       }
     } catch (err) {
@@ -176,5 +180,5 @@ ${brandContext || '(no stored knowledge for this brand)'}
     }
   }
 
-  return parsed || deterministicResult(target);
+  return parsed || { ...deterministicResult(target), isFallback: true };
 }
