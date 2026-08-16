@@ -189,6 +189,26 @@ Running the old full-migration script from the Supabase SQL editor will
 re-add those dead branches (it predates `20240126`) — it is not a safe
 "re-sync" tool; prefer the numbered migrations in `supabase/migrations/`.
 
+## Diagnosing a failed scan
+
+`runBrandScan()` returns `failures` (per-model rejection messages) and
+`keyConfigured` alongside the result. `analyze.js` and `api-analyze.js` build
+the error from them, `recordScanOutcome()` stores it in
+`app_settings.provider_failures.lastError` (1000 chars), and
+`/admin/settings` renders it under the failure count — while a streak is
+building, not only after the watchdog has already paused scanning.
+
+Before this, every cause collapsed into "All model providers failed or
+OPENROUTER_API_KEY is not configured", which cannot tell apart a missing key
+(401), an empty balance (402), a retired model id (400) and a rate limit
+(429) — four problems with four different fixes. Verified all five paths,
+plus that one succeeding model still yields a real scan rather than a
+fallback.
+
+Note the sandbox proxy blocks `openrouter.ai`, and `OPENROUTER_API_KEY` only
+exists in Netlify's environment, so the provider cannot be tested from here —
+read the recorded `lastError` instead of guessing.
+
 ## Admin account management
 
 All three admin pages (`/admin/announcements`, `/admin/settings`,

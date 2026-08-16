@@ -79,7 +79,7 @@ export async function recordScanOutcome(supabaseAdmin, { ok, knownFailureCount =
     const count = knownFailureCount + 1;
     await writeSetting(supabaseAdmin, 'provider_failures', {
       count,
-      lastError: String(error || 'unknown').slice(0, 300),
+      lastError: String(error || 'unknown').slice(0, 1000),
       lastFailureAt: new Date().toISOString(),
     });
 
@@ -89,7 +89,7 @@ export async function recordScanOutcome(supabaseAdmin, { ok, knownFailureCount =
         source: 'auto',
         at: new Date().toISOString(),
         failures: count,
-        lastError: String(error || 'unknown').slice(0, 300),
+        lastError: String(error || 'unknown').slice(0, 1000),
       });
       console.error(
         `appSettings: scanning AUTO-DISABLED after ${count} consecutive provider failures. Last error: ${error}`,
