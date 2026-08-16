@@ -1,22 +1,49 @@
 import { createClient } from '@supabase/supabase-js';
-import ws from "ws";
+import net from 'node:net';
+import ws from 'ws';
+
 import { OPENROUTER_MODELS, runBrandScan } from './_lib/runScan.js';
 import { fireWebhooksForEvent } from './_lib/webhookDelivery.js';
 
+// supabase-js reaches for a global WebSocket (realtime) that Node doesn't
+// provide — without this the client construction throws in the Netlify
+// runtime before any of the logic below ever runs.
 if (!globalThis.WebSocket) {
   globalThis.WebSocket = ws;
 }
 
+// === ENV ===
 const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
 const RATE_LIMIT_WINDOW_MS = Number(process.env.RATE_LIMIT_WINDOW_MS || 60_000);
 const MAX_REQUESTS_PER_WINDOW = Number(process.env.MAX_REQUESTS_PER_WINDOW || 10);
 const MAX_REQUESTS_PER_DAY = Number(process.env.MAX_REQUESTS_PER_DAY || 200);
+const GUEST_LIMIT = Number(process.env.GUEST_LIMIT || 3);
 
-// In-memory store: secondary defense only — primary rate limiting is per user ID (verified via JWT)
-const requestStore = new Map();
+const ALLOWED_HOST_SUFFIXES = (process.env.ALLOWED_HOST_SUFFIXES || '')
+  .split(',')
+  .map((v) => v.trim().toLowerCase())
+  .filter(Boolean);
+
+const BLOCKED_HOST_SUFFIXES = (process.env.BLOCKED_HOST_SUFFIXES || '')
+  .split(',')
+  .map((v) => v.trim().toLowerCase())
+  .filter(Boolean);
+
+// === Helpers ===
+const jsonResponse = (statusCode, payload, extraHeaders = {}) => ({
+  statusCode,
+  headers: {
+    'Content-Type': 'application/json',
+    ...extraHeaders,
+  },
+  body: JSON.stringify(payload),
+});
 
 const now = () => Date.now();
+
+const requestStore = new Map();
 
 const shouldRateLimit = (key) => {
   const current = now();
@@ -25,7 +52,7 @@ const shouldRateLimit = (key) => {
     windowStart: current,
     dailyCount: 0,
     dailyReset: current + 24 * 60 * 60 * 1000,
-    lastRequest: current
+    lastRequest: current,
   };
 
   if (current > entry.dailyReset) {
@@ -48,33 +75,190 @@ const shouldRateLimit = (key) => {
   return entry.count > MAX_REQUESTS_PER_WINDOW || entry.dailyCount > MAX_REQUESTS_PER_DAY;
 };
 
+// Only x-nf-client-connection-ip is set by Netlify itself and can't be
+// spoofed by the caller; x-forwarded-for can be pre-populated by whoever
+// makes the request, so it's a last-resort fallback only.
+const getRequestIp = (headers = {}) => {
+  const candidates = [
+    headers['x-nf-client-connection-ip'],
+    headers['X-NF-Client-Connection-IP'],
+    headers['x-forwarded-for'],
+    headers['X-Forwarded-For'],
+  ];
+
+  for (const value of candidates) {
+    if (typeof value === 'string' && value.trim()) {
+      const ip = value.split(',')[0].trim();
+      if (ip) return ip;
+    }
+  }
+
+  return 'unknown';
+};
+
+const isPrivateOrLocalHostname = (hostname) => {
+  if (!hostname) return true;
+
+  const h = hostname.toLowerCase();
+
+  if (h === 'localhost' || h.endsWith('.localhost')) return true;
+  if (h === '0.0.0.0' || h === '::1' || h === '[::1]') return true;
+
+  if (h.endsWith('.internal') || h.endsWith('.local') || h.endsWith('.lan')) return true;
+
+  const ipVersion = net.isIP(h);
+  if (ipVersion === 4 || ipVersion === 6) {
+    // IPv4 private/reserved ranges
+    if (ipVersion === 4) {
+      const parts = h.split('.');
+      const [a, b] = parts.map(Number);
+
+      if (a === 10) return true;
+      if (a === 127) return true;
+      if (a === 172 && b >= 16 && b <= 31) return true;
+      if (a === 192 && b === 168) return true;
+      if (a === 169 && b === 254) return true;
+      if (a === 0) return true;
+    }
+
+    // IPv6 loopback / link-local / unique-local
+    if (ipVersion === 6) {
+      if (h === '::1') return true;
+      if (h.startsWith('fc') || h.startsWith('fd') || h.startsWith('fe80')) return true;
+    }
+  }
+
+  return false;
+};
+
+const matchesAllowlist = (hostname) => {
+  if (!ALLOWED_HOST_SUFFIXES.length) return true;
+
+  const h = hostname.toLowerCase();
+
+  return ALLOWED_HOST_SUFFIXES.some((suffix) => {
+    const clean = suffix.trim();
+
+    if (!clean) return false;
+
+    if (clean.startsWith('*.')) {
+      const base = clean.slice(2);
+      return h === base || h.endsWith(`.${base}`);
+    }
+
+    return h === clean || h.endsWith(`.${clean}`);
+  });
+};
+
+const matchesBlockedList = (hostname) => {
+  const h = hostname.toLowerCase();
+
+  return BLOCKED_HOST_SUFFIXES.some((suffix) => {
+    if (!suffix) return false;
+
+    if (suffix.startsWith('*.')) {
+      const base = suffix.slice(2);
+      return h === base || h.endsWith(`.${base}`);
+    }
+
+    return h === suffix || h.endsWith(`.${suffix}`);
+  });
+};
+
+// The scan target is usually a plain brand name ("Tesla", "Nike") — see the
+// landing page's example chips and Dashboard's placeholder — and only
+// sometimes a URL ("yourbrand.com"). So URL parsing/SSRF rules are applied
+// only to inputs that actually look like a URL; a bare brand name is
+// validated as text instead. (Validating everything as a URL would reject
+// every plain brand name with a 400 and break scanning entirely.)
+const looksLikeUrl = (value) =>
+  /^[a-z][a-z0-9+.-]*:\/\//i.test(value) || (/\./.test(value) && !/\s/.test(value));
+
+const isValidTargetUrl = (rawUrl) => {
+  if (typeof rawUrl !== 'string') return false;
+
+  const url = rawUrl.trim();
+  if (!url) return false;
+
+  try {
+    // Bare domains ("nike.com") have no protocol — assume https so they
+    // still get parsed and SSRF-checked rather than silently skipped.
+    const parsed = new URL(/^[a-z][a-z0-9+.-]*:\/\//i.test(url) ? url : `https://${url}`);
+
+    if (!['http:', 'https:'].includes(parsed.protocol)) return false;
+    if (!parsed.hostname) return false;
+
+    const host = parsed.hostname.toLowerCase();
+
+    if (isPrivateOrLocalHostname(host)) return false;
+    if (matchesBlockedList(host)) return false;
+    if (!matchesAllowlist(host)) return false;
+
+    if (parsed.username || parsed.password) return false;
+
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+// A brand name is free text, so this only rejects what can't be a real
+// brand: empty, absurdly long, or containing control characters.
+const isValidBrandName = (value) => {
+  if (typeof value !== 'string') return false;
+  const v = value.trim();
+  if (!v || v.length > 500) return false;
+  if (/[\u0000-\u001F\u007F]/.test(v)) return false;
+  return true;
+};
+
 const createAdminClient = () => {
   if (!supabaseUrl || !supabaseServiceKey) {
     throw new Error('Missing Supabase service role configuration');
   }
+
   return createClient(supabaseUrl, supabaseServiceKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-    realtime: { params: { eventsPerSecond: 0 } },
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+    realtime: {
+      params: {
+        eventsPerSecond: 0,
+      },
+    },
   });
+};
+
+const safeFireWebhook = async (supabaseAdmin, userId, eventName, payload) => {
+  try {
+    await fireWebhooksForEvent(supabaseAdmin, {
+      userId,
+      event: eventName,
+      payload,
+    });
+  } catch (err) {
+    console.error(`Webhook failed: ${eventName}`, err?.message || err);
+  }
 };
 
 export const handler = async (event) => {
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: 'Method Not Allowed' };
+    return jsonResponse(405, { error: 'Method Not Allowed' });
   }
 
-  // Enforce payload size limit
-  if (event.body && event.body.length > 16 * 1024) {
-    return { statusCode: 413, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Payload too large' }) };
+  // Check the real body length, not just the declared Content-Length header
+  // — the header can be absent or understate the actual payload.
+  const declaredLength = Number(event.headers?.['content-length'] || 0);
+  const actualLength = event.body ? Buffer.byteLength(event.body) : 0;
+  if (declaredLength > 16 * 1024 || actualLength > 16 * 1024) {
+    return jsonResponse(413, { error: 'Payload too large' });
   }
 
-  const authHeader = event.headers.authorization || event.headers.Authorization || '';
-  const token = authHeader.toString().replace(/^Bearer\s+/i, '');
-
-  // Netlify's own trusted header — cannot be spoofed by the client, unlike
-  // x-forwarded-for which a caller can pre-populate themselves.
-  const getIp = () => event.headers['x-nf-client-connection-ip'] || 'unknown';
-  const GUEST_LIMIT = 3;
+  const authHeader = event.headers?.authorization || event.headers?.Authorization || '';
+  const token = typeof authHeader === 'string'
+    ? authHeader.replace(/^Bearer\s+/i, '').trim()
+    : '';
 
   let authedUser = null;
   let supabaseAdmin = null;
@@ -84,84 +268,116 @@ export const handler = async (event) => {
 
     if (token) {
       const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+
       if (authError || !user) {
-        return {
-          statusCode: 401,
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ error: 'Unauthorized' })
-        };
+        return jsonResponse(401, { error: 'Unauthorized' });
       }
+
       authedUser = user;
 
-      // Rate limit by verified user ID — not spoofable
       if (shouldRateLimit(`user:${user.id}`)) {
-        return {
-          statusCode: 429,
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ error: 'Too many requests. Spróbuj ponownie później.' })
-        };
+        return jsonResponse(429, {
+          error: 'Too many requests. Spróbuj ponownie później.',
+        });
       }
     } else {
-      // No session — the free, no-login scan ("Free analysis, no credit
-      // card required" on the landing page). Gate it with a lifetime
-      // per-IP counter (increment_guest_limit) enforced right here, at the
-      // point that actually spends the paid OpenRouter budget — this used
-      // to unconditionally 401 instead, and a separate client-side
-      // pre-flight call to a now-removed guest-limit.js endpoint was the
-      // only thing tracking guest usage, which nothing stopped a caller
-      // from simply skipping.
-      const ip = getIp();
-      if (ip === 'unknown') {
-        return {
-          statusCode: 403,
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ error: 'Could not verify request. Please sign in.', guestLimitReached: true })
-        };
+      const ip = getRequestIp(event.headers || {});
+
+      if (!ip || ip === 'unknown') {
+        return jsonResponse(403, {
+          error: 'Could not verify request. Please sign in.',
+          guestLimitReached: true,
+        });
       }
-      const { data: guestCount, error: guestError } = await supabaseAdmin.rpc('increment_guest_limit', { p_ip: ip });
+
+      const { data: guestCount, error: guestError } = await supabaseAdmin.rpc('increment_guest_limit', {
+        p_ip: ip,
+      });
+
       if (guestError) {
-        console.error('Guest limit RPC error:', guestError.message);
-        // Fail open — don't block a real visitor because the DB hiccuped
-      } else if ((guestCount ?? 0) > GUEST_LIMIT) {
-        return {
-          statusCode: 403,
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ error: 'Guest limit reached. Sign up for more free analyses.', guestLimitReached: true })
-        };
+        console.error('Guest limit RPC error:', guestError?.message || guestError);
+        return jsonResponse(503, {
+          error: 'Rate limit service unavailable. Please try again later.',
+          guestLimitReached: true,
+        });
+      }
+
+      if ((guestCount ?? 0) > GUEST_LIMIT) {
+        return jsonResponse(403, {
+          error: 'Guest limit reached. Sign up for more free analyses.',
+          guestLimitReached: true,
+        });
       }
     }
   } catch (err) {
-    console.error('Auth error in analyze function');
-    return {
-      statusCode: 500,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ error: 'Authentication failed. Please try again.' })
-    };
+    console.error('Auth / rate-limit failed:', err?.message || err);
+    return jsonResponse(500, { error: 'Authentication failed. Please try again.' });
   }
 
-  // Declared outside the try so the catch block's analysis.failed webhook
-  // can still report which brand the failed scan was for.
   let target = 'unknown brand';
-  try {
-    const { url, models: requestedModelIds } = JSON.parse(event.body || '{}');
-    target = String(url || '').trim().slice(0, 500) || 'unknown brand';
 
-    let planTier = 0; // guests get the Free-equivalent roster
+  try {
+    let payload = {};
+
+    try {
+      payload = JSON.parse(event.body || '{}');
+    } catch {
+      return jsonResponse(400, { error: 'Invalid JSON payload' });
+    }
+
+    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+      return jsonResponse(400, { error: 'Invalid payload format' });
+    }
+
+    const rawTarget = typeof payload.url === 'string' ? payload.url.trim() : '';
+
+    // URL-shaped input gets the full SSRF treatment; anything else is
+    // treated as a brand name (the common case).
+    if (looksLikeUrl(rawTarget)) {
+      if (!isValidTargetUrl(rawTarget)) {
+        return jsonResponse(400, { error: 'Invalid target URL' });
+      }
+    } else if (!isValidBrandName(rawTarget)) {
+      return jsonResponse(400, { error: 'Invalid brand name' });
+    }
+
+    target = rawTarget.slice(0, 500);
+
+    let requestedModelIds = [];
+    if (Array.isArray(payload.models)) {
+      requestedModelIds = payload.models.filter((m) => typeof m === 'string');
+    }
+
+    let planTier = 0;
+
     if (authedUser) {
-      const { data: profile } = await supabaseAdmin
+      const { data: profile, error: profileError } = await supabaseAdmin
         .from('profiles')
         .select('plan')
         .eq('id', authedUser.id)
         .single();
-      const PLAN_TIER = { free: 0, starter: 1, solo: 1, growth: 2, enterprise: 2, agency: 2 };
+
+      if (profileError) {
+        console.error('Profile fetch error:', profileError?.message || profileError);
+      }
+
+      const PLAN_TIER = {
+        free: 0,
+        starter: 1,
+        solo: 1,
+        growth: 2,
+        enterprise: 2,
+        agency: 2,
+      };
+
       planTier = PLAN_TIER[String(profile?.plan || 'free').toLowerCase()] ?? 0;
     }
 
     const allowedModels = OPENROUTER_MODELS.filter((m) => m.tier <= planTier);
     // User's model picks from Settings, intersected with what their plan
     // actually allows — never let a client-supplied list escalate past tier.
-    const requestedSet = Array.isArray(requestedModelIds) ? new Set(requestedModelIds) : null;
-    const selectedModels = requestedSet
+    const requestedSet = new Set(requestedModelIds);
+    const selectedModels = requestedSet.size > 0
       ? allowedModels.filter((m) => requestedSet.has(m.id))
       : allowedModels;
     const modelsToQuery = selectedModels.length > 0 ? selectedModels : allowedModels;
@@ -174,42 +390,31 @@ export const handler = async (event) => {
     });
 
     // A fallback result is fabricated (deterministic, not from any real
-    // model) — never present that to the user as a genuine analysis. Throw
-    // into the catch block below so this is handled exactly like any other
-    // scan failure (500 + analysis.failed webhook), not a 200 success.
-    if (result.isFallback) {
+    // model) — never present that to the user as a genuine analysis.
+    if (result?.isFallback) {
       throw new Error('All model providers failed or OPENROUTER_API_KEY is not configured');
     }
 
-    // Fire-and-forget (best-effort, awaited so it's recorded before the
-    // function exits, but never allowed to fail the actual scan response).
-    // Guests can't have webhooks configured, so only signed-in users hit this.
     if (authedUser) {
-      fireWebhooksForEvent(supabaseAdmin, {
-        userId: authedUser.id,
-        event: 'analysis.completed',
-        payload: { brandName: target, ...result },
-      }).catch((err) => console.error('analyze: webhook firing failed:', err.message));
+      safeFireWebhook(supabaseAdmin, authedUser.id, 'analysis.completed', {
+        brandName: target,
+        ...result,
+      });
     }
 
-    return {
-      statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(result)
-    };
+    return jsonResponse(200, result);
   } catch (error) {
-    console.error('analyze handler error:', error.message);
+    console.error('analyze handler error:', error?.message || error);
+
     if (authedUser && supabaseAdmin) {
-      fireWebhooksForEvent(supabaseAdmin, {
-        userId: authedUser.id,
-        event: 'analysis.failed',
-        payload: { brandName: target, error: error.message },
-      }).catch(() => {});
+      safeFireWebhook(supabaseAdmin, authedUser.id, 'analysis.failed', {
+        brandName: target,
+        error: error?.message || 'Unknown error',
+      });
     }
-    return {
-      statusCode: 500,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ error: 'Analysis failed. Please try again.' })
-    };
+
+    return jsonResponse(500, {
+      error: 'Analysis failed. Please try again.',
+    });
   }
 };
