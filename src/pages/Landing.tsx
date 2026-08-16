@@ -1,6 +1,7 @@
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Zap, Eye, BarChart3, Shield, ChevronDown, HelpCircle, Mail, TrendingUp, ArrowRight, Globe, ShieldCheck, Clock, Search, PenLine, Sparkles, MessageSquare, Rocket, LineChart, Building2 } from 'lucide-react';
+import { Zap, Eye, BarChart3, Shield, ChevronDown, HelpCircle, Mail, TrendingUp, ArrowRight, Globe, ShieldCheck, Clock, Search, PenLine, Sparkles, MessageSquare, Rocket, LineChart, Building2, Tag } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
@@ -12,6 +13,8 @@ import { NewsletterSignup } from '@/components/ui/newsletter-signup';
 import { GradientMeshBg } from '@/components/ui/gradient-mesh-bg';
 import { ContactForm } from '@/components/ui/contact-form';
 import { FAQ_EN } from '@/lib/faq';
+import { PricingCards } from '@/components/ui/pricing-cards';
+import { PLANS } from '@/lib/plans';
 
 /* ── Integration logos (text-based, gray) ─────────────────────────── */
 const INTEGRATIONS = [
@@ -55,6 +58,7 @@ const TRUST_POINTS = [
 
 const Landing = () => {
   const navigate = useNavigate();
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
 
   return (
     <div className="min-h-screen bg-background font-landing">
@@ -878,6 +882,55 @@ const Landing = () => {
         </div>
       </section>
 
+
+      {/* ── Pricing ──────────────────────────────────────────────────
+          The landing page had no pricing at all — a visitor had to guess
+          whether the product even had plans. Cards come from @/lib/plans so
+          these prices can't drift from /pricing or from Stripe checkout.
+          Every CTA goes to /register: nobody is signed in here, and the
+          checkout on /pricing requires a session anyway. */}
+      <section id="pricing" className="py-24 px-4 border-t border-[hsl(var(--glass-border))] scroll-mt-24">
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-4"
+          >
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs badge rounded-lg mb-4 font-data uppercase tracking-wider">
+              <Tag className="w-3 h-3" /> Pricing
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-display text-foreground">
+              Simple, transparent pricing
+            </h2>
+            <p className="text-muted-foreground text-sm mt-3 max-w-lg mx-auto">
+              Start free — three brand analyses, no card required. Upgrade only when
+              you want to track more brands, more often.
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+          >
+            <PricingCards
+              plans={PLANS}
+              billingCycle={billingCycle}
+              onCycleChange={setBillingCycle}
+              onPlanSelect={() => navigate('/register')}
+            />
+          </motion.div>
+
+          <p className="text-center text-xs text-muted-foreground/70 mt-8">
+            Cancel anytime, no contracts.{' '}
+            <Link to="/pricing" className="text-primary hover:underline">
+              Compare every plan in detail
+            </Link>
+          </p>
+        </div>
+      </section>
 
       {/* ── FAQ ───────────────────────────────────────────────────── */}
       <section id="faq" className="pt-20 pb-12 px-4">

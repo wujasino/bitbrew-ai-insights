@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Zap, AlertTriangle, Clock, Check } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { PricingCards, type PricingTierCard } from '@/components/ui/pricing-cards';
+import { PricingCards } from '@/components/ui/pricing-cards';
+import { USD, PLANS } from '@/lib/plans';
 import { CreditsUsageWidget } from '@/components/CreditsUsageWidget';
 import { ContactForm } from '@/components/ui/contact-form';
 import { useSessionUser } from '@/hooks/useAccountInfo';
@@ -17,19 +18,6 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 
-/* Prices in USD */
-const USD = {
-  starter_monthly: '$39',
-  starter_yearly: '$374',
-  solo_monthly: '$59',
-  solo_yearly: '$566',
-  growth_monthly: '$89.99',
-  growth_yearly: '$863.99',
-  credits_20: '$29',
-  credits_50: '$55',
-  credits_120: '$99',
-};
-
 const Pricing = () => {
   const [loading, setLoading] = useState<string | null>(null);
   const [loadingCredits, setLoadingCredits] = useState<string | null>(null);
@@ -42,8 +30,6 @@ const Pricing = () => {
   const isLoggedIn = !!sessionUser?.id;
 
   const prices = USD;
-  const period_month = '/month';
-  const period_year  = '/year';
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -168,108 +154,7 @@ const Pricing = () => {
     }
   };
 
-  const plans: PricingTierCard[] = [
-    {
-      id: 'free',
-      name: 'Free',
-      description: 'Start with three free brand analyses, no credit card required.',
-      priceMonthly: 'Free',
-      priceYearly: 'Free',
-      periodMonthly: '',
-      periodYearly: '',
-      isPopular: false,
-      buttonLabel: 'Start for free',
-      features: [
-        { name: '3 free brand analyses', isIncluded: true },
-        { name: 'Overall AI Visibility Score', isIncluded: true },
-        { name: 'Perception radar (5 dimensions)', isIncluded: true },
-        { name: 'AI Verdict — actionable summary', isIncluded: true },
-        { name: 'Sentiment trend (30 days)', isIncluded: false },
-        { name: 'Brand knowledge context (RAG)', isIncluded: false },
-        { name: 'Competitor comparison', isIncluded: false },
-      ],
-    },
-    {
-      id: 'starter',
-      name: 'Starter',
-      description: 'For creators taking their first steps into AI visibility.',
-      priceMonthly: prices.starter_monthly,
-      priceYearly: prices.starter_yearly,
-      periodMonthly: period_month,
-      periodYearly: period_year,
-      isPopular: false,
-      buttonLabel: 'Choose plan',
-      features: [
-        { name: '5 brand analyses per month', isIncluded: true },
-        { name: '3 LLM sources (GPT-4o, Claude, Gemini)', isIncluded: true },
-        { name: 'Sentiment trend (30 days)', isIncluded: true },
-        { name: 'AI Verdict — actionable summary', isIncluded: true },
-        { name: 'Brand knowledge context (RAG)', isIncluded: false },
-        { name: 'Competitor comparison', isIncluded: false },
-      ],
-    },
-    {
-      id: 'solo',
-      name: 'Solo',
-      description: 'For indie founders and solo marketers tracking their brand.',
-      priceMonthly: prices.solo_monthly,
-      priceYearly: prices.solo_yearly,
-      periodMonthly: period_month,
-      periodYearly: period_year,
-      isPopular: false,
-      buttonLabel: 'Choose plan',
-      features: [
-        { name: '10 brand analyses per month', isIncluded: true },
-        { name: '3 LLM sources (GPT-4o, Claude, Gemini)', isIncluded: true },
-        { name: 'Sentiment trend (30 days)', isIncluded: true },
-        { name: 'Source breakdown chart', isIncluded: true },
-        { name: 'Brand knowledge context (RAG)', isIncluded: true },
-        { name: 'CSV export', isIncluded: true },
-        { name: 'Competitor comparison', isIncluded: false },
-      ],
-    },
-    {
-      id: 'growth',
-      name: 'Business',
-      description: 'For growing teams who need deeper competitive insights.',
-      priceMonthly: prices.growth_monthly,
-      priceYearly: prices.growth_yearly,
-      periodMonthly: period_month,
-      periodYearly: period_year,
-      isPopular: true,
-      buttonLabel: 'Choose plan',
-      features: [
-        { name: '50 brand analyses per month', isIncluded: true },
-        { name: 'All 6 LLM sources + Perplexity', isIncluded: true },
-        { name: 'Full source table with confidence', isIncluded: true },
-        { name: 'Competitor comparison', isIncluded: true },
-        { name: '1-year history & weekly digest', isIncluded: true },
-        { name: 'API access', isIncluded: true },
-        { name: 'Priority email support', isIncluded: true },
-      ],
-    },
-    {
-      id: 'enterprise',
-      name: 'Agency',
-      description: 'A tailored plan for teams that need full AI visibility control.',
-      priceMonthly: 'from $220',
-      priceYearly: 'from $220',
-      periodMonthly: '/mo',
-      periodYearly: '/mo',
-      isPopular: false,
-      buttonLabel: 'Contact Sales',
-      features: [
-        { name: 'Unlimited analyses', isIncluded: true },
-        { name: 'Custom LLM sources + private models', isIncluded: true },
-        { name: 'Real-time monitoring & alerts', isIncluded: true },
-        { name: 'Unlimited history + webhooks', isIncluded: true },
-        { name: 'Slack & Teams integration', isIncluded: true },
-        { name: 'Dedicated account manager', isIncluded: true },
-        { name: 'White-label dashboard', isIncluded: true },
-        { name: 'SLA guarantee (99.9%, contract-based)', isIncluded: true },
-      ],
-    },
-  ];
+  const plans = PLANS;
 
   const faqItems = [
     { q: 'Can I cancel anytime?',             a: 'Yes — cancel at any time and keep access until the end of your billing period.' },
