@@ -144,6 +144,13 @@ touch it.
 
 ## Admin account management
 
+All three admin pages (`/admin/announcements`, `/admin/settings`,
+`/admin/pricing`) are linked from the sidebar's Admin section, shown only
+when `useIsAdmin()` is true. `/admin/settings` and `/admin/pricing` existed
+as routes for a while with **no nav entry at all** — reachable only by typing
+the URL, which is why the credit editor looked missing. If you add an admin
+route, add its `NavItem` in `Sidebar.tsx` in the same change.
+
 `/admin/settings` (`AdminSettings.tsx`) → `admin-update-user.js`: look an
 account up by email and change `plan`, `credits`, or reset the monthly usage
 counter. All three are service-role-only writes gated on the caller's

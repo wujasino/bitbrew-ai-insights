@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Code2, Zap, FileText, Bot, Search, Megaphone, Palette } from 'lucide-react';
+import { Home, Code2, Zap, FileText, Bot, Search, Megaphone, Palette, SlidersHorizontal, Tag } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { usePlan, PLAN_LABELS, useIsAdmin, isAgencyPlan } from '@/hooks/useAccountInfo';
@@ -128,6 +128,8 @@ export const Sidebar = ({ collapsed = false, mobileOpen = false, onMobileClose }
             <>
               <SectionLabel label="Admin" collapsed={effectiveCollapsed} />
               <NavItem to="/admin/announcements" icon={Megaphone} label="Announcements" active={pathname === '/admin/announcements'} collapsed={effectiveCollapsed} onNavigate={handleNavigate} />
+              <NavItem to="/admin/settings" icon={SlidersHorizontal} label="Users & Scanning" active={pathname === '/admin/settings'} collapsed={effectiveCollapsed} onNavigate={handleNavigate} />
+              <NavItem to="/admin/pricing" icon={Tag} label="Custom Pricing" active={pathname === '/admin/pricing'} collapsed={effectiveCollapsed} onNavigate={handleNavigate} />
             </>
           )}
         </nav>
