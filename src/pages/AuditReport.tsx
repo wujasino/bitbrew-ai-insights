@@ -6,6 +6,7 @@ import { Wordmark } from '@/components/Wordmark';
 import { Button } from '@/components/ui/button';
 import { usePlan, isAgencyPlan } from '@/hooks/useAccountInfo';
 import { useAuditBranding } from '@/hooks/useAuditBranding';
+import { bandOf as dimBandOf } from '@/lib/dimensionBands';
 
 interface AnalysisRow {
   id: string;
@@ -51,17 +52,32 @@ const scoreColor = (s: number) =>
 
 const scoreLabel = (s: number) => (s >= 75 ? 'Strong' : s >= 50 ? 'Developing' : 'Needs attention');
 
-// Same 75/50 bands as scoreColor(), applied to the dimension bars/icon chips
-// and the score's own "Strong/Developing/Needs attention" pill. "mid" is
-// amber, not the app's --primary (graphite, buttons/links only) — the
-// score needs 3 visually distinct tiers, and graphite would look like "no
-// color" between the emerald/red tiers.
+// 75/50 bands for the OVERALL trust score ring/pill only — a coarser,
+// 3-tier "headline verdict" concept (Strong/Developing/Needs attention),
+// deliberately distinct from the per-dimension bands below. "mid" is amber,
+// not the app's --primary (graphite, buttons/links only) — the score needs
+// 3 visually distinct tiers, and graphite would look like "no color"
+// between the emerald/red tiers.
 const BAND_STYLE = {
   strong: { bar: 'bg-emerald-500 print:bg-black/70', chip: 'bg-emerald-500/10 text-emerald-500 print:bg-transparent print:text-black/70', pill: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20', ring: 'border-emerald-500 text-emerald-500 print:border-black/20' },
   mid: { bar: 'bg-amber-500 print:bg-black/70', chip: 'bg-amber-500/10 text-amber-500 print:bg-transparent print:text-black/70', pill: 'bg-amber-500/10 text-amber-500 border-amber-500/20', ring: 'border-amber-500 text-amber-500 print:border-black/20' },
   low: { bar: 'bg-red-500 print:bg-black/70', chip: 'bg-red-500/10 text-red-500 print:bg-transparent print:text-black/70', pill: 'bg-red-500/10 text-red-500 border-red-500/20', ring: 'border-red-500 text-red-500 print:border-black/20' },
 } as const;
 const bandOf = (s: number) => (s >= 75 ? BAND_STYLE.strong : s >= 50 ? BAND_STYLE.mid : BAND_STYLE.low);
+
+// Per-DIMENSION bands: shared thresholds from src/lib/dimensionBands.ts (the
+// same 90/75/60 the live scan screen and Home use), print-safe classes kept
+// local since that shared module has no print: variants. Previously reused
+// the 75/50 3-tier map above for individual dimensions too, so a 71%
+// dimension could read "Strong" on the client-facing PDF while the exact
+// same 71% read "Weak" on the live scan screen the agency generated it
+// from — a client comparing the two would catch the contradiction.
+const DIM_BAND_STYLE = {
+  strong:   { bar: 'bg-emerald-500 print:bg-black/70', chip: 'bg-emerald-500/10 text-emerald-500 print:bg-transparent print:text-black/70' },
+  good:     { bar: 'bg-sky-500 print:bg-black/50',     chip: 'bg-sky-500/10 text-sky-500 print:bg-transparent print:text-black/50' },
+  weak:     { bar: 'bg-amber-500 print:bg-black/70',   chip: 'bg-amber-500/10 text-amber-500 print:bg-transparent print:text-black/70' },
+  critical: { bar: 'bg-red-500 print:bg-black/70',     chip: 'bg-red-500/10 text-red-500 print:bg-transparent print:text-black/70' },
+} as const;
 
 const SENTIMENT_STYLE: Record<string, string> = {
   positive: 'text-emerald-500',
@@ -303,7 +319,7 @@ const AuditReport = () => {
           <div className="space-y-3">
             {DIMENSIONS.map(({ key, Icon, name }) => {
               const value = analysis[key] as number;
-              const band = bandOf(value);
+              const band = DIM_BAND_STYLE[dimBandOf(value)];
               return (
                 <div key={key} className="flex items-center gap-3">
                   <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${band.chip}`}>
