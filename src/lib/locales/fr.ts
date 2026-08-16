@@ -87,7 +87,7 @@ const dict: Record<string, string> = {
     dashboard_verdict_moderate: 'Signaux mixtes entre les modèles. Concentrez-vous sur un contenu autoritaire et un message cohérent.',
     dashboard_verdict_low: 'Les modèles IA ont une perception faible ou incohérente de votre marque. Il est temps d\'agir.',
     dashboard_strongest: 'Dimension la plus forte',
-    dashboard_weakest: 'À améliorer',
+    dashboard_weakest: 'Dimension la plus faible',
     dashboard_top_insights: 'Principales insights',
     dashboard_insight_1: 'Modèle le plus cité',
     dashboard_insight_2: 'Confiance moyenne',

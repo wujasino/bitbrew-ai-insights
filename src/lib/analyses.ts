@@ -31,8 +31,30 @@ export const brandKey = (raw: string): string =>
     .trim();
 
 /**
+ * Title-cases a name ONLY if the whole thing was typed in lowercase (or
+ * already has some capitalisation is left untouched).
+ *
+ * A blind "capitalize every word" would wreck names with intentional
+ * internal casing — "eBay", "iPhone", "PayPal" — by producing "Ebay",
+ * "Iphone", "Paypal". Restricting the fix to strings that are entirely
+ * lowercase to begin with (someone typed "facebook" or "coca-cola" without
+ * thinking about it) avoids ever touching a name that already has a
+ * deliberate capital somewhere in it.
+ */
+export const titleCaseIfAllLower = (name: string): string => {
+  const trimmed = name.trim();
+  if (!trimmed || trimmed !== trimmed.toLowerCase()) return trimmed;
+  // Capitalises after start-of-string, spaces or hyphens only — NOT after a
+  // "." — so a bare-typed domain like "facebook.com" becomes "Facebook.com"
+  // rather than "Facebook.Com".
+  return trimmed.replace(/(^|[\s-])([a-z])/g, (_, sep, c) => sep + c.toUpperCase());
+};
+
+/**
  * What gets written to `analyses.brand_name`: host/name without protocol or
- * path, original casing kept so "Coca-Cola" doesn't become "coca-cola".
+ * path, original casing kept so "Coca-Cola" doesn't become "coca-cola" —
+ * and a bare-lowercase input like "facebook" becomes "Facebook" so it
+ * doesn't read as a typo next to properly-cased brands on the same screen.
  * Falls back to the raw input if normalisation empties it.
  */
 export const canonicalBrandName = (raw: string): string => {
@@ -43,7 +65,7 @@ export const canonicalBrandName = (raw: string): string => {
     .replace(/\/.*$/, '')
     .replace(/\s+/g, ' ')
     .trim();
-  return cleaned || String(raw || '').trim();
+  return titleCaseIfAllLower(cleaned) || String(raw || '').trim();
 };
 
 /** Rows written this close together are the same scan saved twice. */

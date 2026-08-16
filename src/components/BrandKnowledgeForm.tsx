@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BookOpen, Plus, Trash2, Loader2, CheckCircle2, AlertCircle, ChevronDown, ChevronUp, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -14,21 +14,27 @@ interface Fragment {
 
 interface BrandKnowledgeFormProps {
   brandName: string;
+  /** Bump this to force the form open and scroll it into view — used by the
+   *  low-confidence banner on the results screen, which is the natural
+   *  bridge into "add context to improve this". */
+  forceExpandSignal?: number;
 }
 
-export default function BrandKnowledgeForm({ brandName }: BrandKnowledgeFormProps) {
+export default function BrandKnowledgeForm({ brandName, forceExpandSignal }: BrandKnowledgeFormProps) {
   const [text, setText] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle');
   const [message, setMessage] = useState('');
   const [fragments, setFragments] = useState<Fragment[]>([]);
   const [loadingFragments, setLoadingFragments] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  // Collapsed by default on mobile — this form otherwise pushes the actual
-  // scan results (the reason someone is on this page) below the fold.
-  // Desktop keeps the original always-expanded default.
-  const [expanded, setExpanded] = useState(() =>
-    typeof window === 'undefined' || window.innerWidth >= 768
-  );
+  // Collapsed by default everywhere — on the results screen this used to be
+  // expanded-by-default on desktop and pushed the actual scan (the reason
+  // someone is on the page) below the fold, empty or not. Auto-expands once
+  // if it turns out there's already saved content, so a returning user
+  // isn't hiding notes they already wrote; a user who deliberately
+  // collapses it afterwards is left alone (autoExpandedRef fires once).
+  const [expanded, setExpanded] = useState(false);
+  const autoExpandedRef = useRef(false);
   const [expandedFragment, setExpandedFragment] = useState<string | null>(null);
 
   const { data: sessionUser } = useSessionUser();
@@ -53,6 +59,20 @@ export default function BrandKnowledgeForm({ brandName }: BrandKnowledgeFormProp
   useEffect(() => {
     loadFragments();
   }, [loadFragments]);
+
+  useEffect(() => {
+    if (!loadingFragments && fragments.length > 0 && !autoExpandedRef.current) {
+      autoExpandedRef.current = true;
+      setExpanded(true);
+    }
+  }, [loadingFragments, fragments.length]);
+
+  const rootRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!forceExpandSignal) return;
+    setExpanded(true);
+    rootRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [forceExpandSignal]);
 
   const handleSave = async () => {
     if (!brandName.trim()) { setStatus('error'); setMessage('Enter a brand name first.'); return; }
@@ -99,9 +119,31 @@ export default function BrandKnowledgeForm({ brandName }: BrandKnowledgeFormProp
 
   const charCount = text.length;
   const isValid = text.trim().length >= 20;
+  const isEmpty = !loadingFragments && fragments.length === 0;
+
+  // Collapsed and confirmed empty: a single slim bar rather than the full
+  // icon+badge+subtitle header below — that fuller header pulled focus even
+  // when there was nothing in it yet to justify the space.
+  if (!expanded && isEmpty) {
+    return (
+      <div ref={rootRef}>
+        <button
+          onClick={() => setExpanded(true)}
+          className="w-full flex items-center gap-2 px-4 py-2.5 rounded-xl border border-primary/20 bg-primary/[0.04] hover:bg-primary/[0.08] transition-colors text-left"
+        >
+          <BookOpen className="w-3.5 h-3.5 text-primary shrink-0" />
+          <span className="text-xs text-muted-foreground flex-1">Add brand context to improve accuracy</span>
+          <span className="inline-flex items-center gap-1 text-xs font-medium text-primary shrink-0">
+            <Plus className="w-3.5 h-3.5" /> Add
+          </span>
+        </button>
+      </div>
+    );
+  }
 
   return (
     <motion.div
+      ref={rootRef}
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       className="rounded-2xl border border-primary/25 bg-primary/5 backdrop-blur-xl overflow-hidden"
@@ -165,7 +207,7 @@ export default function BrandKnowledgeForm({ brandName }: BrandKnowledgeFormProp
                   />
                   <span className={cn(
                     'absolute bottom-2.5 right-3 text-[10px] font-data',
-                    charCount > 2000 ? 'text-destructive' : 'text-muted-foreground/40'
+                    charCount > 2000 ? 'text-destructive' : 'text-muted-foreground'
                   )}>
                     {charCount}/2000
                   </span>

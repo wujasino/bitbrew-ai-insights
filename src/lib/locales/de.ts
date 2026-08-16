@@ -87,7 +87,7 @@ const dict: Record<string, string> = {
     dashboard_verdict_moderate: 'Gemischte Signale über Modelle hinweg. Fokussieren Sie auf autoritäre Inhalte und konsistente Botschaften.',
     dashboard_verdict_low: 'KI-Modelle haben eine schwache oder inkonsistente Wahrnehmung Ihrer Marke. Zeit zum Handeln.',
     dashboard_strongest: 'Stärkste Dimension',
-    dashboard_weakest: 'Verbesserungsbedarf',
+    dashboard_weakest: 'Schwächste Dimension',
     dashboard_top_insights: 'Wichtigste Erkenntnisse',
     dashboard_insight_1: 'Am häufigsten zitiertes Modell',
     dashboard_insight_2: 'Durchschnittliche Konfidenz',
