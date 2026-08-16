@@ -35,20 +35,20 @@ const AFTER  = { mentions: '7 / 10', sentiment: '81', recommend: '63%' };
 const TRUST_POINTS = [
   {
     Icon: Shield,
-    title: 'Row-level security on every table',
-    desc: 'Your analyses, brand knowledge and account data are isolated by Postgres RLS policies, not just app-layer checks — enforced at the database itself.',
+    title: 'Your data is walled off from everyone else\'s',
+    desc: 'Your scans, notes and account details are separated at the database itself — not just hidden by the app. Another customer cannot reach your data even if something goes wrong in the software.',
     iconBg: 'bg-indigo-400/10 border-indigo-400/20 text-indigo-400',
   },
   {
     Icon: Eye,
     title: 'Your data isn\'t used to train models',
-    desc: 'Brand context you provide is sent to AI providers only to generate your analysis, never to train their models, and never shared beyond what\'s required to run a scan.',
+    desc: 'What you tell us about your brand is sent to the AI companies only to produce your result — never to teach their models, and never shared with anyone else.',
     iconBg: 'bg-primary/10 border-primary/20 text-primary',
   },
   {
     Icon: ShieldCheck,
     title: 'Full control over your data',
-    desc: 'Export or permanently delete your account and data at any time from Settings — no support ticket required.',
+    desc: 'Download everything, or delete your account for good, whenever you like — straight from Settings. No emailing support to ask.',
     iconBg: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500',
   },
 ];
@@ -94,7 +94,7 @@ const Landing = () => {
                 </span>
               </h1>
               <p className="text-lg text-muted-foreground max-w-lg mx-auto mb-10">
-                See your brand's visibility, perception and competitive position across AI search — then get a clear, actionable plan to become the answer AI gives.
+                Find out what AI assistants say about your brand, how you compare to rivals — and get a clear plan to become the answer they give.
               </p>
             </motion.div>
 
@@ -144,8 +144,8 @@ const Landing = () => {
             <div className="grid grid-cols-3 gap-2 sm:gap-4">
               {[
                 { title: 'Enter your brand', desc: 'Type a brand name or URL — any niche, any language.' },
-                { title: 'Models are queried', desc: 'GPT-4o, Claude, Gemini and more receive structured prompts in parallel.' },
-                { title: 'Get your score', desc: 'Receive a visibility score, per-model breakdown, and ranked action items.' },
+                { title: 'We ask the AI', desc: 'ChatGPT, Claude, Gemini and others all get asked about you at the same time.' },
+                { title: 'Get your score', desc: 'See your score out of 100, what each assistant said, and what to fix first.' },
               ].map((step, idx) => (
                 <div key={idx} className="flex flex-col items-center text-center p-2 sm:p-4">
                   <div className="w-9 h-9 sm:w-14 sm:h-14 rounded-full bg-primary text-primary-foreground flex items-center justify-center mb-2 sm:mb-3 text-sm sm:text-2xl font-display shadow-lg shadow-primary/20">
@@ -165,7 +165,7 @@ const Landing = () => {
                 </div>
                 <div className="text-left">
                   <div className="text-sm font-semibold text-foreground leading-tight">3 AI models</div>
-                  <div className="text-[11px] text-muted-foreground leading-tight">GPT-4o, Claude & Gemini queried per scan</div>
+                  <div className="text-[11px] text-muted-foreground leading-tight">ChatGPT, Claude & Gemini asked every scan</div>
                 </div>
               </div>
 
@@ -196,7 +196,7 @@ const Landing = () => {
               </span>
               <span className="min-w-0">
                 <span className="block text-xs sm:text-sm font-medium text-foreground">
-                  Sample: Tesla scored 78 — recommended by GPT-4o &amp; Claude
+                  Sample: Tesla scored 78 — recommended by ChatGPT &amp; Claude
                 </span>
                 <span className="inline-flex items-center gap-1 text-xs text-primary group-hover:gap-1.5 transition-all mt-0.5">
                   See the full report <ArrowRight className="w-3 h-3" />
@@ -288,10 +288,10 @@ const Landing = () => {
                     <Eye className="w-6 h-6 text-primary" />
                   </div>
                   <h3 className="text-xl font-semibold text-foreground mb-3">Real-time AI analysis</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed max-w-sm">We query multiple AI models simultaneously to see how they describe your brand.</p>
+                  <p className="text-sm text-muted-foreground leading-relaxed max-w-sm">We ask several AI assistants at once, and show you how each one describes your brand.</p>
                 </div>
                 <div className="mt-6 flex gap-2">
-                  {['GPT-4o', 'Claude', 'Gemini'].map((m) => (
+                  {['ChatGPT', 'Claude', 'Gemini'].map((m) => (
                     <span key={m} className="px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">{m}</span>
                   ))}
                 </div>
@@ -424,7 +424,7 @@ const Landing = () => {
                   </div>
                 </div>
                 <div>
-                  <div className="text-xs text-muted-foreground mb-1">Positive sentiment</div>
+                  <div className="text-xs text-muted-foreground mb-1">Positive tone</div>
                   <div className="text-3xl font-display text-red-400">{BEFORE.sentiment}<span className="text-base text-muted-foreground">/100</span></div>
                   <div className="mt-2 h-1.5 rounded-full bg-muted overflow-hidden">
                     <div className="h-full w-[34%] rounded-full bg-red-400/60" />
@@ -443,7 +443,7 @@ const Landing = () => {
                 <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-primary/15 text-primary border border-primary/20">
                   After
                 </span>
-                <span className="text-xs text-muted-foreground">— 14 days of GEO fixes</span>
+                <span className="text-xs text-muted-foreground">— after 14 days of fixes</span>
               </div>
               <div className="space-y-5">
                 <div>
@@ -454,7 +454,7 @@ const Landing = () => {
                   </div>
                 </div>
                 <div>
-                  <div className="text-xs text-muted-foreground mb-1">Positive sentiment</div>
+                  <div className="text-xs text-muted-foreground mb-1">Positive tone</div>
                   <div className="text-3xl font-display text-primary">{AFTER.sentiment}<span className="text-base text-muted-foreground">/100</span></div>
                   <div className="mt-2 h-1.5 rounded-full bg-muted overflow-hidden">
                     <div className="h-full w-[81%] rounded-full bg-primary/70" />
@@ -580,7 +580,7 @@ const Landing = () => {
               {
                 icon: LineChart,
                 title: 'Brand Managers',
-                desc: 'Already tracking brand in traditional media? Time to add the AI channel. Report to leadership how the brand performs in language models.',
+                desc: 'Already tracking brand in traditional media? Time to add the AI channel. Show your leadership how the brand is doing in AI answers.',
                 tags: ['Sentiment tracking', 'Weekly digest', 'CSV export'],
                 iconBg: 'bg-primary/10 border-primary/20 text-primary',
                 border: 'border-primary/30 hover:border-primary/50',
@@ -685,7 +685,7 @@ const Landing = () => {
               Comparison
             </span>
             <h2 className="text-3xl sm:text-4xl font-display text-foreground mb-3">
-              Presora vs. other GEO tools
+              Presora vs. other AI visibility tools
             </h2>
             <p className="text-sm text-muted-foreground max-w-lg mx-auto">
               Every AI visibility tracker will show you a score. Here's what's actually different about how Presora gets there.
@@ -700,7 +700,7 @@ const Landing = () => {
                     <th className="text-left px-6 py-4 text-muted-foreground font-medium text-xs uppercase tracking-wider w-[35%]">Feature</th>
                     <th className="px-6 py-4 text-center">
                       <div className="flex flex-col items-center gap-1">
-                        <span className="text-xs text-muted-foreground/50">Typical GEO tracker</span>
+                        <span className="text-xs text-muted-foreground/50">Typical AI tracker</span>
                       </div>
                     </th>
                     <th className="px-6 py-4 text-center bg-primary/5 border-x border-primary/20">
@@ -746,7 +746,7 @@ const Landing = () => {
               </table>
             </div>
             <p className="text-center text-xs text-muted-foreground/40 mt-4">
-              Most AI visibility trackers stop at a score. Presora shows the raw query and answer behind every number, so you can verify it yourself.
+              Most AI visibility trackers stop at a score. Presora shows the exact question we asked and the answer we got back, so you can check it yourself.
             </p>
           </motion.div>
         </div>
