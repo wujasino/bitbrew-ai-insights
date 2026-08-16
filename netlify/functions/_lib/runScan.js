@@ -134,9 +134,24 @@ ${brandContext || '(no stored knowledge for this brand)'}
             ],
           }),
         });
-        const data = await response.json();
+        // OpenRouter returns a JSON error body (e.g. {"error":{"message":
+        // "...", "code":401}}) on failure, not just a non-2xx status with an
+        // empty body — read it either way. Previously this went straight to
+        // `data?.choices?.[0]?.message?.content`, so a bad API key, an
+        // unknown/deprecated model id, or a rate limit all collapsed into
+        // the same generic "empty response" message, discarding the actual
+        // reason — which is why the logs looked uninformative.
+        let data;
+        try {
+          data = await response.json();
+        } catch {
+          throw new Error(`${label}: HTTP ${response.status} ${response.statusText} (non-JSON response body)`);
+        }
+        if (!response.ok) {
+          throw new Error(`${label}: HTTP ${response.status} — ${data?.error?.message || response.statusText}`);
+        }
         const text = data?.choices?.[0]?.message?.content;
-        if (!text) throw new Error(`${label}: empty response`);
+        if (!text) throw new Error(`${label}: empty response (finish_reason: ${data?.choices?.[0]?.finish_reason ?? 'unknown'})`);
         const cleaned = text.trim().replace(/```json|```/g, '').trim();
         const result = JSON.parse(cleaned);
         return { label, result };
