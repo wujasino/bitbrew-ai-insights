@@ -1,8 +1,8 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Code2, Zap, FileText, Bot, Search, Megaphone } from 'lucide-react';
+import { Home, Code2, Zap, FileText, Bot, Search, Megaphone, Palette } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { usePlan, PLAN_LABELS, useIsAdmin } from '@/hooks/useAccountInfo';
+import { usePlan, PLAN_LABELS, useIsAdmin, isAgencyPlan } from '@/hooks/useAccountInfo';
 import { Wordmark } from '@/components/Wordmark';
 
 interface NavItemProps {
@@ -58,6 +58,10 @@ export const Sidebar = ({ collapsed = false, mobileOpen = false, onMobileClose }
   // its own AppShell/Sidebar instance instead of sharing one via <Outlet>).
   const { data: plan = 'Free' } = usePlan();
   const { data: isAdmin = false } = useIsAdmin();
+  // Hidden rather than shown-and-gated: a non-agency user has nothing to
+  // configure here, and /audit-branding renders its own upsell if reached
+  // by direct link.
+  const canBrandAudits = isAgencyPlan(plan);
 
   // On mobile the sidebar is a full drawer — never render icon-only mode
   const effectiveCollapsed = isMobile ? false : collapsed;
@@ -116,6 +120,9 @@ export const Sidebar = ({ collapsed = false, mobileOpen = false, onMobileClose }
           <NavItem to="/brand-visibility" icon={Search} label="Brand Scan" active={pathname === '/brand-visibility'} collapsed={effectiveCollapsed} onNavigate={handleNavigate} />
           <NavItem to="/automations" icon={Bot} label="Automations" active={pathname === '/automations'} collapsed={effectiveCollapsed} onNavigate={handleNavigate} />
           <NavItem to="/reports" icon={FileText} label="Reports" active={pathname === '/reports'} collapsed={effectiveCollapsed} onNavigate={handleNavigate} />
+          {canBrandAudits && (
+            <NavItem to="/audit-branding" icon={Palette} label="Audit Branding" active={pathname === '/audit-branding'} collapsed={effectiveCollapsed} onNavigate={handleNavigate} />
+          )}
 
           {isAdmin && (
             <>

@@ -170,13 +170,15 @@ it has to stand on its own without the reader ever seeing Presora.
   UPDATE still raises `Cannot change credits directly`, and that the 60-char
   `agency_name_length` CHECK fires. `profiles.agency_{name,logo_url,
   contact_email,website}` drive the letterhead, the "Prepared by" line and
-  the closing CTA. Edited under Settings → **Audit branding** (Agency-gated
-  tab), read by `useAuditBranding.ts`. Without it a forwarded PDF sent the
+  the closing CTA. Edited at **`/audit-branding`** (`AuditBranding.tsx`, its
+  own page under the sidebar's *Tools* section, next to Reports — it
+  configures a deliverable, not an account preference, so it deliberately
+  isn't a Settings tab), read by `useAuditBranding.ts`. Without it a forwarded PDF sent the
   agency's client to `contact.presora@gmail.com` — i.e. to us, not to them.
 - `useAuditBranding` is deliberately **not** folded into the shared
   `['profile-flags']` select: selecting a column that doesn't exist is a hard
   Postgres error (42703), and a missing migration must only downgrade the
-  letterhead to Presora's, never break the report. The Settings tab surfaces
+  letterhead to Presora's, never break the report. The `/audit-branding` page surfaces
   that same error loudly instead, since that's where it's actionable.
 - `agency_logo_url`/`agency_website` are http(s)-only on read (`safeHttpUrl`)
   — they land in an `<img src>`/`<a href>` on a page that gets printed and
