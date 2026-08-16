@@ -41,11 +41,16 @@ const corsHeaders = (origin) => ({
   'Vary': 'Origin',
 });
 
-// Keep in sync with enforce_analysis_limit()'s CASE (20240112 migration) and
-// PLAN_LIMITS in src/hooks/useAccountInfo.ts — an unknown value here would
-// silently fall through to that trigger's ELSE branch (3/month).
+// Keep in sync with enforce_analysis_limit()'s CASE and PLAN_LIMITS in
+// src/hooks/useAccountInfo.ts — an unknown value here falls through to that
+// trigger's ELSE branch (3/month) with no error anywhere.
+//
+// 'solo_brew' and 'growth_roast' used to be listed here. Migration 20240126
+// removed their branches from the trigger as dead code, but this list wasn't
+// updated, so an admin could still set either one — and silently cap that
+// account at 3 analyses a month while the UI showed no limit at all.
 const VALID_PLANS = new Set([
-  'free', 'starter', 'solo', 'solo_brew', 'growth', 'growth_roast', 'enterprise', 'agency',
+  'free', 'starter', 'solo', 'growth', 'enterprise', 'agency',
 ]);
 
 const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,253}\.[a-zA-Z]{2,}$/;
