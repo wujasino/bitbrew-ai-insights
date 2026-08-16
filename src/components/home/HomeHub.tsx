@@ -12,7 +12,7 @@ import { CreditsUsageWidget } from '@/components/CreditsUsageWidget';
 import { usePlan, tierOf, useSessionUser } from '@/hooks/useAccountInfo';
 import { MODEL_CATALOG, loadModelPrefs, saveModelPrefs } from '@/lib/models';
 import { BrandScanInput } from '@/components/BrandScanInput';
-import { brandKey } from '@/hooks/useBrewing';
+import { brandKey, dedupeAnalyses } from '@/lib/analyses';
 
 interface Analysis {
   id: string;
@@ -30,31 +30,6 @@ interface Analysis {
 const formatDate = (iso: string) =>
   new Date(iso).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' });
 
-/**
- * Collapses the duplicate rows a pre-fix double-submit left behind: the same
- * brand, the same score, written two or three times within ~2 seconds. Those
- * rows are indistinguishable to a reader but made every delta below them
- * wrong — a scan compared against its own duplicate reads "No change", and
- * the one after it compares against the wrong baseline.
- *
- * Keys on the normalised brand (so "presora" and "Presora.app" are one
- * brand) plus the score, and treats rows within the window as one scan.
- * Newest wins, since the list is already sorted descending.
- */
-const DUPLICATE_WINDOW_MS = 10_000;
-
-export const dedupeAnalyses = <T extends { brand_name: string; trust_score: number; created_at: string }>(rows: T[]): T[] => {
-  const out: T[] = [];
-  for (const row of rows) {
-    const isDupe = out.some(kept =>
-      brandKey(kept.brand_name) === brandKey(row.brand_name) &&
-      kept.trust_score === row.trust_score &&
-      Math.abs(new Date(kept.created_at).getTime() - new Date(row.created_at).getTime()) < DUPLICATE_WINDOW_MS
-    );
-    if (!isDupe) out.push(row);
-  }
-  return out;
-};
 
 const DIMENSIONS: { key: keyof Pick<Analysis, 'authority' | 'sentiment' | 'accuracy' | 'mentions' | 'recency'>; label: string; Icon: typeof ShieldCheck }[] = [
   { key: 'authority', label: 'Authority', Icon: ShieldCheck },
