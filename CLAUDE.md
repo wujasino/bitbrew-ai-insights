@@ -234,6 +234,25 @@ model fails, `analyze.js` errors rather than showing fabricated scores; that
 is the point of the `isFallback` check and must not be relaxed to "keep the
 product usable" during an outage.
 
+## `app_settings.value` is `jsonb NOT NULL`
+
+Never write JS `null` to it — PostgREST turns that into SQL NULL and the
+insert fails with `23502`. "No value" is expressed by **deleting the row**;
+`getScanSettings()` and `toggle-scanning`'s GET both read a missing key as
+`null`, and rows still holding the seeded JSON `null` read the same way.
+
+This bit once, silently: `toggle-scanning` wrote the counter reset and
+`scanning_disabled_reason: null` as **one array upsert** whose result was
+never checked. Enabling scanning therefore left `provider_failures.count`
+at 3, so the next failed scan immediately re-tripped the threshold and
+switched scanning back off — the exact flapping the watchdog exists to
+prevent. `/admin/settings` hid it further by setting the counter to 0
+optimistically instead of trusting the response.
+
+Found in `edge_logs`: `POST | 400 | .../rest/v1/app_settings?on_conflict=key`.
+Worth grepping those logs for non-2xx after touching any Function — a
+swallowed PostgREST error is invisible everywhere else.
+
 ## Admin account management
 
 All three admin pages (`/admin/announcements`, `/admin/settings`,

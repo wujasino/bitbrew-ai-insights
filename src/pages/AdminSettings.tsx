@@ -147,11 +147,23 @@ const AdminSettings = () => {
     setStatus('saving');
     setMessage('');
     try {
-      await authedFetch({ method: 'POST', body: JSON.stringify({ enabled: next }) });
+      const json = await authedFetch({ method: 'POST', body: JSON.stringify({ enabled: next }) });
       setEnabled(next);
       setUpdatedAt(new Date().toISOString());
       setReason(next ? null : { source: 'manual' });
+      // Only claim the streak is cleared when the server says it cleared it.
+      // This optimistically set 0 regardless, which is why a silently failing
+      // counter reset went unnoticed: the panel read 0 while the database
+      // still held 3, and scanning switched itself off again on the next
+      // failure.
+      if (json?.warning) {
+        setStatus('error');
+        setMessage(json.warning);
+        return;
+      }
       setFailureCount(0);
+      setLastError(null);
+      setLastFailureAt(null);
       setStatus('ok');
       setMessage(next ? 'Scanning is back on.' : 'Scanning paused for all users.');
     } catch (err) {

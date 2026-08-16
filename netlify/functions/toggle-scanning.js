@@ -132,14 +132,51 @@ exports.handler = async (event) => {
     // Turning it back on clears the watchdog's streak, otherwise the very
     // next failure would immediately re-trip the threshold. Also records who
     // last flipped it, so the UI can distinguish manual from automatic.
-    await supabaseAdmin.from('app_settings').upsert([
-      { key: 'provider_failures', value: { count: 0 }, updated_at: new Date().toISOString() },
-      {
-        key: 'scanning_disabled_reason',
-        value: payload.enabled ? null : { source: 'manual', at: new Date().toISOString(), by: user.id },
-        updated_at: new Date().toISOString(),
-      },
-    ], { onConflict: 'key' });
+    //
+    // These were one array upsert that also wrote `value: null` for the
+    // reason when enabling. app_settings.value is `jsonb NOT NULL`, so
+    // PostgREST rejected the whole batch with 400 (23502) — and the result
+    // was never checked, so it failed silently. The visible effect: clicking
+    // "Enable scanning" left provider_failures.count at 3, so the very next
+    // failed scan re-tripped the threshold and switched scanning straight
+    // back off. Exactly the flapping the watchdog exists to avoid.
+    //
+    // Split in two, and "no reason" is now the absence of the row rather
+    // than a null in a NOT NULL column — both readers (getScanSettings and
+    // this function's own GET) already treat a missing key as null.
+    const { error: counterError } = await supabaseAdmin
+      .from('app_settings')
+      .upsert(
+        { key: 'provider_failures', value: { count: 0 }, updated_at: new Date().toISOString() },
+        { onConflict: 'key' },
+      );
+
+    const { error: reasonError } = payload.enabled
+      ? await supabaseAdmin.from('app_settings').delete().eq('key', 'scanning_disabled_reason')
+      : await supabaseAdmin.from('app_settings').upsert(
+          {
+            key: 'scanning_disabled_reason',
+            value: { source: 'manual', at: new Date().toISOString(), by: user.id },
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'key' },
+        );
+
+    // Reported, not swallowed: the switch itself already flipped, but an
+    // admin needs to know the streak wasn't cleared — otherwise scanning
+    // looks like it turns itself off again for no reason.
+    if (counterError || reasonError) {
+      console.error('toggle-scanning: bookkeeping failed:', counterError?.message, reasonError?.message);
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({
+          ok: true,
+          enabled: payload.enabled,
+          warning: `Scanning was ${payload.enabled ? 'enabled' : 'disabled'}, but the failure counter could not be reset: ${counterError?.message || reasonError?.message}`,
+        }),
+      };
+    }
 
     console.log(`toggle-scanning: scanning ${payload.enabled ? 'ENABLED' : 'DISABLED'} by ${user.id}`);
     return { statusCode: 200, headers, body: JSON.stringify({ ok: true, enabled: payload.enabled }) };
