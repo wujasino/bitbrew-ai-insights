@@ -320,7 +320,7 @@ const Dashboard = () => {
   const t = useTranslation().t;
   const analysisId = searchParams.get('id');
   const brandFromUrl = searchParams.get('brand') || '';
-  const { progress, status, result, startBrewing, reset, loadStoredAnalysis, guestLimitReached, error: brewingError, scansDisabled, notFound } = useBrewing();
+  const { progress, status, result, startBrewing, reset, loadStoredAnalysis, guestLimitReached, error: brewingError, scansDisabled, notFound, providerUnavailable } = useBrewing();
   const displayBrand = result?.brandName || brandFromUrl;
   const [inputValue, setInputValue] = useState(brandFromUrl);
   const [moderationError, setModerationError] = useState('');
@@ -634,23 +634,23 @@ const Dashboard = () => {
           <div className="flex flex-col items-center justify-center min-h-[50vh] text-center gap-4 px-4">
             <div className={cn(
               'w-12 h-12 rounded-xl border flex items-center justify-center',
-              scansDisabled || notFound
+              scansDisabled || notFound || providerUnavailable
                 ? 'bg-muted border-border'
                 : 'bg-destructive/10 border-destructive/20'
             )}>
-              {scansDisabled || notFound
+              {scansDisabled || notFound || providerUnavailable
                 ? <Clock className="w-5 h-5 text-muted-foreground" />
                 : <AlertTriangle className="w-5 h-5 text-destructive" />}
             </div>
             <div>
               <p className="text-sm font-medium text-foreground">
-                {notFound ? 'Report not found' : scansDisabled ? 'Scanning is paused' : "Couldn't complete the scan"}
+                {notFound ? 'Report not found' : scansDisabled ? 'Scanning is paused' : providerUnavailable ? 'Scanning is unavailable' : "Couldn't complete the scan"}
               </p>
               <p className="text-sm text-muted-foreground max-w-sm mt-1">
                 {brewingError || 'Something went wrong while scanning. Please try again.'}
               </p>
             </div>
-            {scansDisabled || notFound ? (
+            {scansDisabled || notFound || providerUnavailable ? (
               // Retrying can't help, but the stored reports are unaffected —
               // without this the paused screen was a dead end.
               <div className="flex flex-wrap items-center justify-center gap-3">

@@ -430,7 +430,14 @@ export const handler = async (event) => {
           scansDisabled: true,
         });
       }
-      throw new Error(reason);
+      // Distinct from a transient scan failure: no provider could serve this
+      // request at all, so "try again" is advice that cannot work. The flag
+      // carries that to the UI; the reason itself stays server-side, since it
+      // quotes the provider's billing messages.
+      return jsonResponse(503, {
+        error: 'Scanning is unavailable right now. This is on our side, not yours.',
+        providerUnavailable: true,
+      });
     }
 
     // A scan that only completed because the direct-provider fallback ran is

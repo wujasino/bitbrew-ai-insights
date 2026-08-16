@@ -86,6 +86,9 @@ export function useBrewing() {
   // Retrying can't help, so the UI needs to tell them apart from a failed
   // scan.
   const [notFound, setNotFound] = useState(false);
+  // Every model provider refused the request (no credits, no key, outage).
+  // Retrying cannot help, so the UI must not offer it.
+  const [providerUnavailable, setProviderUnavailable] = useState(false);
 
   const startBrewing = useCallback(async (rawBrandName: string) => {
     if (inFlight.current) return;
@@ -100,6 +103,7 @@ export function useBrewing() {
     setResult(null);
     setError(null);
     setScansDisabled(false);
+    setProviderUnavailable(false);
 
     let current = 0;
     const interval = setInterval(() => {
@@ -132,6 +136,13 @@ export function useBrewing() {
         if (data?.guestLimitReached) {
           setGuestLimitReached(true);
           setStatus('idle');
+          setProgress(0);
+          return;
+        }
+        if (data?.providerUnavailable) {
+          setProviderUnavailable(true);
+          setError(data?.error || 'Scanning is unavailable right now.');
+          setStatus('error');
           setProgress(0);
           return;
         }
@@ -348,6 +359,7 @@ export function useBrewing() {
     setError(null);
     setScansDisabled(false);
     setNotFound(false);
+    setProviderUnavailable(false);
   }, []);
 
   const loadStoredAnalysis = useCallback(async (id: string) => {
@@ -391,5 +403,5 @@ export function useBrewing() {
     return view;
   }, []);
 
-  return { progress, status, result, startBrewing, reset, loadStoredAnalysis, guestLimitReached, error, scansDisabled, notFound };
+  return { progress, status, result, startBrewing, reset, loadStoredAnalysis, guestLimitReached, error, scansDisabled, notFound, providerUnavailable };
 }
