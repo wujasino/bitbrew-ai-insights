@@ -240,6 +240,34 @@ has `"files": []` and only project references. Use
 `Label` import slipped into `Onboarding.tsx` earlier.) Three pre-existing
 errors in `ai-prompt-box.tsx` and `cookie-banner-1.tsx` are expected noise.
 
+## Scan integrity (`useBrewing.ts`)
+
+Nine of the first fourteen rows in `analyses` were duplicates — the same
+brand and score written two or three times 0.4-1.8s apart. `startBrewing`
+had no in-flight guard, and three call sites could reach it (the
+`brandFromUrl` effect, the re-scan button, a `setTimeout` retry).
+
+- `inFlight` is a **ref**, not state: two calls in the same tick must not
+  both read a stale `false`. Released in a `finally` (so a failed scan
+  doesn't wedge the hook) and in `reset()`.
+- `canonicalBrandName()` is applied on save; `brandKey()` is the comparison
+  key that makes "presora", "Presora.app" and "https://www.presora.app/" one
+  brand. `brandKey` strips protocol, `www.`, path and TLD.
+- `dedupeAnalyses()` (exported from `HomeHub.tsx`, also used by
+  `Reports.tsx`) collapses the historical duplicates on read — same brand
+  key, same score, within 10s.
+- **Deltas compare against the previous scan of the same brand**, not the
+  previous row. Comparing `analyses[0]` to `analyses[1]` regardless of brand
+  is why one score showed two different deltas on two different days. The
+  sparkline is filtered the same way.
+- The 9 duplicate rows are still in the database; they're only hidden on
+  read. Deleting them was not done unilaterally.
+
+Score bands are 75/60 across `HomeHub.tsx` (`barColor`, `bandOf`,
+`scoreColor`) and `AuditReport.tsx`. They were 70/50 on Home, which painted
+a 70 and a 73 the same green as a 95 on the screen whose job is saying what
+to fix first.
+
 ## Locale dictionaries (`src/lib/locales/*.ts`)
 
 ~248 of the 396 keys in `en.ts` (and their counterparts in the five other

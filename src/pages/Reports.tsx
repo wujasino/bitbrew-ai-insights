@@ -5,6 +5,7 @@ import { FileText, Download, Trash2, Calendar, ArrowUp, ArrowDown, ChevronRight,
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 import { usePlan, isAgencyPlan, useSessionUser } from '@/hooks/useAccountInfo';
+import { dedupeAnalyses } from '@/components/home/HomeHub';
 
 interface Report {
   id: string;
@@ -54,7 +55,9 @@ const Reports = () => {
         .select('*')
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
-      setReports((data as Report[]) ?? []);
+      // Same collapse as the Home list: a scan saved two or three times by
+      // the old double-submit shouldn't appear as separate reports.
+      setReports(dedupeAnalyses((data as Report[]) ?? []));
       setLoading(false);
     })();
   }, [navigate, userId, userLoading]);

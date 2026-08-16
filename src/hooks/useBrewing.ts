@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { AnalysisResult, SourceResult } from '@/types/analysis';
 import { supabase } from '@/lib/supabase';
 import { loadModelPrefs } from '@/lib/models';
@@ -61,8 +61,56 @@ const normalizeSentiment = (s: unknown): SourceResult['sentiment'] => {
 
 export const GUEST_LIMIT = 3;
 
+/**
+ * Normalised form of a brand name, used for deduplication and for what gets
+ * written to analyses.brand_name.
+ *
+ * "presora" and "Presora.app" were landing in the database as two unrelated
+ * brands with divergent scores, which reads as the product contradicting
+ * itself. Strips protocol, www., a trailing path and the TLD, then collapses
+ * whitespace — so "https://Presora.app/", "Presora.app" and "presora" all
+ * key to "presora".
+ *
+ * Display casing is preserved separately (see canonicalBrandName) — this is
+ * only the comparison key.
+ */
+export const brandKey = (raw: string): string =>
+  String(raw || '')
+    .trim()
+    .toLowerCase()
+    .replace(/^https?:\/\//, '')
+    .replace(/^www\./, '')
+    .replace(/\/.*$/, '')
+    .replace(/\.(com|net|org|io|app|co|ai|dev|xyz|pl|eu|de|fr|es|it|uk)$/, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+/**
+ * What actually gets stored in brand_name: the host/name without protocol or
+ * path, with original casing kept so "Coca-Cola" doesn't become "coca-cola".
+ * Falls back to the raw input if normalisation empties it.
+ */
+export const canonicalBrandName = (raw: string): string => {
+  const cleaned = String(raw || '')
+    .trim()
+    .replace(/^https?:\/\//i, '')
+    .replace(/^www\./i, '')
+    .replace(/\/.*$/, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return cleaned || String(raw || '').trim();
+};
+
 export function useBrewing() {
   const [progress, setProgress] = useState(0);
+  // Guards against a second scan starting while one is already in flight.
+  // Nine of the first fourteen rows in `analyses` were duplicates written
+  // 0.4-1.8s apart — the same scan saved two or three times, because every
+  // entry point (the URL effect, the re-scan button, the setTimeout retry)
+  // could call startBrewing again before the first call finished. A ref, not
+  // state, so the check is synchronous: two calls in the same tick must not
+  // both read a stale `false`.
+  const inFlight = useRef(false);
   const [status, setStatus] = useState<'idle' | 'brewing' | 'loading' | 'completed' | 'error'>('idle');
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [guestLimitReached, setGuestLimitReached] = useState(false);
@@ -72,7 +120,10 @@ export function useBrewing() {
   // calmly instead of showing the red "something went wrong" treatment.
   const [scansDisabled, setScansDisabled] = useState(false);
 
-  const startBrewing = useCallback(async (brandName: string) => {
+  const startBrewing = useCallback(async (rawBrandName: string) => {
+    if (inFlight.current) return;
+    inFlight.current = true;
+    const brandName = canonicalBrandName(rawBrandName);
     // Guest limit (no session) is enforced server-side by analyze.js itself
     // (atomic per-IP counter) — it responds with guestLimitReached below
     // rather than this needing its own pre-flight check-and-increment call.
@@ -314,10 +365,16 @@ export function useBrewing() {
       setResult(null);
       setError(err instanceof Error ? err.message : 'Something went wrong while scanning. Please try again.');
       setStatus('error');
+    } finally {
+      // Released on every exit path, including the error branch — otherwise a
+      // single failed scan would wedge the hook and the user could never
+      // retry without a full reload.
+      inFlight.current = false;
     }
   }, []);
 
   const reset = useCallback(() => {
+    inFlight.current = false;
     setStatus('idle');
     setProgress(0);
     setResult(null);
