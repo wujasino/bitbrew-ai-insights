@@ -2,6 +2,7 @@ import { useState, useCallback, useRef } from 'react';
 import { AnalysisResult, SourceResult } from '@/types/analysis';
 import { supabase } from '@/lib/supabase';
 import { loadModelPrefs } from '@/lib/models';
+import { canonicalBrandName } from '@/lib/analyses';
 
 type StoredDimensions = {
   authority: number;
@@ -61,45 +62,6 @@ const normalizeSentiment = (s: unknown): SourceResult['sentiment'] => {
 
 export const GUEST_LIMIT = 3;
 
-/**
- * Normalised form of a brand name, used for deduplication and for what gets
- * written to analyses.brand_name.
- *
- * "presora" and "Presora.app" were landing in the database as two unrelated
- * brands with divergent scores, which reads as the product contradicting
- * itself. Strips protocol, www., a trailing path and the TLD, then collapses
- * whitespace — so "https://Presora.app/", "Presora.app" and "presora" all
- * key to "presora".
- *
- * Display casing is preserved separately (see canonicalBrandName) — this is
- * only the comparison key.
- */
-export const brandKey = (raw: string): string =>
-  String(raw || '')
-    .trim()
-    .toLowerCase()
-    .replace(/^https?:\/\//, '')
-    .replace(/^www\./, '')
-    .replace(/\/.*$/, '')
-    .replace(/\.(com|net|org|io|app|co|ai|dev|xyz|pl|eu|de|fr|es|it|uk)$/, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-
-/**
- * What actually gets stored in brand_name: the host/name without protocol or
- * path, with original casing kept so "Coca-Cola" doesn't become "coca-cola".
- * Falls back to the raw input if normalisation empties it.
- */
-export const canonicalBrandName = (raw: string): string => {
-  const cleaned = String(raw || '')
-    .trim()
-    .replace(/^https?:\/\//i, '')
-    .replace(/^www\./i, '')
-    .replace(/\/.*$/, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-  return cleaned || String(raw || '').trim();
-};
 
 export function useBrewing() {
   const [progress, setProgress] = useState(0);

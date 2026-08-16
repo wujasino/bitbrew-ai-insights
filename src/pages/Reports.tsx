@@ -5,7 +5,7 @@ import { FileText, Download, Trash2, Calendar, ArrowUp, ArrowDown, ChevronRight,
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 import { usePlan, isAgencyPlan, useSessionUser } from '@/hooks/useAccountInfo';
-import { dedupeAnalyses } from '@/components/home/HomeHub';
+import { dedupeAnalyses } from '@/lib/analyses';
 
 interface Report {
   id: string;

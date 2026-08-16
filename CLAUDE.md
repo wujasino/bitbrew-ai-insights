@@ -290,9 +290,18 @@ had no in-flight guard, and three call sites could reach it (the
 - `canonicalBrandName()` is applied on save; `brandKey()` is the comparison
   key that makes "presora", "Presora.app" and "https://www.presora.app/" one
   brand. `brandKey` strips protocol, `www.`, path and TLD.
-- `dedupeAnalyses()` (exported from `HomeHub.tsx`, also used by
-  `Reports.tsx`) collapses the historical duplicates on read — same brand
-  key, same score, within 10s.
+- `brandKey()`, `canonicalBrandName()` and `dedupeAnalyses()` live in
+  `src/lib/analyses.ts` — pure functions, no React or Supabase imports.
+  `dedupeAnalyses` used to be exported from `HomeHub.tsx`, which meant
+  `Reports.tsx` importing it dragged recharts and the whole Home screen into
+  the Reports chunk (8kB now, and no `HomeHub-*.js` chunk at all — HomeHub
+  merges into `Dashboard`, its only renderer).
+
+**A stack trace naming a chunk is not naming a file.** The console error
+`Analyze request failed ... at HomeHub-*.js` came from `useBrewing.ts`,
+which Rollup had placed in a chunk it happened to name after HomeHub.
+Confirm with `grep -c "netlify/functions/analyze" dist/assets/<chunk>.js`
+before trusting the name.
 - **Deltas compare against the previous scan of the same brand**, not the
   previous row. Comparing `analyses[0]` to `analyses[1]` regardless of brand
   is why one score showed two different deltas on two different days. The
