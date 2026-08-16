@@ -159,6 +159,25 @@ user could grant themselves credits or zero their usage from the browser
 console. The trigger now guards all of them. Don't add a new paid-usage
 column to `profiles` without adding it to that trigger too.
 
+## Locale dictionaries (`src/lib/locales/*.ts`)
+
+~248 of the 396 keys in `en.ts` (and their counterparts in the five other
+languages) are currently unreferenced — mostly `settings_*`, `pricing_*`,
+`tier_*`, `cookie_*`, `footer_*`, `newsletter_*`, `credits_*`. **This is
+intentional; do not "clean them up".** Those sections were rewritten with
+English copy inlined in the components, so the keys went dead because the
+pages stopped being translated, not because the content disappeared. They
+are finished translations in six languages, kept for whenever those pages
+get localised again — deleting them means retranslating from scratch.
+
+The `faq_q*`/`faq_a*` keys *were* removed (commit `04e67eb`): the FAQ now
+has a single source of truth in `src/lib/faq.ts`, so those were true
+duplicates rather than shelved translations.
+
+Note when auditing usage: `t()` is also called with template literals, so
+any key starting with `dim_`, `rec_`, `sentiment_` or `source_` is live
+even though no string literal in the codebase matches it.
+
 ## Known sandbox limitations
 
 - No real internet in this dev/test sandbox except through the proxy —
