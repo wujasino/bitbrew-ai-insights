@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import ws from 'ws';
 import { OPENROUTER_MODELS, runBrandScan } from './_lib/runScan.js';
 import { fireWebhooksForEvent } from './_lib/webhookDelivery.js';
+import { isScanningEnabled } from './_lib/appSettings.js';
 
 if (!globalThis.WebSocket) {
   globalThis.WebSocket = ws;
@@ -69,6 +70,13 @@ export const handler = async () => {
   if (monitorsError) {
     console.error('check-score-alerts: failed to load brand_monitors:', monitorsError.message);
     return { statusCode: 500, body: 'Failed to load brand_monitors' };
+  }
+
+  // Scheduled re-scans respect the same kill-switch: leave last_checked_at
+  // untouched so every monitor is simply picked up on a later run.
+  if (!(await isScanningEnabled(admin))) {
+    console.log('check-score-alerts: scanning disabled by admin, skipping this run');
+    return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ skipped: 'scanning_disabled' }) };
   }
 
   const now = Date.now();

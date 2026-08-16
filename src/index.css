@@ -324,4 +324,30 @@
     height: auto !important;
     overflow: visible !important;
   }
+
+  /* The audit at /audit/:id is mailed to clients as a PDF, so the page box
+     itself has to be right — the default UA margin is both too tight for a
+     document that reads as a deliverable and inconsistent between browsers.
+     Set once here rather than as print: padding on the report, because
+     padding only pads the first page; @page applies to every page. */
+  @page {
+    margin: 16mm 14mm;
+  }
+
+  /* Headings should never be the last thing on a page with their content
+     stranded overleaf. Cards opt out of splitting individually via the
+     NO_SPLIT class in AuditReport.tsx. */
+  h1, h2, h3 {
+    break-after: avoid-page;
+    page-break-after: avoid;
+  }
+
+  /* Chromium drops background-color by default, which would flatten the
+     dimension bars and the score ring to invisible. The report already
+     supplies print: variants in near-black, so keep them. */
+  .print-exact,
+  .print-exact * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
 }

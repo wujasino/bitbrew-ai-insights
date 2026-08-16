@@ -6,22 +6,24 @@ import {
   User, Bell, Shield, Trash2, Save,
   Upload, Camera, Loader2, KeyRound, Check, Mail, ArrowRight, ArrowLeft,
   Eye, EyeOff, CheckCircle2, Circle, CreditCard, Download, FileText, Volume2, Cpu, Lock,
-  Play, Square as StopIcon, Gift, Copy, Users,
+  Play, Square as StopIcon, Gift, Copy, Users, Palette, Building2, Globe,
 } from 'lucide-react';
 import { loadVoicePrefs, saveVoicePrefs, VoicePrefs, AVAILABLE_VOICES, fetchAvailableVoices, ElevenLabsVoice } from '@/hooks/useTTS';
 import { MODEL_CATALOG, loadModelPrefs, saveModelPrefs, ModelPrefs } from '@/lib/models';
-import { usePlan, tierOf, PLAN_LABELS, useSessionUser, useAvatarUrl, type SessionUser } from '@/hooks/useAccountInfo';
+import { usePlan, tierOf, PLAN_LABELS, useSessionUser, useAvatarUrl, isAgencyPlan, type SessionUser } from '@/hooks/useAccountInfo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 
-type Tab = 'account' | 'notifications' | 'security' | 'privacy' | 'billing' | 'referral';
+type Tab = 'account' | 'notifications' | 'security' | 'privacy' | 'billing' | 'referral' | 'branding';
 
-const tabs: { id: Tab; label: string; icon: React.FC<{ className?: string }> }[] = [
+const tabs: { id: Tab; label: string; icon: React.FC<{ className?: string }>; agencyOnly?: boolean }[] = [
   { id: 'account',       label: 'Account',       icon: User },
+  { id: 'branding',      label: 'Audit branding', icon: Palette, agencyOnly: true },
   { id: 'notifications', label: 'Notifications', icon: Bell },
   { id: 'security',      label: 'Security',      icon: KeyRound },
   { id: 'privacy',       label: 'Privacy',       icon: Shield },
@@ -103,6 +105,14 @@ export default function Settings() {
   };
   const { data: plan = 'Free' } = usePlan();
   const planTier = tierOf(plan);
+  const canBrandAudits = isAgencyPlan(plan);
+  // The full `tabs` list still backs the ?tab= URL check above, so an
+  // Agency user's deep link keeps working while the plan is still loading;
+  // only the visible nav is filtered.
+  const visibleTabs = useMemo(
+    () => tabs.filter(t => !t.agencyOnly || canBrandAudits),
+    [canBrandAudits],
+  );
 
   // Billing / subscription — synced from `profiles` (kept up to date by
   // stripe-webhook.js) and mutated only through manage-subscription.js,
@@ -245,6 +255,20 @@ export default function Settings() {
       setWithdrawalStatus('error');
     }
   };
+
+  // ── Audit branding (Agency plan) ──────────────────────────────────
+  // Drives the letterhead and closing CTA of the client-ready audit at
+  // /audit/:id. Loaded and saved here directly rather than through
+  // useAuditBranding: that hook is a read-only, fail-soft projection for
+  // the report, and reusing it would hide a save failure behind its
+  // Presora fallback.
+  const [branding, setBranding] = useState({ name: '', logoUrl: '', contactEmail: '', website: '' });
+  const [brandingLoaded, setBrandingLoaded] = useState(false);
+  const [brandingSaving, setBrandingSaving] = useState(false);
+  const [brandingSaved, setBrandingSaved] = useState(false);
+  const [brandingError, setBrandingError] = useState<string | null>(null);
+  const [logoUploading, setLogoUploading] = useState(false);
+  const logoInputRef = useRef<HTMLInputElement>(null);
 
   const [userId, setUserId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -389,6 +413,112 @@ export default function Settings() {
   };
 
   const initials = email ? email[0].toUpperCase() : '?';
+
+  // Load once, when the tab is actually opened. Selecting the four columns
+  // fails hard (42703) if the 20240135 migration hasn't been applied, so the
+  // error is surfaced here explicitly — unlike the report, which silently
+  // falls back to Presora branding, this is the screen where the user needs
+  // to be told why nothing saves.
+  useEffect(() => {
+    if (activeTab !== 'branding' || !userId || brandingLoaded) return;
+    (async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('agency_name, agency_logo_url, agency_contact_email, agency_website')
+        .eq('id', userId)
+        .single();
+      if (error) {
+        setBrandingError(
+          error.code === '42703'
+            ? 'Branding columns are missing — run the 20240135_agency_branding.sql migration in Supabase.'
+            : 'Could not load your branding settings.',
+        );
+      } else if (data) {
+        setBranding({
+          name: data.agency_name ?? '',
+          logoUrl: data.agency_logo_url ?? '',
+          contactEmail: data.agency_contact_email ?? '',
+          website: data.agency_website ?? '',
+        });
+      }
+      setBrandingLoaded(true);
+    })();
+  }, [activeTab, userId, brandingLoaded]);
+
+  const handleLogoFile = async (file: File) => {
+    if (!userId) return;
+    setBrandingError(null);
+
+    if (!file.type.startsWith('image/')) {
+      setBrandingError('Please choose an image file');
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setBrandingError('Logo must be under 2MB');
+      return;
+    }
+
+    setLogoUploading(true);
+    try {
+      const ALLOWED_EXTS = ['jpg', 'jpeg', 'png', 'webp', 'svg'];
+      const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
+      if (!ALLOWED_EXTS.includes(ext)) throw new Error('Please choose a PNG, JPG, WEBP or SVG file');
+
+      // Same bucket as avatars, distinct filename — one less bucket to
+      // provision and the existing per-user-folder RLS policy already
+      // covers `${userId}/…`.
+      const storagePath = `${userId}/agency-logo.${ext}`;
+      const { error: storageError } = await supabase.storage
+        .from('avatars')
+        .upload(storagePath, file, { upsert: true, contentType: file.type });
+      if (storageError) throw storageError;
+
+      const { data } = supabase.storage.from('avatars').getPublicUrl(storagePath);
+      setBranding(prev => ({ ...prev, logoUrl: `${data.publicUrl}?t=${Date.now()}` }));
+      setBrandingSaved(false);
+    } catch (err) {
+      setBrandingError(err?.message ?? 'Upload failed, please try again');
+    } finally {
+      setLogoUploading(false);
+    }
+  };
+
+  const handleBrandingSave = async () => {
+    if (!userId) return;
+    setBrandingSaving(true);
+    setBrandingError(null);
+    setBrandingSaved(false);
+
+    // Empty string means "unset" — write NULL so the report falls back to
+    // Presora branding rather than rendering an empty letterhead.
+    const orNull = (v: string) => {
+      const trimmed = v.trim();
+      return trimmed ? trimmed : null;
+    };
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        agency_name: orNull(branding.name),
+        agency_logo_url: orNull(branding.logoUrl),
+        agency_contact_email: orNull(branding.contactEmail),
+        agency_website: orNull(branding.website),
+      })
+      .eq('id', userId);
+
+    if (error) {
+      setBrandingError(
+        error.code === '42703'
+          ? 'Branding columns are missing — run the 20240135_agency_branding.sql migration in Supabase.'
+          : error.message,
+      );
+    } else {
+      setBrandingSaved(true);
+      queryClient.invalidateQueries({ queryKey: ['audit-branding'] });
+      setTimeout(() => setBrandingSaved(false), 2500);
+    }
+    setBrandingSaving(false);
+  };
 
   const handleAvatarFile = async (file: File) => {
     if (!userId) return;
@@ -606,7 +736,7 @@ export default function Settings() {
           {/* Left tab sidebar — full-width stacked list on mobile, fixed side column from md up */}
           <aside className="w-full md:w-48 md:shrink-0">
             <nav className="flex flex-row md:flex-col gap-0.5 overflow-x-auto md:overflow-visible -mx-4 px-5 md:mx-0 md:px-0">
-              {tabs.map((tab) => (
+              {visibleTabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
@@ -1376,6 +1506,139 @@ export default function Settings() {
                     </>
                   ) : null}
                   {referralError && <p className="text-sm text-destructive">{referralError}</p>}
+                </div>
+              )}
+
+              {/* AUDIT BRANDING */}
+              {activeTab === 'branding' && (
+                <div className="space-y-6">
+                  <div>
+                    <h2 className="text-lg font-semibold text-foreground">Audit branding</h2>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Put your own identity on the client-ready audit. The report letterhead and its
+                      closing “get in touch” block use these details, so a PDF you forward to a client
+                      points them back to you — not to Presora.
+                    </p>
+                  </div>
+
+                  {!canBrandAudits ? (
+                    <div className="rounded-xl border border-border bg-accent/30 p-5 text-center">
+                      <Lock className="w-5 h-5 text-muted-foreground mx-auto mb-2" />
+                      <p className="text-sm font-medium text-foreground">Available on the Agency plan</p>
+                      <Link to="/pricing" className="text-sm text-primary hover:underline mt-1 inline-block">
+                        See the Agency plan
+                      </Link>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Logo */}
+                      <div className="space-y-2">
+                        <Label htmlFor="agency-logo">Logo</Label>
+                        <div className="flex items-center gap-4">
+                          <div className="w-28 h-14 rounded-lg border border-border bg-accent/30 flex items-center justify-center shrink-0 overflow-hidden">
+                            {branding.logoUrl
+                              ? <img src={branding.logoUrl} alt="" className="max-h-12 max-w-24 object-contain" />
+                              : <Building2 className="w-5 h-5 text-muted-foreground" />}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <input
+                              ref={logoInputRef}
+                              id="agency-logo"
+                              name="agency-logo"
+                              type="file"
+                              accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                              className="hidden"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) handleLogoFile(file);
+                              }}
+                            />
+                            <Button type="button" size="sm" variant="outline" disabled={logoUploading} onClick={() => logoInputRef.current?.click()}>
+                              {logoUploading
+                                ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> Uploading…</>
+                                : <><Upload className="w-3.5 h-3.5 mr-1.5" /> Upload logo</>}
+                            </Button>
+                            {branding.logoUrl && (
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="ghost"
+                                className="text-muted-foreground hover:text-destructive"
+                                onClick={() => { setBranding(p => ({ ...p, logoUrl: '' })); setBrandingSaved(false); }}
+                              >
+                                Remove
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          PNG, JPG, WEBP or SVG, up to 2MB. A wide logo on a transparent background prints best.
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="agency-name">Company name</Label>
+                        <Input
+                          id="agency-name"
+                          name="agency-name"
+                          maxLength={60}
+                          placeholder="Your agency's name"
+                          value={branding.name}
+                          onChange={(e) => { setBranding(p => ({ ...p, name: e.target.value })); setBrandingSaved(false); }}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Leave empty to keep the Presora wordmark on the report.
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="agency-contact-email">Contact email</Label>
+                        <Input
+                          id="agency-contact-email"
+                          name="agency-contact-email"
+                          type="email"
+                          maxLength={160}
+                          placeholder="hello@youragency.com"
+                          value={branding.contactEmail}
+                          onChange={(e) => { setBranding(p => ({ ...p, contactEmail: e.target.value })); setBrandingSaved(false); }}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Shown at the end of every audit as the address the client should reply to.
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="agency-website">Website</Label>
+                        <Input
+                          id="agency-website"
+                          name="agency-website"
+                          type="url"
+                          maxLength={200}
+                          placeholder="https://youragency.com"
+                          value={branding.website}
+                          onChange={(e) => { setBranding(p => ({ ...p, website: e.target.value })); setBrandingSaved(false); }}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Must start with http:// or https:// — anything else is left off the report.
+                        </p>
+                      </div>
+
+                      {brandingError && <p className="text-sm text-destructive">{brandingError}</p>}
+
+                      <div className="flex items-center gap-3">
+                        <Button onClick={handleBrandingSave} disabled={brandingSaving || !brandingLoaded}>
+                          {brandingSaving
+                            ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving…</>
+                            : brandingSaved
+                            ? <><Check className="w-4 h-4 mr-2" /> Saved</>
+                            : <><Save className="w-4 h-4 mr-2" /> Save branding</>}
+                        </Button>
+                        <Link to="/reports" className="text-sm text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1.5">
+                          <Globe className="w-3.5 h-3.5" /> Preview on a report
+                        </Link>
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
 

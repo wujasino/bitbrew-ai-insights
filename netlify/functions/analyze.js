@@ -4,6 +4,7 @@ import ws from 'ws';
 
 import { OPENROUTER_MODELS, runBrandScan } from './_lib/runScan.js';
 import { fireWebhooksForEvent } from './_lib/webhookDelivery.js';
+import { getScanSettings, recordScanOutcome } from './_lib/appSettings.js';
 
 // supabase-js reaches for a global WebSocket (realtime) that Node doesn't
 // provide — without this the client construction throws in the Netlify
@@ -262,9 +263,22 @@ export const handler = async (event) => {
 
   let authedUser = null;
   let supabaseAdmin = null;
+  // Fetched once with the enabled-flag, then reused by recordScanOutcome()
+  // so the happy path costs no extra read.
+  let scanSettings = { enabled: true, failureCount: 0 };
 
   try {
     supabaseAdmin = createAdminClient();
+
+    // Checked before the guest-limit counter below, so a disabled scanner
+    // never burns someone's free allowance on a scan that can't run.
+    scanSettings = await getScanSettings(supabaseAdmin);
+    if (!scanSettings.enabled) {
+      return jsonResponse(503, {
+        error: 'Scanning is temporarily paused. Please check back shortly.',
+        scansDisabled: true,
+      });
+    }
 
     if (token) {
       const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
@@ -392,8 +406,27 @@ export const handler = async (event) => {
     // A fallback result is fabricated (deterministic, not from any real
     // model) — never present that to the user as a genuine analysis.
     if (result?.isFallback) {
-      throw new Error('All model providers failed or OPENROUTER_API_KEY is not configured');
+      const reason = 'All model providers failed or OPENROUTER_API_KEY is not configured';
+      const { autoDisabled } = await recordScanOutcome(supabaseAdmin, {
+        ok: false,
+        knownFailureCount: scanSettings.failureCount,
+        error: reason,
+      });
+      // Once the watchdog trips, tell this caller it's paused rather than
+      // handing them a generic failure — they'd otherwise be the one user
+      // seeing an error where everyone after them sees the honest notice.
+      if (autoDisabled) {
+        return jsonResponse(503, {
+          error: 'Scanning is temporarily paused. Please check back shortly.',
+          scansDisabled: true,
+        });
+      }
+      throw new Error(reason);
     }
+
+    // Clears a partial streak so unrelated flaky moments don't accumulate
+    // toward the auto-disable threshold.
+    await recordScanOutcome(supabaseAdmin, { ok: true, knownFailureCount: scanSettings.failureCount });
 
     if (authedUser) {
       safeFireWebhook(supabaseAdmin, authedUser.id, 'analysis.completed', {
