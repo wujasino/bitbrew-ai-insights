@@ -168,8 +168,20 @@ ${brandContext || '(no stored knowledge for this brand)'}
     if (!res.ok) {
       throw new Error(`Claude (direct): HTTP ${res.status} — ${data?.error?.message || res.statusText}`);
     }
-    const text = data?.content?.[0]?.text;
-    if (!text) throw new Error('Claude (direct): empty response');
+    // Was `data?.content?.[0]?.text` — wrong whenever the first content block
+    // isn't type "text". Extended-thinking-capable models put a "thinking"
+    // block first, so content[0].text is undefined even on a perfectly
+    // successful call; the old code then threw the uninformative "empty
+    // response" for what was actually a working request. Scan every block
+    // for the first one that has text.
+    const blocks = Array.isArray(data?.content) ? data.content : [];
+    const text = blocks.find((b) => typeof b?.text === 'string' && b.text.length > 0)?.text;
+    if (!text) {
+      throw new Error(
+        `Claude (direct): empty response (stop_reason: ${data?.stop_reason ?? 'unknown'}, ` +
+        `block types: ${blocks.map((b) => b?.type).join(', ') || 'none'})`
+      );
+    }
     const cleaned = text.trim().replace(/```json|```/g, '').trim();
     return { label: 'Claude', result: JSON.parse(cleaned) };
   };

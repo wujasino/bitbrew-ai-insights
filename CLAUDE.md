@@ -225,6 +225,27 @@ Note the sandbox proxy blocks `openrouter.ai`, and `OPENROUTER_API_KEY` only
 exists in Netlify's environment, so the provider cannot be tested from here —
 read the recorded `lastError` instead of guessing.
 
+## Anthropic responses: never assume `content[0]` is the text block
+
+Both `queryAnthropicDirect()` in `runScan.js` and `callClaude()` in
+`generate-audit-summary.js` read `data.content?.[0]?.text` — wrong whenever
+the first content block isn't type `"text"` (a `"thinking"` block ahead of
+it, on a model with extended thinking, is the common case). The call
+succeeds (`res.ok` true), so this wasn't a fetch/auth bug: it silently
+produced an empty string that either threw a useless "empty response" (scan
+path) or fell straight through to the deterministic template with no error
+anywhere (audit-summary path) — which is why every generated summary in the
+database matched the template exactly even with a valid key.
+
+Both now scan every block in `data.content` for the first one with a
+non-empty `.text`, and the scan path's error names `stop_reason` and the
+block types actually returned when none qualifies, so a genuine refusal is
+still distinguishable from this bug.
+
+Verified against three response shapes: text-only, thinking-then-text (the
+real bug — now handled), and a genuine empty `content: []` refusal, which
+correctly still produces a fallback rather than a fabricated result.
+
 ## Provider redundancy in `runBrandScan()`
 
 OpenRouter was a single point of failure with a single balance: when its
