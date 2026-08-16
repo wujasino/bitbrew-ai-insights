@@ -15,7 +15,7 @@ import ws from 'ws';
 import { OPENROUTER_MODELS, runBrandScan, summariseFailures } from './_lib/runScan.js';
 import { verifyApiKey, checkRateLimitAndLog } from './_lib/apiKeyAuth.js';
 import { fireWebhooksForEvent } from './_lib/webhookDelivery.js';
-import { isScanningEnabled } from './_lib/appSettings.js';
+import { getScanSettings } from './_lib/appSettings.js';
 
 if (!globalThis.WebSocket) globalThis.WebSocket = ws;
 
@@ -68,7 +68,8 @@ export const handler = async (event) => {
   try {
     // Same admin kill-switch analyze.js honours — don't charge an API
     // call against a scan that can't run.
-    if (!(await isScanningEnabled(supabaseAdmin))) {
+    const scanSettings = await getScanSettings(supabaseAdmin);
+    if (!scanSettings.enabled) {
       return { statusCode: 503, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Scanning is temporarily paused. Please try again later.' }) };
     }
 
@@ -76,7 +77,7 @@ export const handler = async (event) => {
     const planTier = PLAN_TIER[String(profile?.plan || 'free').toLowerCase()] ?? 0;
     const models = OPENROUTER_MODELS.filter((m) => m.tier <= planTier);
 
-    const result = await runBrandScan({ supabaseAdmin, target: brandName, models, userId: auth.userId });
+    const result = await runBrandScan({ supabaseAdmin, target: brandName, models, userId: auth.userId, openrouterEnabled: scanSettings.openrouterEnabled });
 
     // A fallback result is fabricated (deterministic, not from any real
     // model) — never save/return that as a genuine analysis via the public

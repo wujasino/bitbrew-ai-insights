@@ -36,6 +36,7 @@ const AdminSettings = () => {
   const [lastError, setLastError] = useState<string | null>(null);
   const [lastFailureAt, setLastFailureAt] = useState<string | null>(null);
   const [autoDisable, setAutoDisable] = useState(false);
+  const [openrouterEnabled, setOpenrouterEnabled] = useState(true);
   const [status, setStatus] = useState<'idle' | 'loading' | 'saving' | 'ok' | 'error'>('idle');
   const [message, setMessage] = useState('');
 
@@ -67,6 +68,7 @@ const AdminSettings = () => {
         setLastError(json.lastError ?? null);
         setLastFailureAt(json.lastFailureAt ?? null);
         setAutoDisable(json.autoDisable === true);
+        setOpenrouterEnabled(json.openrouterEnabled !== false);
         setStatus('idle');
       })
       .catch((err) => {
@@ -274,6 +276,36 @@ const AdminSettings = () => {
                   Pause scanning automatically after 3 failed scans in a row.
                   Failures are recorded either way; this only controls whether the
                   switch above flips by itself.
+                </span>
+              </label>
+
+              {/* Independent of the main switch above: skips a known-broken
+                  OpenRouter balance and goes straight to the direct
+                  Anthropic fallback, instead of paying OpenRouter's timeout
+                  on all 6 models before falling through anyway. Flip back
+                  the moment OpenRouter credits are topped up — no redeploy
+                  needed. */}
+              <label className="mt-3 flex items-start gap-2.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  id="openrouter-enabled"
+                  name="openrouterEnabled"
+                  checked={openrouterEnabled}
+                  onChange={async (e) => {
+                    const next = e.target.checked;
+                    setOpenrouterEnabled(next);
+                    try {
+                      await authedFetch({ method: 'POST', body: JSON.stringify({ openrouterEnabled: next }) });
+                    } catch {
+                      setOpenrouterEnabled(!next);
+                    }
+                  }}
+                  className="mt-0.5 accent-primary"
+                />
+                <span className="text-xs text-muted-foreground">
+                  Use OpenRouter for scans. Turn off to skip it entirely and scan
+                  directly via Anthropic instead — useful while OpenRouter's balance
+                  is empty. Re-enable once it's topped up.
                 </span>
               </label>
 

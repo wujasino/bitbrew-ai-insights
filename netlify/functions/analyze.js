@@ -401,6 +401,7 @@ export const handler = async (event) => {
       target,
       models: modelsToQuery,
       userId: authedUser?.id || null,
+      openrouterEnabled: scanSettings.openrouterEnabled,
     });
 
     // A fallback result is fabricated (deterministic, not from any real

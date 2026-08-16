@@ -162,6 +162,16 @@ touch it.
 - In `analyze.js` the check sits *before* the guest-limit RPC on purpose, so
   a paused scanner never burns a visitor's free allowance. Verified: with
   the flag off, zero OpenRouter calls and the guest counter untouched.
+- **`openrouter_enabled`** (checkbox in `/admin/settings`, independent of the
+  main switch) — skips OpenRouter entirely and goes straight to the direct
+  Anthropic fallback in `runScan.js`. Added while OpenRouter's balance was
+  empty: without it, every scan still paid OpenRouter's ~20s timeout across
+  6 models before falling through anyway, and recorded six 402s per scan in
+  `provider_failures.lastError`, burying the signal. Flip back on the moment
+  OpenRouter is topped up — no redeploy, it's a stored flag like the others.
+  **Only helps if `ANTHROPIC_API_KEY` is actually valid on this deploy** —
+  it does not create a working provider, it just stops wasting time on a
+  known-broken one.
 - **Auto-pause is OFF by default** (`auto_disable_enabled`, checkbox in
   `/admin/settings`). Changed on the owner's explicit instruction: with an
   outage that lasts — an unpaid balance rather than a blip — auto-pausing

@@ -76,7 +76,7 @@ exports.handler = async (event) => {
       const { data, error } = await supabaseAdmin
         .from('app_settings')
         .select('key, value, updated_at, updated_by')
-        .in('key', ['scanning_enabled', 'provider_failures', 'scanning_disabled_reason', 'auto_disable_enabled']);
+        .in('key', ['scanning_enabled', 'provider_failures', 'scanning_disabled_reason', 'auto_disable_enabled', 'openrouter_enabled']);
       if (error) {
         return { statusCode: 500, headers, body: JSON.stringify({ error: error.message }) };
       }
@@ -103,6 +103,8 @@ exports.handler = async (event) => {
           lastFailureAt: rows.provider_failures?.value?.lastFailureAt ?? null,
           // Defaults to false — see AUTO_DISABLE_DEFAULT in _lib/appSettings.js.
           autoDisable: rows.auto_disable_enabled?.value === true,
+          // Missing row -> on, same fail-open default as everything else here.
+          openrouterEnabled: rows.openrouter_enabled ? rows.openrouter_enabled.value !== false : true,
         }),
       };
     }
@@ -114,7 +116,7 @@ exports.handler = async (event) => {
       return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid JSON' }) };
     }
 
-    // Checked before `enabled` is required, so the watchdog preference can be
+    // Checked before `enabled` is required, so either preference can be
     // changed on its own without also flipping the main switch.
     if (typeof payload.autoDisable === 'boolean' && payload.enabled === undefined) {
       const { error } = await supabaseAdmin.from('app_settings').upsert(
@@ -125,6 +127,23 @@ exports.handler = async (event) => {
         return { statusCode: 500, headers, body: JSON.stringify({ error: error.message }) };
       }
       return { statusCode: 200, headers, body: JSON.stringify({ ok: true, autoDisable: payload.autoDisable }) };
+    }
+
+    // Skip a known-broken OpenRouter balance and go straight to the direct
+    // Anthropic fallback — faster than paying OpenRouter's timeout on every
+    // scan, and it stops six 402s per scan from burying the real signal in
+    // provider_failures.lastError. Independent of the main scanning switch:
+    // this can be flipped back the moment OpenRouter credits are topped up,
+    // with no redeploy.
+    if (typeof payload.openrouterEnabled === 'boolean' && payload.enabled === undefined) {
+      const { error } = await supabaseAdmin.from('app_settings').upsert(
+        { key: 'openrouter_enabled', value: payload.openrouterEnabled, updated_at: new Date().toISOString(), updated_by: user.id },
+        { onConflict: 'key' },
+      );
+      if (error) {
+        return { statusCode: 500, headers, body: JSON.stringify({ error: error.message }) };
+      }
+      return { statusCode: 200, headers, body: JSON.stringify({ ok: true, openrouterEnabled: payload.openrouterEnabled }) };
     }
 
     if (typeof payload.enabled !== 'boolean') {

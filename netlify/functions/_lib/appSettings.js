@@ -28,12 +28,12 @@ const truthy = (v) => v !== false && v !== 'false';
  * security controls, so a DB hiccup must never take scanning down by itself.
  */
 export async function getScanSettings(supabaseAdmin) {
-  const fallback = { enabled: true, failureCount: 0, disabledReason: null, autoDisable: AUTO_DISABLE_DEFAULT };
+  const fallback = { enabled: true, failureCount: 0, disabledReason: null, autoDisable: AUTO_DISABLE_DEFAULT, openrouterEnabled: true };
   try {
     const { data, error } = await supabaseAdmin
       .from('app_settings')
       .select('key, value')
-      .in('key', ['scanning_enabled', 'provider_failures', 'scanning_disabled_reason', 'auto_disable_enabled']);
+      .in('key', ['scanning_enabled', 'provider_failures', 'scanning_disabled_reason', 'auto_disable_enabled', 'openrouter_enabled']);
 
     if (error) {
       console.warn('getScanSettings: query failed, assuming enabled:', error.message);
@@ -49,6 +49,10 @@ export async function getScanSettings(supabaseAdmin) {
       autoDisable: byKey.auto_disable_enabled === undefined
         ? AUTO_DISABLE_DEFAULT
         : truthy(byKey.auto_disable_enabled),
+      // Lets an admin skip a known-broken OpenRouter balance entirely rather
+      // than paying its 20s timeout on every single scan before falling back
+      // to Anthropic. Missing row -> on, same as every other flag here.
+      openrouterEnabled: byKey.openrouter_enabled === undefined ? true : truthy(byKey.openrouter_enabled),
     };
   } catch (err) {
     console.warn('getScanSettings: unexpected failure, assuming enabled:', err.message);

@@ -118,7 +118,7 @@ export function summariseFailures(failures = []) {
     .join(' | ');
 }
 
-export async function runBrandScan({ supabaseAdmin, target, models, userId }) {
+export async function runBrandScan({ supabaseAdmin, target, models, userId, openrouterEnabled = true }) {
   let parsed = null;
   /** Per-model rejection messages, surfaced to the caller for diagnosis. */
   let failures = [];
@@ -197,7 +197,12 @@ ${brandContext || '(no stored knowledge for this brand)'}
     };
   };
 
-  if (process.env.OPENROUTER_API_KEY) {
+  // Admin-controlled skip (app_settings.openrouter_enabled) — distinct from
+  // the OPENROUTER_API_KEY check below. Used while a known-broken balance
+  // would otherwise cost every scan a 20s timeout x 6 models before falling
+  // through to the Anthropic path anyway; going straight there is both
+  // faster and avoids six recorded 402s per scan cluttering the failure log.
+  if (openrouterEnabled && process.env.OPENROUTER_API_KEY) {
     try {
       const queryModel = async ({ id, label }) => {
         const response = await fetchWithTimeout('https://openrouter.ai/api/v1/chat/completions', {
@@ -274,6 +279,10 @@ ${brandContext || '(no stored knowledge for this brand)'}
   // and using it is the difference between a working product and a paused
   // one. Only reached when OpenRouter produced no result, so a healthy scan
   // never pays for a second provider.
+  if (!parsed && !openrouterEnabled) {
+    failures.push('OpenRouter skipped: disabled by an admin in /admin/settings');
+  }
+
   if (!parsed) {
     if (process.env.ANTHROPIC_API_KEY) {
       try {
