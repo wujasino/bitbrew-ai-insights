@@ -16,24 +16,32 @@ export const CreditsUsageWidget = () => {
 
   const limit = PLAN_LIMITS[plan] ?? 3;
   const unlimited = limit >= 9999;
-  const pct = unlimited ? 100 : Math.min(100, Math.round((used / limit) * 100));
+  // Only meaningful when there's a ceiling to measure against. This used to
+  // be forced to 100 for unlimited plans, which then tripped the >= 90 "red"
+  // branch below — an unlimited plan rendered a full red bar, i.e. the
+  // universal signal for "you're out of credits".
+  const pct = unlimited ? null : Math.min(100, Math.round((used / limit) * 100));
 
   return (
     <div className="w-full max-w-[280px] rounded-xl border border-[hsl(var(--glass-border))] bg-card/60 divide-y divide-[hsl(var(--glass-border))] text-xs">
       {/* Credit usage meter */}
       <div className="px-3 py-2.5">
-        <div className="flex items-center justify-between gap-3 mb-1.5">
-          <span className="text-muted-foreground">Credits used</span>
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-muted-foreground">{unlimited ? 'Analyses this month' : 'Credits used'}</span>
           <span className="font-medium text-foreground font-data whitespace-nowrap">
-            {used} / {unlimited ? '∞' : limit}{!unlimited && ` (${pct}%)`}
+            {unlimited ? `${used} · unlimited` : `${used} / ${limit} (${pct}%)`}
           </span>
         </div>
-        <div className="h-1 rounded-full bg-muted overflow-hidden">
-          <div
-            className={cn('h-full rounded-full transition-[width]', pct >= 90 ? 'bg-red-500' : 'bg-primary')}
-            style={{ width: `${unlimited ? 100 : pct}%` }}
-          />
-        </div>
+        {/* No progress bar on an unlimited plan — a bar against infinity has
+            nothing to fill. */}
+        {!unlimited && (
+          <div className="h-1 rounded-full bg-muted overflow-hidden mt-1.5">
+            <div
+              className={cn('h-full rounded-full transition-[width]', (pct ?? 0) >= 90 ? 'bg-red-500' : 'bg-primary')}
+              style={{ width: `${pct}%` }}
+            />
+          </div>
+        )}
       </div>
 
       {/* Current plan + billing shortcut */}

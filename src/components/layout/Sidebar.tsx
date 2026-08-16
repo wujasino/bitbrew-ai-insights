@@ -13,9 +13,11 @@ interface NavItemProps {
   active: boolean;
   collapsed: boolean;
   onNavigate?: () => void;
+  /** Admin-only destination — rendered in amber so it never reads as product nav. */
+  adminStyle?: boolean;
 }
 
-const NavItem = ({ to, icon: Icon, label, badge, active, collapsed, onNavigate }: NavItemProps) => (
+const NavItem = ({ to, icon: Icon, label, badge, active, collapsed, onNavigate, adminStyle }: NavItemProps) => (
   <Link
     to={to}
     onClick={onNavigate}
@@ -23,9 +25,13 @@ const NavItem = ({ to, icon: Icon, label, badge, active, collapsed, onNavigate }
     className={cn(
       'flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors',
       collapsed ? 'justify-center px-2' : '',
-      active
-        ? 'bg-accent text-foreground font-medium'
-        : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+      adminStyle
+        ? active
+          ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 font-medium'
+          : 'text-amber-600/70 dark:text-amber-400/70 hover:bg-amber-500/10 hover:text-amber-600 dark:hover:text-amber-400'
+        : active
+          ? 'bg-accent text-foreground font-medium'
+          : 'text-muted-foreground hover:bg-accent hover:text-foreground'
     )}
   >
     <Icon className="w-4 h-4 shrink-0" />
@@ -126,10 +132,20 @@ export const Sidebar = ({ collapsed = false, mobileOpen = false, onMobileClose }
 
           {isAdmin && (
             <>
-              <SectionLabel label="Admin" collapsed={effectiveCollapsed} />
-              <NavItem to="/admin/announcements" icon={Megaphone} label="Announcements" active={pathname === '/admin/announcements'} collapsed={effectiveCollapsed} onNavigate={handleNavigate} />
-              <NavItem to="/admin/settings" icon={SlidersHorizontal} label="Users & Scanning" active={pathname === '/admin/settings'} collapsed={effectiveCollapsed} onNavigate={handleNavigate} />
-              <NavItem to="/admin/pricing" icon={Tag} label="Custom Pricing" active={pathname === '/admin/pricing'} collapsed={effectiveCollapsed} onNavigate={handleNavigate} />
+              {/* Visually fenced off from the product nav. These three write
+                  to other people's accounts and to a global scanning switch;
+                  sitting flush against Reports invites a mis-click in
+                  production. */}
+              {!effectiveCollapsed && (
+                <div className="flex items-center gap-2 px-3 pt-4 pb-1">
+                  <p className="text-[10px] uppercase tracking-widest text-amber-500/80 font-semibold">Admin mode</p>
+                  <div className="flex-1 h-px bg-amber-500/20" />
+                </div>
+              )}
+              {effectiveCollapsed && <div className="h-px bg-amber-500/30 mx-2 my-1" />}
+              <NavItem adminStyle to="/admin/announcements" icon={Megaphone} label="Announcements" active={pathname === '/admin/announcements'} collapsed={effectiveCollapsed} onNavigate={handleNavigate} />
+              <NavItem adminStyle to="/admin/settings" icon={SlidersHorizontal} label="Users & Scanning" active={pathname === '/admin/settings'} collapsed={effectiveCollapsed} onNavigate={handleNavigate} />
+              <NavItem adminStyle to="/admin/pricing" icon={Tag} label="Custom Pricing" active={pathname === '/admin/pricing'} collapsed={effectiveCollapsed} onNavigate={handleNavigate} />
             </>
           )}
         </nav>

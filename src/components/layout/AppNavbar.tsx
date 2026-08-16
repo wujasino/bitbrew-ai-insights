@@ -89,6 +89,7 @@ export const AppNavbar = ({ collapsed = false, onToggle, onMobileToggle, chatOpe
         onClick={onToggle}
         className="hidden md:flex items-center justify-center w-8 h-8 rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground transition-colors shrink-0"
         aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
       >
         {collapsed ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
       </button>
@@ -178,7 +179,11 @@ export const AppNavbar = ({ collapsed = false, onToggle, onMobileToggle, chatOpe
             <Popover open={open} onOpenChange={setOpen}>
               <TooltipTrigger asChild>
                 <PopoverTrigger asChild>
-                  <button className="flex items-center gap-2 pl-2 border-l border-border hover:opacity-80 transition-opacity">
+                  <button
+                    className="flex items-center gap-2 pl-2 border-l border-border hover:opacity-80 transition-opacity"
+                    aria-label="Account menu"
+                    title="Account"
+                  >
                     <Avatar className="h-7 w-7 cursor-pointer">
                       <AvatarImage src={userAvatar ?? undefined} />
                       <AvatarFallback className="text-xs bg-primary text-primary-foreground">{initials}</AvatarFallback>

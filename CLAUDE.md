@@ -16,8 +16,9 @@ Decorative/repeating chrome (`.hero`, `.badge`, `.cta-box` gradients in
 `src/index.css`, and `GradientMeshBg`'s hero orbs) was deliberately toned
 down from indigo/violet to neutral graphite — indigo stayed reserved for
 actionable elements: `--primary` (buttons, links, focus rings, the 1/2/3
-step-number circles on Landing) and `.ai-presence-accent` (the "AI
-visibility audit" chromatic hero accent, the one signature moment). Don't
+step-number circles on Landing) and `.ai-presence-accent` (the chromatic
+hero accent, the one signature moment — now on "Find out if it's yours."
+after the hero headline was rewritten to lead with the stake). Don't
 casually re-add indigo tints to background/wash classes; that's undoing an
 intentional "vivid identity in some places, neutral everywhere else" split.
 
@@ -71,6 +72,35 @@ base (light) and `.dark` override — previously they were dark-only since
 the page force-applied `.dark` regardless of the resolved theme.
 `useForceDarkTheme()` was removed when the toggle was added; don't
 re-add hardcoded dark-only colors on Landing without a light pairing.
+
+## Landing-page copy rules
+
+Two claims were deliberately left out of the marketing copy and must not be
+reintroduced casually:
+
+- **No usage numbers.** "X brands scanned this week" was requested and
+  declined: the real figure is single-digit (4 scans in the last 7 days, 14
+  total), so publishing it signals the opposite of traction. The hero trust
+  bar carries product facts (models queried, ~15s) instead — see the "real
+  product facts, not invented usage stats" comment there.
+- **No unbuilt integrations.** The "Powered by leading AI models" strip used
+  to list Slack, HubSpot, Zapier, Google Analytics, Semrush and Notion.
+  Nothing in `netlify/functions` talks to any of them. It now lists the six
+  models `runScan.js` actually queries.
+
+Model tiering is stated in four places and they must agree: `src/lib/plans.ts`
+(authoritative), `AI_MODELS` in `Landing.tsx`, `src/lib/faq.ts`, and the
+JSON-LD in `index.html`. Free = ChatGPT; Starter and Solo add Claude and
+Gemini; Business = all six.
+
+The before/after figures (`BEFORE`/`AFTER` in `Landing.tsx`) are illustrative
+and labelled as such both in the section badge and in a caption under the
+numbers. Don't relabel them as a case study without a real, attributable
+customer.
+
+`contact.presora@gmail.com` is still the live address. A switch to
+`hello@presora.app` is wanted but deferred until that mailbox actually
+receives mail — changing it early loses customer email silently.
 
 ## Wordmark font
 
@@ -209,6 +239,39 @@ has `"files": []` and only project references. Use
 `npx tsc -p tsconfig.app.json --noEmit`. (This is how a missing
 `Label` import slipped into `Onboarding.tsx` earlier.) Three pre-existing
 errors in `ai-prompt-box.tsx` and `cookie-banner-1.tsx` are expected noise.
+
+## Scan integrity (`useBrewing.ts`)
+
+Nine of the first fourteen rows in `analyses` were duplicates — the same
+brand and score written two or three times 0.4-1.8s apart. `startBrewing`
+had no in-flight guard, and three call sites could reach it (the
+`brandFromUrl` effect, the re-scan button, a `setTimeout` retry).
+
+- `inFlight` is a **ref**, not state: two calls in the same tick must not
+  both read a stale `false`. Released in a `finally` (so a failed scan
+  doesn't wedge the hook) and in `reset()`.
+- `canonicalBrandName()` is applied on save; `brandKey()` is the comparison
+  key that makes "presora", "Presora.app" and "https://www.presora.app/" one
+  brand. `brandKey` strips protocol, `www.`, path and TLD.
+- `dedupeAnalyses()` (exported from `HomeHub.tsx`, also used by
+  `Reports.tsx`) collapses the historical duplicates on read — same brand
+  key, same score, within 10s.
+- **Deltas compare against the previous scan of the same brand**, not the
+  previous row. Comparing `analyses[0]` to `analyses[1]` regardless of brand
+  is why one score showed two different deltas on two different days. The
+  sparkline is filtered the same way.
+- The historical duplicates **have been deleted** (5 rows, keeping the
+  earliest of each group; 14 -> 9). Checked first that nothing has a foreign
+  key onto `analyses` and that none of the deleted copies carried an
+  `audit_summary` or `sources`. `dedupeAnalyses()` stays regardless — it is
+  the read-side safety net, and the guard is what prevents new ones.
+- Deleting scans does **not** decrement `profiles.analyses_this_month`; that
+  counter is separate accounting and was intentionally left alone.
+
+Score bands are 75/60 across `HomeHub.tsx` (`barColor`, `bandOf`,
+`scoreColor`) and `AuditReport.tsx`. They were 70/50 on Home, which painted
+a 70 and a 73 the same green as a 95 on the screen whose job is saying what
+to fix first.
 
 ## Locale dictionaries (`src/lib/locales/*.ts`)
 
