@@ -179,6 +179,12 @@ export const BrewingProgress = ({ progress, brandName }: BrewingProgressProps) =
             fill="hsl(240, 4%, 10%)"
             stroke="#8B79F6"
             strokeWidth={1.5}
+            // Explicit `initial` for every animated SVG attribute: without a
+            // starting value framer-motion reads it back off the element, and
+            // on the first frame the attribute isn't set yet — it resolves to
+            // undefined and the browser rejects it ("<circle> attribute r:
+            // Expected length, undefined").
+            initial={{ strokeOpacity: 0.5, r: 32 }}
             animate={{
               strokeOpacity: [0.5, 1, 0.5],
               r: [32, 34, 32],
@@ -197,6 +203,10 @@ export const BrewingProgress = ({ progress, brandName }: BrewingProgressProps) =
                     r={20}
                     fill={m.color}
                     fillOpacity={0.15}
+                    // See the center core above — animated SVG attributes need
+                    // an explicit initial value or framer-motion resolves the
+                    // first frame to undefined.
+                    initial={{ r: 18, fillOpacity: 0.1 }}
                     animate={{ r: [18, 24, 18], fillOpacity: [0.1, 0.25, 0.1] }}
                     transition={{ duration: 2, repeat: Infinity, delay: i * 0.15 }}
                   />
