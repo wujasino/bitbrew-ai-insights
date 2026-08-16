@@ -25,8 +25,10 @@ const TIME_FILTERS = [
   { key: 'all', label: 'All', days: 0 },
 ] as const;
 
+// amber for the middle tier, not text-primary (now graphite, buttons/
+// links only) — the score needs a visually distinct middle tier.
 const scoreColor = (s: number) =>
-  s >= 75 ? 'text-emerald-600 dark:text-emerald-400' : s >= 50 ? 'text-primary' : 'text-red-600 dark:text-red-400';
+  s >= 75 ? 'text-emerald-600 dark:text-emerald-400' : s >= 50 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400';
 
 const formatDate = (iso: string) =>
   new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });

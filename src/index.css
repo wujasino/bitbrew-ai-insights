@@ -14,7 +14,13 @@
     --popover: 0 0% 100%;
     --popover-foreground: 240 40% 10%;
 
-    --primary: 249 70% 58%;
+    /* Buttons/links/focus went from indigo to graphite — matches the new
+       monochrome logo mark. Score-tier "medium" text (previously
+       text-primary in several scoreColor() helpers) was carved out to its
+       own amber color instead of following this change, so 3-tier score
+       displays (emerald/amber/red) don't lose their middle band to gray —
+       see AuditReport.tsx, Reports.tsx, Profile.tsx, HomeHub.tsx. */
+    --primary: 240 10% 16%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 240 15% 92%;
@@ -31,18 +37,18 @@
 
     --border: 240 15% 87%;
     --input: 240 12% 88%;
-    --ring: 249 70% 58%;
+    --ring: 240 10% 16%;
 
     --radius: 0.5rem;
 
     --sidebar-background: 240 20% 96%;
     --sidebar-foreground: 240 15% 30%;
-    --sidebar-primary: 249 70% 58%;
+    --sidebar-primary: 240 10% 16%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 249 100% 94%;
     --sidebar-accent-foreground: 240 40% 10%;
     --sidebar-border: 249 70% 58% / 0.15;
-    --sidebar-ring: 249 70% 58%;
+    --sidebar-ring: 240 10% 16%;
 
     --violet: 249 87% 72%;
     --violet-muted: 249 100% 92%;
@@ -55,8 +61,13 @@
 
   /* ── Dark theme — Presora SaaS dark palette ────────────────────
      #0B0F19 bg · #111827 card · #334155 border · #F8FAFC text
-     #94A3B8 muted · #6366F1 primary / #4F46E5 primary hover
-     #1E293B secondary (login button) ─────────────────────────── */
+     #94A3B8 muted · light graphite primary (buttons/links/focus)
+     #1E293B secondary (login button) ───────────────────────────
+     Primary is a LIGHT graphite here, not dark — a literal graphite/
+     black button would be under 2:1 contrast against this near-black
+     background, same problem the new logo mark had (see CLAUDE.md's
+     Logo mark section). Buttons stay visible; only the hue direction
+     (indigo -> neutral) changed, same as the mark's light/dark swap. */
   .dark {
     --background: 222 39% 7%;
     --foreground: 210 40% 98%;
@@ -67,8 +78,8 @@
     --popover: 221 39% 11%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 239 84% 67%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 220 9% 82%;
+    --primary-foreground: 222 39% 11%;
 
     --secondary: 217 33% 17%;
     --secondary-foreground: 210 40% 98%;
@@ -84,16 +95,16 @@
 
     --border: 215 25% 27%;
     --input: 217 33% 17%;
-    --ring: 239 84% 67%;
+    --ring: 220 9% 82%;
 
     --sidebar-background: 222 39% 6%;
     --sidebar-foreground: 215 20% 65%;
-    --sidebar-primary: 239 84% 67%;
-    --sidebar-primary-foreground: 210 40% 98%;
+    --sidebar-primary: 220 9% 82%;
+    --sidebar-primary-foreground: 222 39% 11%;
     --sidebar-accent: 221 39% 11%;
     --sidebar-accent-foreground: 210 40% 98%;
     --sidebar-border: 215 25% 27%;
-    --sidebar-ring: 239 84% 67%;
+    --sidebar-ring: 220 9% 82%;
 
     --violet: 239 84% 67%;
     --violet-muted: 217 33% 17%;

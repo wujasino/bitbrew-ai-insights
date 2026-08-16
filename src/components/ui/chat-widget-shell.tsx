@@ -147,7 +147,7 @@ export function ChatWidgetShell({
         type="button"
         onClick={() => onOpenChange(!open)}
         whileTap={{ scale: 0.94 }}
-        className="w-12 h-12 rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/25 flex items-center justify-center hover:bg-[#4F46E5] transition-colors"
+        className="w-12 h-12 rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/25 flex items-center justify-center hover:bg-primary/90 transition-colors"
         aria-label={open ? 'Close chat' : 'Open chat'}
       >
         <AnimatePresence mode="wait" initial={false}>
