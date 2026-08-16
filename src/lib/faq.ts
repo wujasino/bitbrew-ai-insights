@@ -14,7 +14,7 @@ export const FAQ_EN: FaqItem[] = [
   },
   {
     q: 'Which AI assistants do you check?',
-    a: 'The free plan checks ChatGPT. Solo adds Claude and Gemini. Growth checks all six, including Perplexity. Larger companies can ask us to add their own.',
+    a: 'The free plan checks ChatGPT. Starter and Solo add Claude and Gemini. Business checks all six, including Perplexity. Larger companies can ask us to add their own.',
   },
   {
     q: 'How long does it take?',

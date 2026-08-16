@@ -11,19 +11,27 @@ import { CookiePanel } from '@/components/ui/cookie-banner-1';
 import { SalesChatWidget } from '@/components/ui/sales-chat-widget';
 import { NewsletterSignup } from '@/components/ui/newsletter-signup';
 import { GradientMeshBg } from '@/components/ui/gradient-mesh-bg';
-import { ContactForm } from '@/components/ui/contact-form';
 import { FAQ_EN } from '@/lib/faq';
 import { PricingCards } from '@/components/ui/pricing-cards';
 import { PLANS } from '@/lib/plans';
 
-/* ── Integration logos (text-based, gray) ─────────────────────────── */
-const INTEGRATIONS = [
-  { name: 'Slack', color: '#611f69' },
-  { name: 'HubSpot', color: '#ff7a59' },
-  { name: 'Zapier', color: '#ff4a00' },
-  { name: 'Google Analytics', color: '#e37400' },
-  { name: 'Semrush', color: '#ff642d' },
-  { name: 'Notion', color: '#000' },
+/* ── AI models actually queried ────────────────────────────────────
+   Mirrors OPENROUTER_MODELS in netlify/functions/_lib/runScan.js — these
+   are the six models a scan really hits, in tier order.
+
+   This block used to list Slack, HubSpot, Zapier, Google Analytics, Semrush
+   and Notion under the heading "Powered by leading AI models". None of them
+   are AI models, and none of them are integrations that exist: nothing in
+   netlify/functions talks to any of those services. Promising integrations
+   that aren't built is the most expensive kind of copy to be caught on, so
+   the logos are gone rather than relabelled. */
+const AI_MODELS = [
+  { name: 'ChatGPT (GPT-4o)', vendor: 'OpenAI', color: '#10a37f', tier: 'All plans' },
+  { name: 'Claude', vendor: 'Anthropic', color: '#d97757', tier: 'Starter and up' },
+  { name: 'Gemini', vendor: 'Google', color: '#4285f4', tier: 'Starter and up' },
+  { name: 'Perplexity', vendor: 'Perplexity AI', color: '#20808d', tier: 'Business' },
+  { name: 'Mistral', vendor: 'Mistral AI', color: '#ff7000', tier: 'Business' },
+  { name: 'Llama 3', vendor: 'Meta', color: '#0866ff', tier: 'Business' },
 ];
 
 /* ── Before / After data ──────────────────────────────────────────── */
@@ -92,13 +100,19 @@ const Landing = () => {
                 <Search className="w-3 h-3" /> For brands that want to be found
               </span>
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-display text-zinc-900 dark:text-zinc-50 mb-5 leading-[1.1]">
-                Get your brand's{' '}
-                <span className="ai-presence-accent" data-text="AI visibility audit">
-                  <span className="ai-presence-accent-text">AI visibility audit</span>
+                AI recommends one brand.{' '}
+                <span className="ai-presence-accent" data-text="Find out if it's yours.">
+                  <span className="ai-presence-accent-text">Find out if it's yours.</span>
                 </span>
               </h1>
-              <p className="text-lg text-muted-foreground max-w-lg mx-auto mb-10">
-                Find out what AI assistants say about your brand, how you compare to rivals — and get a clear plan to become the answer they give.
+              <p className="text-lg text-muted-foreground max-w-xl mx-auto mb-4">
+                Get your brand's AI visibility audit — what ChatGPT, Claude and Gemini
+                actually say about you, how you compare to rivals, and a clear plan to
+                become the answer they give.
+              </p>
+              <p className="text-sm text-foreground/70 max-w-xl mx-auto mb-10">
+                The only AI visibility tool that shows you{' '}
+                <span className="text-foreground font-medium">the actual answer, not just a number.</span>
               </p>
             </motion.div>
 
@@ -116,14 +130,35 @@ const Landing = () => {
               />
             </motion.div>
 
-            <motion.p
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.4 }}
-              className="text-xs text-muted-foreground/70 mt-3"
+              className="mt-4"
             >
-              Free analysis, ~15 seconds. No credit card required.
-            </motion.p>
+              <button
+                onClick={() => document.getElementById('sample-report')?.scrollIntoView({ behavior: 'smooth' })}
+                className="text-sm text-primary hover:underline inline-flex items-center gap-1.5"
+              >
+                Or see a sample report first <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+
+              {/* Risk reversal, at the point of decision. These three used to
+                  live only in the closing CTA at the very bottom of the page —
+                  i.e. after the visitor had already decided. */}
+              <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 mt-5 text-xs text-muted-foreground">
+                {[
+                  { icon: Zap, label: 'Free — no credit card' },
+                  { icon: ShieldCheck, label: '14-day money-back guarantee' },
+                  { icon: Clock, label: 'Cancel anytime, one click' },
+                ].map((g) => (
+                  <span key={g.label} className="inline-flex items-center gap-1.5">
+                    <g.icon className="w-3.5 h-3.5 text-primary" />
+                    {g.label}
+                  </span>
+                ))}
+              </div>
+            </motion.div>
 
             {/* scroll hint */}
             <motion.button
@@ -168,8 +203,8 @@ const Landing = () => {
                   <Sparkles className="w-4 h-4 text-primary" />
                 </div>
                 <div className="text-left">
-                  <div className="text-sm font-semibold text-foreground leading-tight">3 AI models</div>
-                  <div className="text-[11px] text-muted-foreground leading-tight">ChatGPT, Claude & Gemini asked every scan</div>
+                  <div className="text-sm font-semibold text-foreground leading-tight">Up to 6 AI models</div>
+                  <div className="text-[11px] text-muted-foreground leading-tight">ChatGPT, Claude &amp; Gemini — plus 3 more on Business</div>
                 </div>
               </div>
 
@@ -394,13 +429,14 @@ const Landing = () => {
             className="text-center mb-12"
           >
             <span className="inline-block px-3 py-1 text-xs badge rounded-lg mb-4 font-data uppercase tracking-wider">
-              Case study
+              Illustrative example
             </span>
             <h2 className="text-3xl sm:text-4xl font-display text-foreground mb-3">
-              Before and after Presora
+              What improving AI visibility looks like
             </h2>
             <p className="text-sm text-muted-foreground max-w-lg mx-auto">
-              See the difference brand optimization makes in AI model responses.
+              A worked example of the numbers this report tracks, and how they move
+              once a brand acts on its recommendations.
             </p>
           </motion.div>
 
@@ -473,6 +509,14 @@ const Landing = () => {
               <div className="absolute -bottom-6 -right-6 w-32 h-32 rounded-full bg-primary/10 blur-2xl pointer-events-none" />
             </div>
           </motion.div>
+
+          {/* Said plainly next to the numbers, not just in the badge above:
+              unattributed before/after figures read as invented and cost more
+              credibility than they buy. */}
+          <p className="text-center text-xs text-muted-foreground/70 mt-6 max-w-xl mx-auto">
+            Illustrative figures showing how these metrics relate, not results from a
+            named customer. Your own numbers come from a real scan — run one above.
+          </p>
         </div>
       </section>
 
@@ -648,8 +692,11 @@ const Landing = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <h3 className="text-lg font-display text-foreground mb-1">Powered by leading AI models</h3>
-            <p className="text-sm text-muted-foreground mb-8">We analyze your brand across the AI models your customers actually use.</p>
+            <h3 className="text-lg font-display text-foreground mb-1">The AI models we query</h3>
+            <p className="text-sm text-muted-foreground mb-8">
+              Every scan asks these models the same questions about your brand, at the same time.
+              Free covers ChatGPT; Starter and Solo add Claude and Gemini; Business unlocks all six.
+            </p>
           </motion.div>
 
           <motion.div
@@ -659,24 +706,98 @@ const Landing = () => {
             transition={{ delay: 0.1 }}
             className="flex flex-wrap items-center justify-center gap-3"
           >
-            {INTEGRATIONS.map((intg) => (
+            {AI_MODELS.map((m) => (
               <div
-                key={intg.name}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[hsl(var(--glass-border))] bg-card/50 text-sm text-muted-foreground hover:text-foreground hover:border-primary/30 transition-colors"
+                key={m.name}
+                className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl border border-[hsl(var(--glass-border))] bg-card/50 text-sm text-muted-foreground hover:text-foreground hover:border-primary/30 transition-colors"
               >
                 <span
                   className="w-2 h-2 rounded-full shrink-0"
-                  style={{ backgroundColor: intg.color, opacity: 0.7 }}
+                  style={{ backgroundColor: m.color }}
                 />
-                {intg.name}
+                <span className="text-foreground">{m.name}</span>
+                <span className="text-[11px] text-muted-foreground/60">{m.tier}</span>
               </div>
             ))}
-            <Link
-              to="/developers"
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-dashed border-primary/30 text-sm text-primary/60 hover:text-primary hover:border-primary/60 transition-colors"
-            >
-              + more via API →
-            </Link>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ── Chat-based setup ──────────────────────────────────────────
+          Was buried as a single row in the comparison table below ("Set up
+          monitoring by chatting, not forms") despite being the clearest thing
+          Presora does that competitors don't. It's a real feature, not a
+          roadmap item: /automations posts to netlify/functions/chat.js, which
+          writes the schedule and model selection into brand_monitors. */}
+      <section className="py-24 px-4 border-t border-[hsl(var(--glass-border))]">
+        <div className="max-w-5xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-10"
+          >
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs badge rounded-lg mb-4 font-data uppercase tracking-wider">
+              <MessageSquare className="w-3 h-3" /> No forms
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-display text-foreground mb-3">
+              Set up monitoring by just saying it
+            </h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              No settings screens, no cron syntax, no checkbox matrix. Describe what you
+              want watched in a sentence and Presora sets it up.
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+            className="grid md:grid-cols-2 gap-4 items-start"
+          >
+            {/* Mock exchange — the shape of a real /automations conversation */}
+            <div className="rounded-2xl border border-[hsl(var(--glass-border))] bg-card/60 backdrop-blur-xl p-5 space-y-3">
+              <div className="flex justify-end">
+                <div className="max-w-[85%] rounded-2xl rounded-br-sm bg-primary text-primary-foreground px-4 py-2.5 text-sm">
+                  Watch my brand weekly on ChatGPT and Claude, and tell me if my score drops
+                </div>
+              </div>
+              <div className="flex justify-start">
+                <div className="max-w-[85%] rounded-2xl rounded-bl-sm bg-muted/60 text-foreground px-4 py-2.5 text-sm">
+                  Done. Scanning every Monday across ChatGPT and Claude — you'll get an
+                  alert if the score falls more than 5 points.
+                </div>
+              </div>
+              <div className="flex items-center gap-2 pt-1 text-xs text-muted-foreground">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                Monitor active · next scan Monday
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {[
+                { Icon: Clock, title: 'Any schedule, in plain words', desc: '“every Monday”, “twice a month”, “first of the quarter” — no cron, no dropdowns.' },
+                { Icon: Sparkles, title: 'Pick models by naming them', desc: 'Say which assistants matter to you and only those get queried.' },
+                { Icon: TrendingUp, title: 'Alerts you describe, not configure', desc: 'Tell it what counts as bad news and it watches for exactly that.' },
+              ].map(({ Icon, title, desc }) => (
+                <div key={title} className="flex items-start gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+                    <Icon className="w-4 h-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">{title}</p>
+                    <p className="text-sm text-muted-foreground leading-relaxed mt-0.5">{desc}</p>
+                  </div>
+                </div>
+              ))}
+              <Link
+                to="/automations"
+                className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline pt-1"
+              >
+                See how automations work <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
           </motion.div>
         </div>
       </section>
@@ -772,7 +893,7 @@ const Landing = () => {
               Built to be trusted with your brand data
             </h2>
             <p className="text-sm text-muted-foreground max-w-lg mx-auto">
-              No case studies to show yet — here's exactly how your data is handled instead.
+              Early-stage product, built security-first. Here's exactly how your data is handled.
             </p>
           </motion.div>
 
@@ -870,14 +991,32 @@ const Landing = () => {
             <h2 className="text-3xl sm:text-4xl font-display text-foreground">
               Get in touch
             </h2>
+            <p className="text-sm text-muted-foreground mt-3 max-w-md mx-auto">
+              Questions about plans, agencies or the API? We reply to everything.
+            </p>
           </motion.div>
+          {/* A 4000-character message box mid-landing interrupted the flow for
+              the 99% who came to scan, not to write. The form itself lives on
+              /contact — this is just the doorway. */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
+            className="flex flex-col sm:flex-row items-center justify-center gap-3"
           >
-            <ContactForm />
+            <Link
+              to="/contact"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
+            >
+              Send us a message <ArrowRight className="w-4 h-4" />
+            </Link>
+            <a
+              href="mailto:contact.presora@gmail.com"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-border text-foreground text-sm font-medium hover:bg-accent transition-colors"
+            >
+              <Mail className="w-4 h-4" /> contact.presora@gmail.com
+            </a>
           </motion.div>
         </div>
       </section>
@@ -948,7 +1087,7 @@ const Landing = () => {
               Frequently asked questions
             </h2>
             <p className="text-muted-foreground text-sm mt-3 max-w-lg mx-auto">
-              Everything you need to know before your first brew.
+              Everything you need to know before your first scan.
             </p>
           </motion.div>
 

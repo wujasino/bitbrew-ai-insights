@@ -7,6 +7,9 @@ interface BrandScanInputProps {
   placeholder?: string;
   suggestions?: string[];
   className?: string;
+  /** Outcome-worded submit label. "Scan" describes the mechanism; the default
+   *  here names what the visitor gets, which is what the button is for. */
+  submitLabel?: string;
 }
 
 /**
@@ -19,6 +22,7 @@ export const BrandScanInput = ({
   placeholder = 'yourbrand.com',
   suggestions = [],
   className,
+  submitLabel = 'See my AI score',
 }: BrandScanInputProps) => {
   const [value, setValue] = useState('');
 
@@ -52,7 +56,7 @@ export const BrandScanInput = ({
           className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-5 py-3 rounded-xl text-sm font-semibold shadow-md shadow-primary/30 hover:shadow-lg hover:shadow-primary/40 hover:scale-[1.03] active:scale-[0.98] transition-all whitespace-nowrap"
         >
           <Sparkles className="w-4 h-4" />
-          <span>Scan</span>
+          <span>{submitLabel}</span>
           <ArrowRight className="w-4 h-4 hidden sm:inline" />
         </button>
       </form>
