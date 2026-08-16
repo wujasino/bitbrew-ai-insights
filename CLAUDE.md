@@ -164,7 +164,11 @@ column to `profiles` without adding it to that trigger too.
 The Agency-plan deliverable agencies mail to their own clients as a PDF, so
 it has to stand on its own without the reader ever seeing Presora.
 
-- **White-label** (migration `20240135`): `profiles.agency_{name,logo_url,
+- **White-label** (migration `20240135`, applied to the live DB): verified
+  under an `authenticated` JWT that an owner can write their own branding,
+  that another user's row returns 0 rows (RLS), that `credits` in the *same*
+  UPDATE still raises `Cannot change credits directly`, and that the 60-char
+  `agency_name_length` CHECK fires. `profiles.agency_{name,logo_url,
   contact_email,website}` drive the letterhead, the "Prepared by" line and
   the closing CTA. Edited under Settings → **Audit branding** (Agency-gated
   tab), read by `useAuditBranding.ts`. Without it a forwarded PDF sent the
