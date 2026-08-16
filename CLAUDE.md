@@ -166,8 +166,17 @@ column to `profiles` without adding it to that trigger too.
   in Playwright/Chromium. If a webfont looks wrong in a screenshot, don't
   assume proxy flakiness — check for a stale/corrupted cached font file in
   `/tmp` first (re-`curl` it fresh) before suspecting the network.
-- Supabase MCP tools are read-only here; schema/data changes need SQL run
-  manually by the user via the Supabase Dashboard SQL editor.
+- Supabase MCP has **write** access (verified: `apply_migration` applied
+  20240133/20240134 successfully). It's been read-only in some earlier
+  sessions when the connector wasn't authorised — if `list_tables` errors,
+  fall back to handing the user SQL for the Dashboard editor, but try
+  first rather than assuming.
+- Useful pattern for proving an RLS/trigger hole before and after a fix:
+  `BEGIN; SET LOCAL request.jwt.claims = '{"sub":"...","role":"authenticated"}';
+  <attack>; ROLLBACK;`. Note `auth.role()` reads the **JWT claim**, not the
+  Postgres session role — `SET LOCAL ROLE service_role` alone won't make
+  `auth.role()` return `service_role`, and a leftover claim from an earlier
+  statement in the same transaction will silently skew the next test.
 - GitHub PR for this branch has been merged mid-session more than once —
   always check `git log origin/main` before pushing; if merged, restart
   from `origin/main` and cherry-pick any unmerged commits back on top.
