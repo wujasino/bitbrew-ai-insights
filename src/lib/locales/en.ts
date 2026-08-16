@@ -28,7 +28,7 @@ const dict: Record<string, string> = {
     faq_q6: 'Do you offer an API and webhooks?',
     faq_a6: 'Yes. Generate API keys from the Developers panel and integrate via REST. Webhooks deliver events (analysis.completed, sentiment.dropped, score.changed) to your endpoint in real time. Full OpenAPI spec in the docs.',
     faq_q7: 'How is my data handled?',
-    faq_a7: 'Brand context you upload stays in your private workspace. We never train models on your data and never share inputs beyond the AI providers required to run an analysis. SOC 2 aligned, full GDPR compliance.',
+    faq_a7: 'Brand context you upload stays in your private workspace. We never train models on your data and never share inputs beyond the AI providers required to run an analysis. Fully GDPR compliant.',
     faq_q8: 'Can I cancel anytime?',
     faq_a8: 'Yes — no contracts, no lock-in. Cancel in one click from Settings and your access continues until the end of the billing period.',
     trustedBy: 'First 3 analyses free —',
