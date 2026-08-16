@@ -162,6 +162,22 @@ touch it.
 - In `analyze.js` the check sits *before* the guest-limit RPC on purpose, so
   a paused scanner never burns a visitor's free allowance. Verified: with
   the flag off, zero OpenRouter calls and the guest counter untouched.
+- **`openrouter_enabled`** (checkbox in `/admin/settings`, independent of the
+  main switch) — skips OpenRouter entirely and goes straight to the direct
+  Anthropic fallback in `runScan.js`. Added while OpenRouter's balance was
+  empty: without it, every scan still paid OpenRouter's ~20s timeout across
+  6 models before falling through anyway, and recorded six 402s per scan in
+  `provider_failures.lastError`, burying the signal. Flip back on the moment
+  OpenRouter is topped up — no redeploy, it's a stored flag like the others.
+  **Only helps if `ANTHROPIC_API_KEY` is actually valid on this deploy** —
+  it does not create a working provider, it just stops wasting time on a
+  known-broken one.
+- **Auto-pause is OFF by default** (`auto_disable_enabled`, checkbox in
+  `/admin/settings`). Changed on the owner's explicit instruction: with an
+  outage that lasts — an unpaid balance rather than a blip — auto-pausing
+  turned every scan into "temporarily paused" and only an admin could undo
+  it. Failures are still counted and recorded; the flag only controls whether
+  the switch flips by itself. Turning it back on is one checkbox.
 - **Watchdog**: `recordScanOutcome()` counts consecutive all-models-failed
   scans in `provider_failures` and flips `scanning_enabled` off at
   `AUTO_DISABLE_THRESHOLD` (3), recording why in `scanning_disabled_reason`
@@ -209,6 +225,59 @@ Note the sandbox proxy blocks `openrouter.ai`, and `OPENROUTER_API_KEY` only
 exists in Netlify's environment, so the provider cannot be tested from here —
 read the recorded `lastError` instead of guessing.
 
+## Provider redundancy in `runBrandScan()`
+
+OpenRouter was a single point of failure with a single balance: when its
+credits ran out every model returned 402 and brand scanning — the product —
+stopped, with nothing in the code able to help.
+
+`runBrandScan()` now falls back to **Anthropic directly**
+(`api.anthropic.com/v1/messages`, `ANTHROPIC_API_KEY`, already used by
+`generate-audit-summary.js`, `assistant.js` and `chat.js`) whenever
+OpenRouter produced no result at all — including when `OPENROUTER_API_KEY`
+is absent entirely, which is why the fallback sits *outside* that key's
+branch. Same prompt, same JSON contract, so it's a genuine scan from one
+model rather than a degraded one. `usedFallbackProvider: true` marks it.
+
+It only runs when OpenRouter returned nothing, so a healthy scan never pays
+for a second provider, and a partial OpenRouter result is left alone.
+
+Verified across the matrix: OpenRouter OK / OpenRouter 402 + Anthropic OK /
+OpenRouter 402 with no Anthropic key / both 402 / no OpenRouter key at all.
+Only the cases where *every* provider fails still produce `isFallback`.
+
+The watchdog stays — but it can now only trip when every provider is down,
+which is a real outage rather than one vendor's billing.
+
+## A missing report must say so
+
+`loadStoredAnalysis()` used to answer a failed lookup with a silent
+`setStatus('idle')`. With `?id=` in the URL the page then rendered 24
+characters — "Back / AI Audit / Analyze" — no message, no way back. Opening a
+report that had been deleted (or belonged to another account; RLS makes those
+indistinguishable, deliberately) looked exactly like the app being broken.
+
+It now sets `notFound` plus an explanatory error, and `Dashboard` renders it
+with the same neutral treatment as the paused state — clock icon, no "Try
+again" (retrying cannot help), and links to Reports and Home.
+
+Worth remembering after any cleanup of `analyses`: deleting rows invalidates
+every bookmark and history entry pointing at them.
+
+## Which provider keys are actually configured
+
+A quick, non-invasive check without access to the Netlify environment: the
+stored `audit_summary` headlines. `generate-audit-summary.js` only falls back
+to `deterministicSummary()` when `ANTHROPIC_API_KEY` is unset, and that
+template always reads `"<brand>'s AI visibility is <tier> — trust score
+<n>/100"`. Every stored summary matching that shape means the key is missing,
+not that Claude wrote a dull headline.
+
+Confirmed that way on 2026-08-16: **ANTHROPIC_API_KEY is not set on the
+deploy**, which is also why the direct-Anthropic scan fallback never ran —
+`runBrandScan` now records "No fallback provider: ANTHROPIC_API_KEY is not
+set on this deploy" instead of skipping it in silence.
+
 ## Read-only mode when scanning is paused
 
 `netlify/functions/scan-status.js` is a **public** GET returning only
@@ -233,6 +302,25 @@ read-only rather than looking broken.
 model fails, `analyze.js` errors rather than showing fabricated scores; that
 is the point of the `isFallback` check and must not be relaxed to "keep the
 product usable" during an outage.
+
+## `app_settings.value` is `jsonb NOT NULL`
+
+Never write JS `null` to it — PostgREST turns that into SQL NULL and the
+insert fails with `23502`. "No value" is expressed by **deleting the row**;
+`getScanSettings()` and `toggle-scanning`'s GET both read a missing key as
+`null`, and rows still holding the seeded JSON `null` read the same way.
+
+This bit once, silently: `toggle-scanning` wrote the counter reset and
+`scanning_disabled_reason: null` as **one array upsert** whose result was
+never checked. Enabling scanning therefore left `provider_failures.count`
+at 3, so the next failed scan immediately re-tripped the threshold and
+switched scanning back off — the exact flapping the watchdog exists to
+prevent. `/admin/settings` hid it further by setting the counter to 0
+optimistically instead of trusting the response.
+
+Found in `edge_logs`: `POST | 400 | .../rest/v1/app_settings?on_conflict=key`.
+Worth grepping those logs for non-2xx after touching any Function — a
+swallowed PostgREST error is invisible everywhere else.
 
 ## Admin account management
 

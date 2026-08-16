@@ -401,6 +401,7 @@ export const handler = async (event) => {
       target,
       models: modelsToQuery,
       userId: authedUser?.id || null,
+      openrouterEnabled: scanSettings.openrouterEnabled,
     });
 
     // A fallback result is fabricated (deterministic, not from any real
@@ -419,6 +420,7 @@ export const handler = async (event) => {
         ok: false,
         knownFailureCount: scanSettings.failureCount,
         error: reason,
+        autoDisable: scanSettings.autoDisable,
       });
       // Once the watchdog trips, tell this caller it's paused rather than
       // handing them a generic failure — they'd otherwise be the one user
@@ -429,7 +431,21 @@ export const handler = async (event) => {
           scansDisabled: true,
         });
       }
-      throw new Error(reason);
+      // Distinct from a transient scan failure: no provider could serve this
+      // request at all, so "try again" is advice that cannot work. The flag
+      // carries that to the UI; the reason itself stays server-side, since it
+      // quotes the provider's billing messages.
+      return jsonResponse(503, {
+        error: 'Scanning is unavailable right now. This is on our side, not yours.',
+        providerUnavailable: true,
+      });
+    }
+
+    // A scan that only completed because the direct-provider fallback ran is
+    // still a successful scan for the user, but it means the primary provider
+    // is down — worth a log line, not a failure count.
+    if (result?.usedFallbackProvider) {
+      console.warn(`analyze: OpenRouter unavailable, "${target}" served by the direct-provider fallback.`);
     }
 
     // Clears a partial streak so unrelated flaky moments don't accumulate

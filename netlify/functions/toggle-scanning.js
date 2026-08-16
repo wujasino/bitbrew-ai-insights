@@ -76,7 +76,7 @@ exports.handler = async (event) => {
       const { data, error } = await supabaseAdmin
         .from('app_settings')
         .select('key, value, updated_at, updated_by')
-        .in('key', ['scanning_enabled', 'provider_failures', 'scanning_disabled_reason']);
+        .in('key', ['scanning_enabled', 'provider_failures', 'scanning_disabled_reason', 'auto_disable_enabled', 'openrouter_enabled']);
       if (error) {
         return { statusCode: 500, headers, body: JSON.stringify({ error: error.message }) };
       }
@@ -101,6 +101,10 @@ exports.handler = async (event) => {
           // nothing about the cause.
           lastError: rows.provider_failures?.value?.lastError ?? null,
           lastFailureAt: rows.provider_failures?.value?.lastFailureAt ?? null,
+          // Defaults to false — see AUTO_DISABLE_DEFAULT in _lib/appSettings.js.
+          autoDisable: rows.auto_disable_enabled?.value === true,
+          // Missing row -> on, same fail-open default as everything else here.
+          openrouterEnabled: rows.openrouter_enabled ? rows.openrouter_enabled.value !== false : true,
         }),
       };
     }
@@ -110,6 +114,36 @@ exports.handler = async (event) => {
       payload = JSON.parse(event.body || '{}');
     } catch {
       return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid JSON' }) };
+    }
+
+    // Checked before `enabled` is required, so either preference can be
+    // changed on its own without also flipping the main switch.
+    if (typeof payload.autoDisable === 'boolean' && payload.enabled === undefined) {
+      const { error } = await supabaseAdmin.from('app_settings').upsert(
+        { key: 'auto_disable_enabled', value: payload.autoDisable, updated_at: new Date().toISOString(), updated_by: user.id },
+        { onConflict: 'key' },
+      );
+      if (error) {
+        return { statusCode: 500, headers, body: JSON.stringify({ error: error.message }) };
+      }
+      return { statusCode: 200, headers, body: JSON.stringify({ ok: true, autoDisable: payload.autoDisable }) };
+    }
+
+    // Skip a known-broken OpenRouter balance and go straight to the direct
+    // Anthropic fallback — faster than paying OpenRouter's timeout on every
+    // scan, and it stops six 402s per scan from burying the real signal in
+    // provider_failures.lastError. Independent of the main scanning switch:
+    // this can be flipped back the moment OpenRouter credits are topped up,
+    // with no redeploy.
+    if (typeof payload.openrouterEnabled === 'boolean' && payload.enabled === undefined) {
+      const { error } = await supabaseAdmin.from('app_settings').upsert(
+        { key: 'openrouter_enabled', value: payload.openrouterEnabled, updated_at: new Date().toISOString(), updated_by: user.id },
+        { onConflict: 'key' },
+      );
+      if (error) {
+        return { statusCode: 500, headers, body: JSON.stringify({ error: error.message }) };
+      }
+      return { statusCode: 200, headers, body: JSON.stringify({ ok: true, openrouterEnabled: payload.openrouterEnabled }) };
     }
 
     if (typeof payload.enabled !== 'boolean') {
@@ -132,14 +166,51 @@ exports.handler = async (event) => {
     // Turning it back on clears the watchdog's streak, otherwise the very
     // next failure would immediately re-trip the threshold. Also records who
     // last flipped it, so the UI can distinguish manual from automatic.
-    await supabaseAdmin.from('app_settings').upsert([
-      { key: 'provider_failures', value: { count: 0 }, updated_at: new Date().toISOString() },
-      {
-        key: 'scanning_disabled_reason',
-        value: payload.enabled ? null : { source: 'manual', at: new Date().toISOString(), by: user.id },
-        updated_at: new Date().toISOString(),
-      },
-    ], { onConflict: 'key' });
+    //
+    // These were one array upsert that also wrote `value: null` for the
+    // reason when enabling. app_settings.value is `jsonb NOT NULL`, so
+    // PostgREST rejected the whole batch with 400 (23502) — and the result
+    // was never checked, so it failed silently. The visible effect: clicking
+    // "Enable scanning" left provider_failures.count at 3, so the very next
+    // failed scan re-tripped the threshold and switched scanning straight
+    // back off. Exactly the flapping the watchdog exists to avoid.
+    //
+    // Split in two, and "no reason" is now the absence of the row rather
+    // than a null in a NOT NULL column — both readers (getScanSettings and
+    // this function's own GET) already treat a missing key as null.
+    const { error: counterError } = await supabaseAdmin
+      .from('app_settings')
+      .upsert(
+        { key: 'provider_failures', value: { count: 0 }, updated_at: new Date().toISOString() },
+        { onConflict: 'key' },
+      );
+
+    const { error: reasonError } = payload.enabled
+      ? await supabaseAdmin.from('app_settings').delete().eq('key', 'scanning_disabled_reason')
+      : await supabaseAdmin.from('app_settings').upsert(
+          {
+            key: 'scanning_disabled_reason',
+            value: { source: 'manual', at: new Date().toISOString(), by: user.id },
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'key' },
+        );
+
+    // Reported, not swallowed: the switch itself already flipped, but an
+    // admin needs to know the streak wasn't cleared — otherwise scanning
+    // looks like it turns itself off again for no reason.
+    if (counterError || reasonError) {
+      console.error('toggle-scanning: bookkeeping failed:', counterError?.message, reasonError?.message);
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({
+          ok: true,
+          enabled: payload.enabled,
+          warning: `Scanning was ${payload.enabled ? 'enabled' : 'disabled'}, but the failure counter could not be reset: ${counterError?.message || reasonError?.message}`,
+        }),
+      };
+    }
 
     console.log(`toggle-scanning: scanning ${payload.enabled ? 'ENABLED' : 'DISABLED'} by ${user.id}`);
     return { statusCode: 200, headers, body: JSON.stringify({ ok: true, enabled: payload.enabled }) };

@@ -81,6 +81,14 @@ export function useBrewing() {
   // analyze.js) — a maintenance state, not a failure, so the UI can say so
   // calmly instead of showing the red "something went wrong" treatment.
   const [scansDisabled, setScansDisabled] = useState(false);
+  // A report id that no longer resolves — deleted, or belonging to another
+  // account (RLS makes those indistinguishable, and deliberately so).
+  // Retrying can't help, so the UI needs to tell them apart from a failed
+  // scan.
+  const [notFound, setNotFound] = useState(false);
+  // Every model provider refused the request (no credits, no key, outage).
+  // Retrying cannot help, so the UI must not offer it.
+  const [providerUnavailable, setProviderUnavailable] = useState(false);
 
   const startBrewing = useCallback(async (rawBrandName: string) => {
     if (inFlight.current) return;
@@ -95,6 +103,7 @@ export function useBrewing() {
     setResult(null);
     setError(null);
     setScansDisabled(false);
+    setProviderUnavailable(false);
 
     let current = 0;
     const interval = setInterval(() => {
@@ -127,6 +136,13 @@ export function useBrewing() {
         if (data?.guestLimitReached) {
           setGuestLimitReached(true);
           setStatus('idle');
+          setProgress(0);
+          return;
+        }
+        if (data?.providerUnavailable) {
+          setProviderUnavailable(true);
+          setError(data?.error || 'Scanning is unavailable right now.');
+          setStatus('error');
           setProgress(0);
           return;
         }
@@ -342,6 +358,8 @@ export function useBrewing() {
     setResult(null);
     setError(null);
     setScansDisabled(false);
+    setNotFound(false);
+    setProviderUnavailable(false);
   }, []);
 
   const loadStoredAnalysis = useCallback(async (id: string) => {
@@ -349,14 +367,21 @@ export function useBrewing() {
     // report, not a live AI scan, so it shouldn't show the model-scanning
     // animation built for the latter.
     setStatus('loading');
+    setNotFound(false);
+    setError(null);
     const { data, error } = await supabase
       .from('analyses')
       .select('*')
       .eq('id', id)
       .single();
     if (error || !data) {
+      // Was a silent `setStatus('idle')`, which rendered an all-but-empty
+      // page: no message, no explanation, no way back. Opening a report that
+      // had been deleted looked exactly like the app being broken.
       console.error('Failed to load analysis', error);
-      setStatus('idle');
+      setNotFound(true);
+      setError("This report doesn't exist any more, or it belongs to another account.");
+      setStatus('error');
       setProgress(0);
       return null;
     }
@@ -378,5 +403,5 @@ export function useBrewing() {
     return view;
   }, []);
 
-  return { progress, status, result, startBrewing, reset, loadStoredAnalysis, guestLimitReached, error, scansDisabled };
+  return { progress, status, result, startBrewing, reset, loadStoredAnalysis, guestLimitReached, error, scansDisabled, notFound, providerUnavailable };
 }
