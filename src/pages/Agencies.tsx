@@ -21,7 +21,7 @@ const STEPS = [
   {
     Icon: Printer,
     title: '3. Brand it and send',
-    desc: 'Set your logo and contact details once in Settings — every audit carries them from then on. Print to PDF and attach it to your outreach email, or the proposal you\'re already sending.',
+    desc: 'Set your logo and contact details once under Tools → Audit Branding — every audit carries them from then on. Print to PDF and attach it to your outreach email, or the proposal you\'re already sending.',
   },
 ];
 

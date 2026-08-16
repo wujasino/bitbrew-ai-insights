@@ -195,7 +195,7 @@ const AuditReport = () => {
         </Link>
         <div className="flex items-center gap-3">
           {!branding.isWhiteLabeled && (
-            <Link to="/settings?tab=branding" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+            <Link to="/audit-branding" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
               Add your own branding
             </Link>
           )}

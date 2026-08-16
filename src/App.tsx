@@ -33,6 +33,7 @@ const Terms          = lazy(() => import("./pages/Terms"));
 const NewsletterTerms = lazy(() => import("./pages/NewsletterTerms"));
 const Settings       = lazy(() => import("./pages/Settings"));
 const Reports        = lazy(() => import("./pages/Reports"));
+const AuditBranding  = lazy(() => import("./pages/AuditBranding"));
 const AdminAnnouncements = lazy(() => import("./pages/AdminAnnouncements"));
 const AdminPricing   = lazy(() => import("./pages/AdminPricing"));
 const AdminSettings  = lazy(() => import("./pages/AdminSettings"));
@@ -134,6 +135,16 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <AppShell><Reports /></AppShell>
+                </ProtectedRoute>
+              }
+            />
+            {/* Plan gate lives inside the page (an upsell, not a redirect) —
+                the sidebar link is hidden for non-agency plans anyway. */}
+            <Route
+              path="/audit-branding"
+              element={
+                <ProtectedRoute>
+                  <AppShell><AuditBranding /></AppShell>
                 </ProtectedRoute>
               }
             />

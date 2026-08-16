@@ -144,6 +144,13 @@ touch it.
 
 ## Admin account management
 
+All three admin pages (`/admin/announcements`, `/admin/settings`,
+`/admin/pricing`) are linked from the sidebar's Admin section, shown only
+when `useIsAdmin()` is true. `/admin/settings` and `/admin/pricing` existed
+as routes for a while with **no nav entry at all** — reachable only by typing
+the URL, which is why the credit editor looked missing. If you add an admin
+route, add its `NavItem` in `Sidebar.tsx` in the same change.
+
 `/admin/settings` (`AdminSettings.tsx`) → `admin-update-user.js`: look an
 account up by email and change `plan`, `credits`, or reset the monthly usage
 counter. All three are service-role-only writes gated on the caller's
@@ -164,15 +171,21 @@ column to `profiles` without adding it to that trigger too.
 The Agency-plan deliverable agencies mail to their own clients as a PDF, so
 it has to stand on its own without the reader ever seeing Presora.
 
-- **White-label** (migration `20240135`): `profiles.agency_{name,logo_url,
+- **White-label** (migration `20240135`, applied to the live DB): verified
+  under an `authenticated` JWT that an owner can write their own branding,
+  that another user's row returns 0 rows (RLS), that `credits` in the *same*
+  UPDATE still raises `Cannot change credits directly`, and that the 60-char
+  `agency_name_length` CHECK fires. `profiles.agency_{name,logo_url,
   contact_email,website}` drive the letterhead, the "Prepared by" line and
-  the closing CTA. Edited under Settings → **Audit branding** (Agency-gated
-  tab), read by `useAuditBranding.ts`. Without it a forwarded PDF sent the
+  the closing CTA. Edited at **`/audit-branding`** (`AuditBranding.tsx`, its
+  own page under the sidebar's *Tools* section, next to Reports — it
+  configures a deliverable, not an account preference, so it deliberately
+  isn't a Settings tab), read by `useAuditBranding.ts`. Without it a forwarded PDF sent the
   agency's client to `contact.presora@gmail.com` — i.e. to us, not to them.
 - `useAuditBranding` is deliberately **not** folded into the shared
   `['profile-flags']` select: selecting a column that doesn't exist is a hard
   Postgres error (42703), and a missing migration must only downgrade the
-  letterhead to Presora's, never break the report. The Settings tab surfaces
+  letterhead to Presora's, never break the report. The `/audit-branding` page surfaces
   that same error loudly instead, since that's where it's actionable.
 - `agency_logo_url`/`agency_website` are http(s)-only on read (`safeHttpUrl`)
   — they land in an `<img src>`/`<a href>` on a page that gets printed and
