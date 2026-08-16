@@ -41,7 +41,9 @@ const LOCALE_DATE_TAG: Record<string, string> = {
 
 function scoreColor(score: number) {
   if (score >= 75) return 'text-emerald-400';
-  if (score >= 50) return 'text-primary';
+  // amber, not text-primary (now graphite, buttons/links only) — the
+  // score needs a visually distinct middle tier, not "no color".
+  if (score >= 50) return 'text-amber-400';
   return 'text-red-400';
 }
 

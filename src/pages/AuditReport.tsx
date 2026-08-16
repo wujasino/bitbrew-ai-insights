@@ -43,15 +43,18 @@ const PRIORITY_STYLE: Record<string, string> = {
 };
 
 const scoreColor = (s: number) =>
-  s >= 75 ? 'text-emerald-500' : s >= 50 ? 'text-primary' : 'text-red-500';
+  s >= 75 ? 'text-emerald-500' : s >= 50 ? 'text-amber-500' : 'text-red-500';
 
 const scoreLabel = (s: number) => (s >= 75 ? 'Strong' : s >= 50 ? 'Developing' : 'Needs attention');
 
 // Same 75/50 bands as scoreColor(), applied to the dimension bars/icon chips
-// and the score's own "Strong/Developing/Needs attention" pill.
+// and the score's own "Strong/Developing/Needs attention" pill. "mid" is
+// amber, not the app's --primary (graphite, buttons/links only) — the
+// score needs 3 visually distinct tiers, and graphite would look like "no
+// color" between the emerald/red tiers.
 const BAND_STYLE = {
   strong: { bar: 'bg-emerald-500 print:bg-black/70', chip: 'bg-emerald-500/10 text-emerald-500 print:bg-transparent print:text-black/70', pill: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20', ring: 'border-emerald-500 text-emerald-500 print:border-black/20' },
-  mid: { bar: 'bg-primary print:bg-black/70', chip: 'bg-primary/10 text-primary print:bg-transparent print:text-black/70', pill: 'bg-primary/10 text-primary border-primary/20', ring: 'border-primary text-primary print:border-black/20' },
+  mid: { bar: 'bg-amber-500 print:bg-black/70', chip: 'bg-amber-500/10 text-amber-500 print:bg-transparent print:text-black/70', pill: 'bg-amber-500/10 text-amber-500 border-amber-500/20', ring: 'border-amber-500 text-amber-500 print:border-black/20' },
   low: { bar: 'bg-red-500 print:bg-black/70', chip: 'bg-red-500/10 text-red-500 print:bg-transparent print:text-black/70', pill: 'bg-red-500/10 text-red-500 border-red-500/20', ring: 'border-red-500 text-red-500 print:border-black/20' },
 } as const;
 const bandOf = (s: number) => (s >= 75 ? BAND_STYLE.strong : s >= 50 ? BAND_STYLE.mid : BAND_STYLE.low);

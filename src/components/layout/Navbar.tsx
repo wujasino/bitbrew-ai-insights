@@ -129,6 +129,13 @@ export const Navbar = ({ showThemeToggle = false, landingCta = false }: NavbarPr
                     Contact
                   </a>
                   <Link
+                    to="/about"
+                    onClick={() => setMobileOpen(false)}
+                    className="px-3 py-2 pl-6 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                  >
+                    About
+                  </Link>
+                  <Link
                     to="/agencies"
                     onClick={() => setMobileOpen(false)}
                     className={`px-3 py-2 rounded-md text-sm transition-colors ${
@@ -138,6 +145,17 @@ export const Navbar = ({ showThemeToggle = false, landingCta = false }: NavbarPr
                     }`}
                   >
                     Agencies
+                  </Link>
+                  <Link
+                    to="/pricing"
+                    onClick={() => setMobileOpen(false)}
+                    className={`px-3 py-2 rounded-md text-sm transition-colors ${
+                      location.pathname === '/pricing'
+                        ? 'text-primary bg-primary/10 font-medium'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                    }`}
+                  >
+                    Pricing
                   </Link>
                   <div className="my-1 h-px bg-border" />
                   {!authLoading && (
@@ -221,6 +239,14 @@ export const Navbar = ({ showThemeToggle = false, landingCta = false }: NavbarPr
                           Contact
                         </a>
                       </li>
+                      <li>
+                        <Link
+                          to="/about"
+                          className="block px-3 py-1.5 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                        >
+                          About
+                        </Link>
+                      </li>
                     </ul>
                   </NavigationMenuContent>
                 </NavigationMenuItem>
@@ -236,6 +262,20 @@ export const Navbar = ({ showThemeToggle = false, landingCta = false }: NavbarPr
                     }`}
                   >
                     Agencies
+                  </Link>
+                </NavigationMenuItem>
+
+                {/* Pricing */}
+                <NavigationMenuItem>
+                  <Link
+                    to="/pricing"
+                    className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                      location.pathname === '/pricing'
+                        ? 'text-primary bg-primary/10 font-medium'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                    }`}
+                  >
+                    Pricing
                   </Link>
                 </NavigationMenuItem>
               </NavigationMenuList>
