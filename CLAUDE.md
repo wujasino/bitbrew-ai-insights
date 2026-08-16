@@ -260,8 +260,13 @@ had no in-flight guard, and three call sites could reach it (the
   previous row. Comparing `analyses[0]` to `analyses[1]` regardless of brand
   is why one score showed two different deltas on two different days. The
   sparkline is filtered the same way.
-- The 9 duplicate rows are still in the database; they're only hidden on
-  read. Deleting them was not done unilaterally.
+- The historical duplicates **have been deleted** (5 rows, keeping the
+  earliest of each group; 14 -> 9). Checked first that nothing has a foreign
+  key onto `analyses` and that none of the deleted copies carried an
+  `audit_summary` or `sources`. `dedupeAnalyses()` stays regardless — it is
+  the read-side safety net, and the guard is what prevents new ones.
+- Deleting scans does **not** decrement `profiles.analyses_this_month`; that
+  counter is separate accounting and was intentionally left alone.
 
 Score bands are 75/60 across `HomeHub.tsx` (`barColor`, `bandOf`,
 `scoreColor`) and `AuditReport.tsx`. They were 70/50 on Home, which painted
