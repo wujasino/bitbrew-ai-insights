@@ -23,6 +23,16 @@ export const OPENROUTER_MODELS = [
   { id: 'meta-llama/llama-3.3-70b-instruct', label: 'Llama 3', tier: 2, shortCode: 'llama' },
 ];
 
+// Direct-Anthropic fallback roster — queried in parallel (like OPENROUTER_MODELS
+// above) whenever OpenRouter produced nothing, so a scan running only on the
+// fallback still shows more than one voice instead of a single "Claude" row.
+// IDs must match what the deploy's ANTHROPIC_API_KEY account actually serves.
+export const ANTHROPIC_MODELS = [
+  { id: 'claude-opus-5', label: 'Claude Opus' },
+  { id: 'claude-sonnet-5', label: 'Claude Sonnet' },
+  { id: 'claude-haiku-4-5-20251001', label: 'Claude Haiku' },
+];
+
 // RAG: embedding via Voyage (input_type "query")
 const embedQuery = async (text) => {
   const res = await fetchWithTimeout('https://api.voyageai.com/v1/embeddings', {
@@ -142,9 +152,11 @@ ${brandContext || '(no stored knowledge for this brand)'}
   /**
    * Direct-to-Anthropic path. Defined outside the OpenRouter branch on
    * purpose: it has to be reachable both when OpenRouter rejects every call
-   * and when OPENROUTER_API_KEY isn't configured at all.
+   * and when OPENROUTER_API_KEY isn't configured at all. Takes an entry from
+   * ANTHROPIC_MODELS so the fallback can query Opus/Sonnet/Haiku in parallel
+   * instead of a single hardcoded model.
    */
-  const queryAnthropicDirect = async () => {
+  const queryAnthropicModel = async ({ id, label }) => {
     const res = await fetchWithTimeout('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -153,7 +165,7 @@ ${brandContext || '(no stored knowledge for this brand)'}
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-5',
+        model: id,
         max_tokens: 1000,
         system: systemPrompt,
         messages: [{ role: 'user', content: userPrompt }],
@@ -163,10 +175,10 @@ ${brandContext || '(no stored knowledge for this brand)'}
     try {
       data = await res.json();
     } catch {
-      throw new Error(`Claude (direct): HTTP ${res.status} (non-JSON response body)`);
+      throw new Error(`${label}: HTTP ${res.status} (non-JSON response body)`);
     }
     if (!res.ok) {
-      throw new Error(`Claude (direct): HTTP ${res.status} — ${data?.error?.message || res.statusText}`);
+      throw new Error(`${label}: HTTP ${res.status} — ${data?.error?.message || res.statusText}`);
     }
     // Was `data?.content?.[0]?.text` — wrong whenever the first content block
     // isn't type "text". Extended-thinking-capable models put a "thinking"
@@ -178,12 +190,12 @@ ${brandContext || '(no stored knowledge for this brand)'}
     const text = blocks.find((b) => typeof b?.text === 'string' && b.text.length > 0)?.text;
     if (!text) {
       throw new Error(
-        `Claude (direct): empty response (stop_reason: ${data?.stop_reason ?? 'unknown'}, ` +
+        `${label}: empty response (stop_reason: ${data?.stop_reason ?? 'unknown'}, ` +
         `block types: ${blocks.map((b) => b?.type).join(', ') || 'none'})`
       );
     }
     const cleaned = text.trim().replace(/```json|```/g, '').trim();
-    return { label: 'Claude', result: JSON.parse(cleaned) };
+    return { label, result: JSON.parse(cleaned) };
   };
 
   /** Averages whatever models did answer into a real (non-fallback) result. */
@@ -298,11 +310,29 @@ ${brandContext || '(no stored knowledge for this brand)'}
   if (!parsed) {
     if (process.env.ANTHROPIC_API_KEY) {
       try {
-        parsed = buildResult([await queryAnthropicDirect()]);
-        usedFallbackProvider = true;
-        console.warn('OpenRouter served nothing; scan completed via the direct Anthropic fallback.');
+        // Same allSettled-and-average pattern as the OpenRouter block above:
+        // query every Claude tier in parallel and build a real result out of
+        // whichever ones answer, instead of a single "Claude" call standing
+        // in for the whole scan.
+        const settled = await Promise.allSettled(ANTHROPIC_MODELS.map(queryAnthropicModel));
+        const successes = settled
+          .filter((s) => s.status === 'fulfilled')
+          .map((s) => s.value);
+
+        const anthropicFailures = settled
+          .map((s, i) => (s.status === 'rejected'
+            ? (s.reason?.message || `${ANTHROPIC_MODELS[i].label}: unknown error`)
+            : null))
+          .filter(Boolean);
+        failures.push(...anthropicFailures);
+
+        if (successes.length > 0) {
+          parsed = buildResult(successes);
+          usedFallbackProvider = true;
+          console.warn(`OpenRouter served nothing; scan completed via the direct Anthropic fallback (${successes.length}/${ANTHROPIC_MODELS.length} Claude models answered).`);
+        }
       } catch (err) {
-        failures.push(err.message);
+        failures.push(`Anthropic direct: ${err.message}`);
       }
     } else {
       // Said out loud rather than skipped in silence. Without this line a
