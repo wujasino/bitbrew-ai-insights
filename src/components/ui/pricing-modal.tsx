@@ -216,10 +216,10 @@ export function PricingModal({ open, onClose, currentPlan = 'free' }: Props) {
         <DialogContent className="max-w-5xl w-full max-h-[90vh] overflow-y-auto p-0">
           <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-[hsl(var(--glass-border))] px-6 py-4 flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-display font-semibold">Pricing</h2>
-              <p className="text-xs text-muted-foreground mt-0.5">
+              <DialogTitle className="text-lg font-display font-semibold">Pricing</DialogTitle>
+              <DialogDescription className="text-xs text-muted-foreground mt-0.5">
                 Plan: <span className="text-primary font-medium capitalize">{currentPlan}</span>
-              </p>
+              </DialogDescription>
             </div>
 
             {/* Tab switcher */}
