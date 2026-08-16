@@ -188,6 +188,41 @@ touch it.
 - `getScanSettings()` reads all three keys in one query and hands the count
   to `recordScanOutcome()`, so the happy path adds no extra round-trip.
 
+## `enforce_analysis_limit()` vs `protect_plan_changes()` — a self-inflicted outage
+
+Migration `20240134` (closing the credit/usage self-grant hole, see below)
+blocked `analyses_this_month`/`analyses_reset_at` changes on `profiles`
+unless `auth.role() = 'service_role'`. It broke the app's own internal
+counter bump: `enforce_analysis_limit()` (trigger on `analyses`, runs on
+every scan save) increments that exact counter, and despite being
+`SECURITY DEFINER`, `auth.role()` still read `'authenticated'` — `SECURITY
+DEFINER` changes which Postgres role executes the function body, not what
+`auth.role()` reports, which reads the request's JWT claim regardless.
+
+Net effect for ~30 minutes: **every scan appeared to work** (`analyze.js`
+returned a real, non-fallback result) **but the client-side insert into
+`analyses` always failed with a generic 400**, so nothing was ever saved —
+no new rows in Reports, no id to open a report by, `/audit/:id` unreachable.
+This was the actual cause behind "audit nie działa": there was nothing new
+to audit, not a problem in the audit page itself.
+
+Found via `edge_logs`: `POST | 400 | .../rest/v1/analyses` from a browser
+User-Agent (the client-side insert), then reproduced exactly with
+`enforce_analysis_limit()`'s own UPDATE in a rolled-back transaction —
+`P0001: Cannot change usage counter directly`.
+
+Fixed in migration `20240136` with a transaction-local GUC flag
+(`presora.internal_usage_write`), set by `enforce_analysis_limit()` right
+before its own trusted UPDATEs and checked by `protect_plan_changes()` in
+addition to the `service_role` check — scoped to only the two usage columns;
+`plan`/`credits`/`is_admin`/`custom_plan_price_*` are untouched and still
+require `service_role`. `set_config(..., true)` is transaction-local and not
+reachable from the client (no exposed RPC calls it), so it can't be spoofed
+from outside. Verified: the scan-save insert succeeds and the counter
+increments correctly, while a direct client attempt to write
+`analyses_this_month` or `credits` is still rejected with the same
+`P0001` as before.
+
 ## Plan values must agree in three places
 
 `enforce_analysis_limit()`'s CASE, `VALID_PLANS` in
