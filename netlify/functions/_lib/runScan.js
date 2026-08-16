@@ -99,6 +99,8 @@ const deterministicResult = (seedStr) => {
  */
 export async function runBrandScan({ supabaseAdmin, target, models, userId }) {
   let parsed = null;
+  /** Per-model rejection messages, surfaced to the caller for diagnosis. */
+  let failures = [];
 
   if (process.env.OPENROUTER_API_KEY) {
     try {
@@ -168,6 +170,18 @@ ${brandContext || '(no stored knowledge for this brand)'}
         }
       });
 
+      // Keep the per-model reasons on the returned object. They used to exist
+      // only as console.warn lines in the Netlify function log, so the admin
+      // panel and the watchdog both recorded the useless "All model providers
+      // failed or OPENROUTER_API_KEY is not configured" — which cannot
+      // distinguish a missing key from an empty balance from a model id
+      // OpenRouter no longer serves. Those need completely different fixes.
+      failures = settled
+        .map((s, i) => (s.status === 'rejected'
+          ? (s.reason?.message || `${models[i].label}: unknown error`)
+          : null))
+        .filter(Boolean);
+
       if (successes.length > 0) {
         const avg = (key) => Math.round(
           successes.reduce((sum, s) => sum + (Number(s.result[key]) || 0), 0) / successes.length
@@ -195,5 +209,14 @@ ${brandContext || '(no stored knowledge for this brand)'}
     }
   }
 
-  return parsed || { ...deterministicResult(target), isFallback: true };
+  if (parsed) return { ...parsed, failures };
+
+  return {
+    ...deterministicResult(target),
+    isFallback: true,
+    // Empty when the key itself is absent — that distinction is what tells
+    // "not configured" apart from "configured but every call was rejected".
+    failures,
+    keyConfigured: Boolean(process.env.OPENROUTER_API_KEY),
+  };
 }

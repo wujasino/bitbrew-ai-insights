@@ -172,6 +172,43 @@ touch it.
 - `getScanSettings()` reads all three keys in one query and hands the count
   to `recordScanOutcome()`, so the happy path adds no extra round-trip.
 
+## Plan values must agree in three places
+
+`enforce_analysis_limit()`'s CASE, `VALID_PLANS` in
+`netlify/functions/admin-update-user.js`, and `PLAN_LIMITS` in
+`src/hooks/useAccountInfo.ts`. A plan value missing from the trigger's CASE
+hits its `ELSE 3` — the account is capped at 3 analyses a month with no
+error and no sign of it in the UI.
+
+This drifted once already: migration `20240126` removed the `solo_brew` and
+`growth_roast` branches as dead code, but `VALID_PLANS` kept accepting them,
+so an admin could set a plan that silently capped the account at 3. Fixed —
+the live list is free / starter / solo / growth / enterprise / agency.
+
+Running the old full-migration script from the Supabase SQL editor will
+re-add those dead branches (it predates `20240126`) — it is not a safe
+"re-sync" tool; prefer the numbered migrations in `supabase/migrations/`.
+
+## Diagnosing a failed scan
+
+`runBrandScan()` returns `failures` (per-model rejection messages) and
+`keyConfigured` alongside the result. `analyze.js` and `api-analyze.js` build
+the error from them, `recordScanOutcome()` stores it in
+`app_settings.provider_failures.lastError` (1000 chars), and
+`/admin/settings` renders it under the failure count — while a streak is
+building, not only after the watchdog has already paused scanning.
+
+Before this, every cause collapsed into "All model providers failed or
+OPENROUTER_API_KEY is not configured", which cannot tell apart a missing key
+(401), an empty balance (402), a retired model id (400) and a rate limit
+(429) — four problems with four different fixes. Verified all five paths,
+plus that one succeeding model still yields a real scan rather than a
+fallback.
+
+Note the sandbox proxy blocks `openrouter.ai`, and `OPENROUTER_API_KEY` only
+exists in Netlify's environment, so the provider cannot be tested from here —
+read the recorded `lastError` instead of guessing.
+
 ## Admin account management
 
 All three admin pages (`/admin/announcements`, `/admin/settings`,
@@ -265,8 +302,11 @@ had no in-flight guard, and three call sites could reach it (the
   key onto `analyses` and that none of the deleted copies carried an
   `audit_summary` or `sources`. `dedupeAnalyses()` stays regardless — it is
   the read-side safety net, and the guard is what prevents new ones.
-- Deleting scans does **not** decrement `profiles.analyses_this_month`; that
-  counter is separate accounting and was intentionally left alone.
+- Deleting scans does **not** decrement `profiles.analyses_this_month` — the
+  trigger only ever increments it. After the duplicate cleanup the counters
+  were realigned to the real per-month row count (16 -> 9 and 61 -> 0);
+  every account involved was on an unlimited tier, so no quota was granted
+  or taken away.
 
 Score bands are 75/60 across `HomeHub.tsx` (`barColor`, `bandOf`,
 `scoreColor`) and `AuditReport.tsx`. They were 70/50 on Home, which painted

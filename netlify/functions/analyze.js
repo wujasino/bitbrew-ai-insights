@@ -406,7 +406,15 @@ export const handler = async (event) => {
     // A fallback result is fabricated (deterministic, not from any real
     // model) — never present that to the user as a genuine analysis.
     if (result?.isFallback) {
-      const reason = 'All model providers failed or OPENROUTER_API_KEY is not configured';
+      // Say which of the two very different causes this is, and quote the
+      // provider's own words per model. "All providers failed" alone sent
+      // whoever read it hunting through Netlify logs to find out whether the
+      // key was missing, the balance empty, or a model id retired.
+      const reason = result.keyConfigured === false
+        ? 'OPENROUTER_API_KEY is not configured on this deploy'
+        : result.failures?.length
+          ? `All ${result.failures.length} model call(s) rejected — ${result.failures.join(' | ')}`
+          : 'All model providers failed (no error detail returned)';
       const { autoDisabled } = await recordScanOutcome(supabaseAdmin, {
         ok: false,
         knownFailureCount: scanSettings.failureCount,

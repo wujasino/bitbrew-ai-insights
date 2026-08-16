@@ -83,7 +83,15 @@ export const handler = async (event) => {
     // API. Throw into the catch block below so it's a 500, not a paid API
     // call silently billed against fake data.
     if (result.isFallback) {
-      throw new Error('All model providers failed or OPENROUTER_API_KEY is not configured');
+      // Mirrors analyze.js: name the actual cause instead of collapsing a
+      // missing key, an empty balance and a retired model id into one string.
+      throw new Error(
+        result.keyConfigured === false
+          ? 'OPENROUTER_API_KEY is not configured on this deploy'
+          : result.failures?.length
+            ? `All ${result.failures.length} model call(s) rejected — ${result.failures.join(' | ')}`
+            : 'All model providers failed (no error detail returned)'
+      );
     }
 
     const { data: saved, error: insertError } = await supabaseAdmin

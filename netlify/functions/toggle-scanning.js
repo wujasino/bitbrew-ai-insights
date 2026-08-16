@@ -95,6 +95,12 @@ exports.handler = async (event) => {
           // after N failures, and here's the provider's last error".
           reason: rows.scanning_disabled_reason?.value ?? null,
           failureCount: Number(rows.provider_failures?.value?.count) || 0,
+          // The provider's own words for the most recent failed scan. Was
+          // only surfaced once the watchdog had already paused scanning, so
+          // while a streak was building the admin panel showed a count and
+          // nothing about the cause.
+          lastError: rows.provider_failures?.value?.lastError ?? null,
+          lastFailureAt: rows.provider_failures?.value?.lastFailureAt ?? null,
         }),
       };
     }

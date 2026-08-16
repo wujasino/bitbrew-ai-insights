@@ -33,6 +33,8 @@ const AdminSettings = () => {
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
   const [reason, setReason] = useState<ScanDisableReason>(null);
   const [failureCount, setFailureCount] = useState(0);
+  const [lastError, setLastError] = useState<string | null>(null);
+  const [lastFailureAt, setLastFailureAt] = useState<string | null>(null);
   const [status, setStatus] = useState<'idle' | 'loading' | 'saving' | 'ok' | 'error'>('idle');
   const [message, setMessage] = useState('');
 
@@ -61,6 +63,8 @@ const AdminSettings = () => {
         setUpdatedAt(json.updatedAt);
         setReason(json.reason ?? null);
         setFailureCount(json.failureCount ?? 0);
+        setLastError(json.lastError ?? null);
+        setLastFailureAt(json.lastFailureAt ?? null);
         setStatus('idle');
       })
       .catch((err) => {
@@ -232,10 +236,23 @@ const AdminSettings = () => {
                 </div>
               )}
 
+              {/* While a streak is building, the cause matters more than the
+                  count — the count alone sent whoever saw it into the Netlify
+                  logs to find out what actually broke. */}
               {enabled && failureCount > 0 && (
-                <p className="mt-4 text-xs text-muted-foreground">
-                  {failureCount} recent scan failure{failureCount === 1 ? '' : 's'} — scanning pauses automatically at 3 in a row.
-                </p>
+                <div className="mt-4 rounded-xl border border-amber-500/25 bg-amber-500/[0.06] p-3">
+                  <p className="text-xs text-foreground">
+                    {failureCount} recent scan failure{failureCount === 1 ? '' : 's'} — scanning pauses automatically at 3 in a row.
+                    {lastFailureAt && (
+                      <span className="text-muted-foreground"> Last: {new Date(lastFailureAt).toLocaleString()}.</span>
+                    )}
+                  </p>
+                  {lastError && (
+                    <p className="mt-1.5 font-mono text-[11px] leading-relaxed text-muted-foreground break-words">
+                      {lastError}
+                    </p>
+                  )}
+                </div>
               )}
 
               {message && (
