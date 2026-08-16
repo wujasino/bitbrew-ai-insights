@@ -209,6 +209,31 @@ Note the sandbox proxy blocks `openrouter.ai`, and `OPENROUTER_API_KEY` only
 exists in Netlify's environment, so the provider cannot be tested from here —
 read the recorded `lastError` instead of guessing.
 
+## Read-only mode when scanning is paused
+
+`netlify/functions/scan-status.js` is a **public** GET returning only
+`{ enabled }` — `app_settings` is service-role-only and `toggle-scanning.js`
+requires `is_admin`, so the UI had no way to know the switch was off until a
+scan had already failed. It deliberately never returns the failure count,
+the provider's error text, or who flipped it: those quote OpenRouter's
+billing messages and belong behind the admin check.
+
+`useScanStatus()` fails open — a blip must never make the app claim scanning
+is down when it isn't. `analyze.js` re-checks the real flag server-side on
+every scan, so this is advisory only.
+
+While paused, HomeHub shows a banner pointing at stored reports, the "Run
+new scan" CTA becomes an inert "Scanning paused" chip, the re-scan section
+and the per-model "Enable & rescan" actions are replaced with static text,
+and the scan screen offers "View your saved reports" instead of a dead-end
+error. Everything already scanned keeps working — the app degrades to
+read-only rather than looking broken.
+
+**The deterministic fallback is never surfaced as a real result.** When every
+model fails, `analyze.js` errors rather than showing fabricated scores; that
+is the point of the `isFallback` check and must not be relaxed to "keep the
+product usable" during an outage.
+
 ## Admin account management
 
 All three admin pages (`/admin/announcements`, `/admin/settings`,

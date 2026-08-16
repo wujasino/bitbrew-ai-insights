@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Search, Bot, FileText, ArrowRight, ArrowUpRight, ArrowUp, ArrowDown,
-  Lock, Sparkles, CalendarClock, ShieldCheck, Smile, Target, AtSign, Clock, RefreshCw, Plus,
+  Lock, Sparkles, CalendarClock, ShieldCheck, Smile, Target, AtSign, Clock, RefreshCw, Plus, PauseCircle,
 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { supabase } from '@/lib/supabase';
@@ -13,6 +13,7 @@ import { usePlan, tierOf, useSessionUser } from '@/hooks/useAccountInfo';
 import { MODEL_CATALOG, loadModelPrefs, saveModelPrefs } from '@/lib/models';
 import { BrandScanInput } from '@/components/BrandScanInput';
 import { brandKey, dedupeAnalyses } from '@/lib/analyses';
+import { useScanStatus } from '@/hooks/useScanStatus';
 
 interface Analysis {
   id: string;
@@ -191,6 +192,7 @@ const HomeHub = () => {
   const [analyses, setAnalyses] = useState<Analysis[]>([]);
   const { data: plan = 'Free' } = usePlan();
   const planTier = tierOf(plan);
+  const { enabled: scanningEnabled } = useScanStatus();
   const visibleModels = MODEL_CATALOG.filter(m => m.tier <= planTier);
   const lockedModels = MODEL_CATALOG.filter(m => m.tier > planTier);
 
@@ -275,7 +277,7 @@ const HomeHub = () => {
    * incomplete. One click does the whole thing instead.
    */
   const enableModelsAndRescan = (ids: string[]) => {
-    if (!latest) return;
+    if (!latest || !scanningEnabled) return;
     const prefs = loadModelPrefs();
     saveModelPrefs({ selected: Array.from(new Set([...prefs.selected, ...ids])) });
     runScan(latest.brand_name);
@@ -293,12 +295,21 @@ const HomeHub = () => {
               {/* Running a scan is the whole product and had no button
                   anywhere on this page — only a sidebar link and a card at
                   the very bottom. */}
-              <Link
-                to="/brand-visibility"
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
-              >
-                <Search className="w-3.5 h-3.5" /> Run new scan
-              </Link>
+              {scanningEnabled ? (
+                <Link
+                  to="/brand-visibility"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
+                >
+                  <Search className="w-3.5 h-3.5" /> Run new scan
+                </Link>
+              ) : (
+                <span
+                  title="Scanning is paused — your saved reports are still available"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-border text-muted-foreground text-sm font-medium cursor-not-allowed"
+                >
+                  <PauseCircle className="w-3.5 h-3.5" /> Scanning paused
+                </span>
+              )}
             </div>
             <p className="text-sm text-muted-foreground mt-1.5">Your AI visibility, at a glance.</p>
           </div>
@@ -307,6 +318,26 @@ const HomeHub = () => {
             <CreditsUsageWidget />
           </div>
         </div>
+
+        {/* Told up front rather than after a failed scan — the reports below
+            are unaffected, so the honest framing is "read-only for now", not
+            "something went wrong". */}
+        {!scanningEnabled && (
+          <div className="mb-6 rounded-2xl border border-amber-500/25 bg-amber-500/[0.06] p-4 flex items-start gap-3">
+            <PauseCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-foreground">New scans are paused</p>
+              <p className="text-sm text-muted-foreground mt-0.5">
+                Everything already scanned stays available — scores, per-model breakdowns and
+                reports all still open normally. New scans resume once scanning is switched
+                back on.
+              </p>
+              <Link to="/reports" className="inline-flex items-center gap-1 text-sm text-primary hover:underline mt-2">
+                Browse your reports <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          </div>
+        )}
 
         {/* ── State: loading / empty / populated ──────────────────── */}
         {loading ? (
@@ -376,13 +407,18 @@ const HomeHub = () => {
                           </div>
                           <span className="text-xs text-muted-foreground w-7 text-right tabular-nums">{conf}</span>
                         </>
-                      ) : (
+                      ) : scanningEnabled ? (
                         <button
                           onClick={() => enableModelsAndRescan([m.id])}
                           className="flex-1 inline-flex items-center justify-end gap-1 text-xs text-primary hover:underline"
                         >
                           <Plus className="w-3 h-3" /> Enable &amp; rescan
                         </button>
+                      ) : (
+                        // A button that can't do anything is worse than none:
+                        // while scanning is paused this reads as "not in this
+                        // scan" rather than offering an action that no-ops.
+                        <span className="flex-1 text-right text-xs text-muted-foreground">not queried</span>
                       )}
                     </div>
                   );
@@ -401,12 +437,18 @@ const HomeHub = () => {
                     Incomplete picture — {skippedVisibleModels.length} of {visibleModels.length} models
                     you already pay for weren't asked about {latest.brand_name}.
                   </p>
-                  <button
-                    onClick={() => enableModelsAndRescan(skippedVisibleModels.map(m => m.id))}
-                    className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:opacity-90 transition-opacity"
-                  >
-                    <RefreshCw className="w-3 h-3" /> Enable all &amp; rescan
-                  </button>
+                  {scanningEnabled ? (
+                    <button
+                      onClick={() => enableModelsAndRescan(skippedVisibleModels.map(m => m.id))}
+                      className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:opacity-90 transition-opacity"
+                    >
+                      <RefreshCw className="w-3 h-3" /> Enable all &amp; rescan
+                    </button>
+                  ) : (
+                    <p className="mt-1.5 text-xs text-muted-foreground">
+                      You can add them once scanning resumes.
+                    </p>
+                  )}
                 </div>
               )}
               {lockedModels.length > 0 && (
@@ -454,7 +496,7 @@ const HomeHub = () => {
             Reports — the three entries already sitting in the sidebar two
             inches to the left. Half a screen that added nothing. This offers
             the next action on brands already scanned instead. */}
-        {!loading && latest && (
+        {!loading && latest && scanningEnabled && (
           <div>
             <h2 className="text-sm font-semibold text-foreground mb-3">Continue where you left off</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

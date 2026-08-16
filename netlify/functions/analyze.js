@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import net from 'node:net';
 import ws from 'ws';
 
-import { OPENROUTER_MODELS, runBrandScan } from './_lib/runScan.js';
+import { OPENROUTER_MODELS, runBrandScan, summariseFailures } from './_lib/runScan.js';
 import { fireWebhooksForEvent } from './_lib/webhookDelivery.js';
 import { getScanSettings, recordScanOutcome } from './_lib/appSettings.js';
 
@@ -413,7 +413,7 @@ export const handler = async (event) => {
       const reason = result.keyConfigured === false
         ? 'OPENROUTER_API_KEY is not configured on this deploy'
         : result.failures?.length
-          ? `All ${result.failures.length} model call(s) rejected — ${result.failures.join(' | ')}`
+          ? `All ${result.failures.length} model call(s) rejected — ${summariseFailures(result.failures)}`
           : 'All model providers failed (no error detail returned)';
       const { autoDisabled } = await recordScanOutcome(supabaseAdmin, {
         ok: false,

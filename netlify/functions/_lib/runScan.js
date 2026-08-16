@@ -97,6 +97,27 @@ const deterministicResult = (seedStr) => {
  * genuine (see analyze.js / api-analyze.js / check-score-alerts.js, which
  * all treat isFallback as a failure rather than a degraded-but-OK result).
  */
+/**
+ * One readable line out of the per-model rejection messages.
+ *
+ * When every model fails for the same reason — the common case, since an
+ * expired key or an empty balance rejects all of them identically — storing
+ * six copies of the same sentence just overflowed the 1000-char cap and cut
+ * the last one off mid-word. Identical messages collapse to "6 models: ...".
+ */
+export function summariseFailures(failures = []) {
+  if (!failures.length) return '';
+  const stripLabel = (m) => String(m).replace(/^[^:]+:\s*/, '');
+  const byReason = new Map();
+  for (const f of failures) {
+    const reason = stripLabel(f);
+    byReason.set(reason, (byReason.get(reason) || 0) + 1);
+  }
+  return [...byReason.entries()]
+    .map(([reason, n]) => (n > 1 ? `${n} models: ${reason}` : reason))
+    .join(' | ');
+}
+
 export async function runBrandScan({ supabaseAdmin, target, models, userId }) {
   let parsed = null;
   /** Per-model rejection messages, surfaced to the caller for diagnosis. */
