@@ -20,18 +20,20 @@ const STEPS = [
   },
   {
     Icon: Printer,
-    title: '3. Export and send',
-    desc: 'Open it as a client-ready audit, print to PDF, and attach it to your outreach email — or the proposal you\'re already sending.',
+    title: '3. Brand it and send',
+    desc: 'Set your logo and contact details once in Settings — every audit carries them from then on. Print to PDF and attach it to your outreach email, or the proposal you\'re already sending.',
   },
 ];
 
 const INCLUDED = [
+  'Your logo, name and contact details on it — not ours',
   'Headline AI visibility score (0–100) with executive summary',
   'Business-impact narrative — why the score matters to their revenue',
   '5-dimension breakdown: authority, sentiment, accuracy, mentions, recency',
-  'Per-AI-model breakdown (what GPT-4o, Claude and Gemini each say)',
+  'What each AI model actually associates the brand with, quoted',
   'Prioritized, ranked recommendations — the specific fixes to pitch',
-  'Clean, branded PDF layout — no watermarked screenshots',
+  'A methodology section that answers "where does this number come from?"',
+  'Clean, print-ready PDF layout — no watermarked screenshots',
 ];
 
 const Agencies = () => {

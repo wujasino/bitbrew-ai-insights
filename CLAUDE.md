@@ -159,6 +159,44 @@ user could grant themselves credits or zero their usage from the browser
 console. The trigger now guards all of them. Don't add a new paid-usage
 column to `profiles` without adding it to that trigger too.
 
+## Client-ready audit (`/audit/:id`)
+
+The Agency-plan deliverable agencies mail to their own clients as a PDF, so
+it has to stand on its own without the reader ever seeing Presora.
+
+- **White-label** (migration `20240135`): `profiles.agency_{name,logo_url,
+  contact_email,website}` drive the letterhead, the "Prepared by" line and
+  the closing CTA. Edited under Settings → **Audit branding** (Agency-gated
+  tab), read by `useAuditBranding.ts`. Without it a forwarded PDF sent the
+  agency's client to `contact.presora@gmail.com` — i.e. to us, not to them.
+- `useAuditBranding` is deliberately **not** folded into the shared
+  `['profile-flags']` select: selecting a column that doesn't exist is a hard
+  Postgres error (42703), and a missing migration must only downgrade the
+  letterhead to Presora's, never break the report. The Settings tab surfaces
+  that same error loudly instead, since that's where it's actionable.
+- `agency_logo_url`/`agency_website` are http(s)-only on read (`safeHttpUrl`)
+  — they land in an `<img src>`/`<a href>` on a page that gets printed and
+  mailed onward.
+- The branding columns are intentionally **not** in
+  `protect_plan_changes()`: they're display fields like `avatar_url`, with no
+  billing or quota meaning.
+- **Print**: `@page { margin: 16mm 14mm }` and heading `break-after: avoid`
+  live in `src/index.css`; individual cards opt out of splitting via the
+  `NO_SPLIT` class in `AuditReport.tsx`. Verified no no-split block exceeds
+  one A4 page (the tallest, the methodology card, is ~493px of ~1002px
+  usable) — an oversized one would force a blank page.
+- The methodology + limitations section is load-bearing, not filler: a
+  professional reader's first question is where the number comes from, and
+  stating what the method *can't* do is what makes the rest credible.
+
+## Typechecking gotcha
+
+`npx tsc --noEmit` **silently checks nothing** — the root `tsconfig.json`
+has `"files": []` and only project references. Use
+`npx tsc -p tsconfig.app.json --noEmit`. (This is how a missing
+`Label` import slipped into `Onboarding.tsx` earlier.) Three pre-existing
+errors in `ai-prompt-box.tsx` and `cookie-banner-1.tsx` are expected noise.
+
 ## Locale dictionaries (`src/lib/locales/*.ts`)
 
 ~248 of the 396 keys in `en.ts` (and their counterparts in the five other

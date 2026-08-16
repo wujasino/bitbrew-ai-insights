@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ShieldCheck, Smile, Target, AtSign, Clock, Printer, ArrowLeft, Loader2, AlertTriangle, Sparkles, Mail, Lock } from 'lucide-react';
+import { ShieldCheck, Smile, Target, AtSign, Clock, Printer, ArrowLeft, Loader2, AlertTriangle, Sparkles, Mail, Lock, Quote, Globe } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { Wordmark } from '@/components/Wordmark';
 import { Button } from '@/components/ui/button';
 import { usePlan, isAgencyPlan } from '@/hooks/useAccountInfo';
+import { useAuditBranding } from '@/hooks/useAuditBranding';
 
 interface AnalysisRow {
   id: string;
@@ -16,7 +17,7 @@ interface AnalysisRow {
   mentions: number;
   accuracy: number;
   created_at: string;
-  sources: { model: string; sentiment: string; confidence: number }[] | null;
+  sources: { model: string; sentiment: string; confidence: number; association?: string }[] | null;
   audit_summary: AuditSummary | null;
 }
 
@@ -28,12 +29,15 @@ interface AuditSummary {
   recommendations: { title: string; description: string; priority: 'high' | 'medium' | 'low' }[];
 }
 
-const DIMENSIONS: { key: keyof AnalysisRow; Icon: typeof ShieldCheck; name: string }[] = [
-  { key: 'authority', Icon: ShieldCheck, name: 'Authority' },
-  { key: 'sentiment', Icon: Smile, name: 'Sentiment' },
-  { key: 'accuracy', Icon: Target, name: 'Accuracy' },
-  { key: 'mentions', Icon: AtSign, name: 'Mentions' },
-  { key: 'recency', Icon: Clock, name: 'Recency' },
+// `what` is printed in the methodology section. An agency forwarding this to
+// a client gets asked "what does Authority actually mean?" — the report has
+// to answer that on its own, without anyone opening Presora.
+const DIMENSIONS: { key: keyof AnalysisRow; Icon: typeof ShieldCheck; name: string; what: string }[] = [
+  { key: 'authority', Icon: ShieldCheck, name: 'Authority', what: 'How confidently the models treat the brand as a credible, established name in its category.' },
+  { key: 'sentiment', Icon: Smile, name: 'Sentiment', what: 'Whether the language the models use about the brand is positive, neutral or negative.' },
+  { key: 'accuracy', Icon: Target, name: 'Accuracy', what: 'How factually correct the models are about what the brand actually does and sells.' },
+  { key: 'mentions', Icon: AtSign, name: 'Mentions', what: 'How readily the brand comes up at all when the models are asked about this category.' },
+  { key: 'recency', Icon: Clock, name: 'Recency', what: 'How current the models’ knowledge is — whether they know the brand as it is today.' },
 ];
 
 const PRIORITY_STYLE: Record<string, string> = {
@@ -73,6 +77,11 @@ const sentimentTextClass = (sentiment: string) => {
   return SENTIMENT_STYLE[key] ?? (key.includes('positive') ? SENTIMENT_STYLE.positive : key.includes('negative') ? SENTIMENT_STYLE.negative : SENTIMENT_STYLE.neutral);
 };
 
+// Keeps a card from being split across two printed pages. Tailwind's
+// break-inside-avoid only emits the modern property; older print engines
+// still want page-break-inside, so both go on via a plain class string.
+const NO_SPLIT = 'break-inside-avoid [page-break-inside:avoid]';
+
 const AuditReport = () => {
   const { id } = useParams<{ id: string }>();
   const [analysis, setAnalysis] = useState<AnalysisRow | null>(null);
@@ -80,6 +89,7 @@ const AuditReport = () => {
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState('');
   const { data: plan = 'Free' } = usePlan();
+  const { data: branding } = useAuditBranding();
   const canAccess = isAgencyPlan(plan);
 
   useEffect(() => {
@@ -170,25 +180,48 @@ const AuditReport = () => {
   }
 
   const summary = analysis.audit_summary;
+  const scannedAt = new Date(analysis.created_at);
+  const modelsQueried = (analysis.sources ?? []).map(s => s.model);
+  // The scan's own id, shortened — gives the client something to quote back
+  // when they ask for the audit to be re-run and compared.
+  const referenceId = analysis.id.slice(0, 8).toUpperCase();
 
   return (
-    <div className="min-h-screen print:min-h-0 print:h-auto bg-background print:bg-white">
+    <div className="print-exact min-h-screen print:min-h-0 print:h-auto bg-background print:bg-white">
       {/* Screen-only toolbar — hidden on print */}
       <div className="print:hidden sticky top-0 z-10 border-b border-border bg-background/95 backdrop-blur px-4 py-3 flex items-center justify-between">
         <Link to="/reports" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
           <ArrowLeft className="w-3.5 h-3.5" /> Back to reports
         </Link>
-        <Button size="sm" onClick={() => window.print()} className="gap-1.5">
-          <Printer className="w-3.5 h-3.5" /> Print / Save as PDF
-        </Button>
+        <div className="flex items-center gap-3">
+          {!branding.isWhiteLabeled && (
+            <Link to="/settings?tab=branding" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+              Add your own branding
+            </Link>
+          )}
+          <Button size="sm" onClick={() => window.print()} className="gap-1.5">
+            <Printer className="w-3.5 h-3.5" /> Print / Save as PDF
+          </Button>
+        </div>
       </div>
 
-      <main className="max-w-3xl mx-auto px-6 py-12 print:py-6 print:px-0">
-        {/* Cover */}
-        <div className="flex items-center justify-between mb-6 print:mb-6">
-          <Wordmark className="text-xl print:!text-black" />
-          <p className="text-xs text-muted-foreground print:text-black/60">
-            AI Visibility Audit · {new Date(analysis.created_at).toLocaleDateString(undefined, { day: '2-digit', month: 'long', year: 'numeric' })}
+      <main className="max-w-3xl mx-auto px-6 py-12 print:py-0 print:px-0">
+        {/* Letterhead — the agency's identity when they've set one, ours otherwise */}
+        <div className="flex items-center justify-between gap-4 mb-6 print:mb-6">
+          {branding.isWhiteLabeled ? (
+            <div className="flex items-center gap-2.5 min-w-0">
+              {branding.logoUrl && (
+                <img src={branding.logoUrl} alt="" className="h-8 w-auto max-w-[140px] object-contain shrink-0" />
+              )}
+              <span className="text-lg font-display font-semibold text-foreground print:text-black truncate">
+                {branding.name}
+              </span>
+            </div>
+          ) : (
+            <Wordmark className="text-xl print:!text-black" />
+          )}
+          <p className="text-xs text-muted-foreground print:text-black/60 text-right shrink-0">
+            AI Visibility Audit · {scannedAt.toLocaleDateString(undefined, { day: '2-digit', month: 'long', year: 'numeric' })}
           </p>
         </div>
         <div className="h-px bg-gradient-to-r from-primary/40 via-border to-transparent print:from-black/30 print:via-black/10 mb-8" />
@@ -196,12 +229,35 @@ const AuditReport = () => {
         <h1 className="text-3xl sm:text-4xl font-display text-foreground print:text-black mb-2">
           {analysis.brand_name}
         </h1>
-        <p className="text-sm text-muted-foreground print:text-black/70 mb-8">
+        <p className="text-sm text-muted-foreground print:text-black/70 mb-4">
           How ChatGPT, Claude, Gemini and other AI models see this brand right now.
         </p>
 
+        {/* Prepared-for / prepared-by strip. An audit that names its author and
+            carries a reference number reads as a deliverable, not an export. */}
+        <div className={`flex flex-wrap gap-x-8 gap-y-2 text-xs mb-8 pb-6 border-b border-border print:border-black/10 ${NO_SPLIT}`}>
+          <div>
+            <p className="uppercase tracking-wider text-muted-foreground print:text-black/50">Subject</p>
+            <p className="text-foreground print:text-black mt-0.5 font-medium">{analysis.brand_name}</p>
+          </div>
+          <div>
+            <p className="uppercase tracking-wider text-muted-foreground print:text-black/50">Prepared by</p>
+            <p className="text-foreground print:text-black mt-0.5 font-medium">{branding.name ?? 'Presora'}</p>
+          </div>
+          <div>
+            <p className="uppercase tracking-wider text-muted-foreground print:text-black/50">Data collected</p>
+            <p className="text-foreground print:text-black mt-0.5 font-medium">
+              {scannedAt.toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' })}
+            </p>
+          </div>
+          <div>
+            <p className="uppercase tracking-wider text-muted-foreground print:text-black/50">Reference</p>
+            <p className="text-foreground print:text-black mt-0.5 font-medium tabular-nums">{referenceId}</p>
+          </div>
+        </div>
+
         {/* Headline score */}
-        <div className="relative overflow-hidden rounded-2xl border border-border bg-card/60 print:bg-transparent print:border-black/15 p-6 mb-8 flex items-center gap-6">
+        <div className={`relative overflow-hidden rounded-2xl border border-border bg-card/60 print:bg-transparent print:border-black/15 p-6 mb-8 flex items-center gap-6 ${NO_SPLIT}`}>
           <div className={`print:hidden absolute -top-10 -right-10 w-40 h-40 rounded-full blur-3xl opacity-20 ${scoreColor(analysis.trust_score).replace('text-', 'bg-')}`} />
           <div className={`relative shrink-0 w-24 h-24 rounded-full border-4 flex items-center justify-center ${bandOf(analysis.trust_score).ring}`}>
             <span className="text-3xl font-display font-bold tabular-nums">{analysis.trust_score}</span>
@@ -226,15 +282,15 @@ const AuditReport = () => {
         {/* Business impact + narrative */}
         {summary && (
           <div className="space-y-5 mb-10">
-            <section>
+            <section className={NO_SPLIT}>
               <h2 className="text-xs uppercase tracking-wider text-muted-foreground print:text-black/60 mb-1.5">Why this matters</h2>
               <p className="text-sm text-foreground/90 print:text-black leading-relaxed">{summary.businessImpact}</p>
             </section>
-            <section>
+            <section className={NO_SPLIT}>
               <h2 className="text-xs uppercase tracking-wider text-muted-foreground print:text-black/60 mb-1.5">What the numbers show</h2>
               <p className="text-sm text-foreground/90 print:text-black leading-relaxed">{summary.narrative}</p>
             </section>
-            <section>
+            <section className={NO_SPLIT}>
               <h2 className="text-xs uppercase tracking-wider text-muted-foreground print:text-black/60 mb-1.5">Competitive position</h2>
               <p className="text-sm text-foreground/90 print:text-black leading-relaxed">{summary.competitivePosition}</p>
             </section>
@@ -242,7 +298,7 @@ const AuditReport = () => {
         )}
 
         {/* Dimension breakdown */}
-        <section className="mb-10">
+        <section className={`mb-10 ${NO_SPLIT}`}>
           <h2 className="text-xs uppercase tracking-wider text-muted-foreground print:text-black/60 mb-3">Dimension breakdown</h2>
           <div className="space-y-3">
             {DIMENSIONS.map(({ key, Icon, name }) => {
@@ -262,21 +318,34 @@ const AuditReport = () => {
               );
             })}
           </div>
+          <p className="text-xs text-muted-foreground print:text-black/50 mt-3">
+            Bands: 75–100 strong · 50–74 developing · 0–49 needs attention. Each dimension is defined
+            under “How this was measured”.
+          </p>
         </section>
 
-        {/* Per-model breakdown */}
+        {/* Per-model breakdown — including what each model actually associates
+            the brand with, which is the evidence behind the numbers above. */}
         {analysis.sources && analysis.sources.length > 0 && (
           <section className="mb-10">
-            <h2 className="text-xs uppercase tracking-wider text-muted-foreground print:text-black/60 mb-3">By AI model</h2>
+            <h2 className="text-xs uppercase tracking-wider text-muted-foreground print:text-black/60 mb-3">What each AI model says</h2>
             <div className="space-y-2">
               {analysis.sources.map(s => (
-                <div key={s.model} className="flex items-center justify-between text-sm rounded-xl border border-border/60 print:border-black/10 px-4 py-3">
-                  <span className="text-foreground print:text-black font-medium">{s.model}</span>
-                  <span className="flex items-center gap-1.5 text-muted-foreground print:text-black/60">
-                    <span className={`w-1.5 h-1.5 rounded-full print:hidden ${sentimentDotClass(s.sentiment)}`} />
-                    <span className={`${sentimentTextClass(s.sentiment)} print:text-black/70 font-medium`}>{s.sentiment}</span>
-                    · {Math.round(s.confidence)}% confidence
-                  </span>
+                <div key={s.model} className={`rounded-xl border border-border/60 print:border-black/10 px-4 py-3 ${NO_SPLIT}`}>
+                  <div className="flex items-center justify-between text-sm gap-3">
+                    <span className="text-foreground print:text-black font-medium">{s.model}</span>
+                    <span className="flex items-center gap-1.5 text-muted-foreground print:text-black/60 shrink-0">
+                      <span className={`w-1.5 h-1.5 rounded-full print:hidden ${sentimentDotClass(s.sentiment)}`} />
+                      <span className={`${sentimentTextClass(s.sentiment)} print:text-black/70 font-medium`}>{s.sentiment}</span>
+                      · {Math.round(s.confidence)}% confidence
+                    </span>
+                  </div>
+                  {s.association && (
+                    <p className="flex items-start gap-1.5 text-xs text-muted-foreground print:text-black/60 mt-2 leading-relaxed">
+                      <Quote className="w-3 h-3 shrink-0 mt-0.5 print:hidden" />
+                      <span>Associates the brand with: <span className="text-foreground/90 print:text-black">{s.association}</span></span>
+                    </p>
+                  )}
                 </div>
               ))}
             </div>
@@ -289,7 +358,7 @@ const AuditReport = () => {
             <h2 className="text-xs uppercase tracking-wider text-muted-foreground print:text-black/60 mb-3">Recommended next steps</h2>
             <div className="space-y-3">
               {summary.recommendations.map((rec, i) => (
-                <div key={i} className="rounded-xl border border-border print:border-black/15 p-4">
+                <div key={i} className={`rounded-xl border border-border print:border-black/15 p-4 ${NO_SPLIT}`}>
                   <div className="flex items-start justify-between gap-3 mb-1">
                     <p className="text-sm font-semibold text-foreground print:text-black">{rec.title}</p>
                     <span className={`shrink-0 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border print:border-black/20 print:bg-transparent print:text-black/70 ${PRIORITY_STYLE[rec.priority] ?? PRIORITY_STYLE.medium}`}>
@@ -303,21 +372,85 @@ const AuditReport = () => {
           </section>
         )}
 
-        {/* Closing CTA */}
-        <section className="rounded-2xl border border-primary/20 bg-primary/[0.04] print:border-black/15 print:bg-transparent p-6 text-center">
+        {/* Methodology. The single most-asked question about a report like this
+            is "where does the number come from" — answering it in the document
+            is what separates an audit from a screenshot. The limitations
+            paragraph is deliberate: naming what the method can't do is what
+            makes the rest of it credible to a professional reader. */}
+        <section className="mb-10">
+          <h2 className="text-xs uppercase tracking-wider text-muted-foreground print:text-black/60 mb-3">How this was measured</h2>
+          <div className={`rounded-xl border border-border print:border-black/15 p-5 space-y-4 ${NO_SPLIT}`}>
+            <div>
+              <p className="text-sm font-semibold text-foreground print:text-black mb-1">Method</p>
+              <p className="text-sm text-muted-foreground print:text-black/70 leading-relaxed">
+                {modelsQueried.length > 0
+                  ? <>Each of the AI assistants below — {modelsQueried.join(', ')} — was asked the same
+                      set of questions about {analysis.brand_name} at the same time, on{' '}
+                      {scannedAt.toLocaleDateString(undefined, { day: '2-digit', month: 'long', year: 'numeric' })}.</>
+                  : <>A panel of AI assistants was asked the same set of questions about {analysis.brand_name} on{' '}
+                      {scannedAt.toLocaleDateString(undefined, { day: '2-digit', month: 'long', year: 'numeric' })}.</>}
+                {' '}Their answers were scored independently across the five dimensions below, and the
+                trust score is the combined result on a 0–100 scale. No answer is discarded, so a single
+                unusual reply cannot move the headline number on its own.
+              </p>
+            </div>
+
+            <div>
+              <p className="text-sm font-semibold text-foreground print:text-black mb-2">What each dimension means</p>
+              <dl className="space-y-1.5">
+                {DIMENSIONS.map(({ key, name, what }) => (
+                  <div key={key} className="text-sm leading-relaxed">
+                    <dt className="inline font-medium text-foreground print:text-black">{name}: </dt>
+                    <dd className="inline text-muted-foreground print:text-black/70">{what}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+
+            <div>
+              <p className="text-sm font-semibold text-foreground print:text-black mb-1">Limitations</p>
+              <p className="text-sm text-muted-foreground print:text-black/70 leading-relaxed">
+                AI assistants are not deterministic — the same question can produce slightly different
+                wording each time, and each model is retrained periodically. This audit is a snapshot of{' '}
+                {scannedAt.toLocaleDateString(undefined, { day: '2-digit', month: 'long', year: 'numeric' })},
+                not a permanent ranking. Scores are most useful tracked over time and compared against
+                competitors measured the same way, which is why we recommend re-running it on a schedule.
+                Quote reference {referenceId} to have this exact audit re-run and compared.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* Closing CTA — the agency's own, so a forwarded PDF sends the client
+            back to them rather than to us. */}
+        <section className={`rounded-2xl border border-primary/20 bg-primary/[0.04] print:border-black/15 print:bg-transparent p-6 text-center ${NO_SPLIT}`}>
           <Sparkles className="w-5 h-5 text-primary print:text-black/60 mx-auto mb-2" />
           <p className="text-sm font-medium text-foreground print:text-black mb-1">Ready to close this gap?</p>
           <p className="text-sm text-muted-foreground print:text-black/70 mb-4">
-            Get in touch to discuss a plan for improving {analysis.brand_name}'s visibility across AI models.
+            {branding.isWhiteLabeled
+              ? <>Get in touch with {branding.name} to discuss a plan for improving {analysis.brand_name}&rsquo;s visibility across AI models.</>
+              : <>Get in touch to discuss a plan for improving {analysis.brand_name}&rsquo;s visibility across AI models.</>}
           </p>
-          <a href="mailto:contact.presora@gmail.com" className="print:hidden inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline">
-            <Mail className="w-3.5 h-3.5" /> contact.presora@gmail.com
-          </a>
-          <p className="hidden print:block text-sm text-black">contact.presora@gmail.com</p>
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
+            <a href={`mailto:${branding.contactEmail}`} className="print:hidden inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline">
+              <Mail className="w-3.5 h-3.5" /> {branding.contactEmail}
+            </a>
+            <p className="hidden print:block text-sm text-black">{branding.contactEmail}</p>
+            {branding.website && (
+              <>
+                <a href={branding.website} target="_blank" rel="noreferrer" className="print:hidden inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline">
+                  <Globe className="w-3.5 h-3.5" /> {branding.website.replace(/^https?:\/\//, '')}
+                </a>
+                <p className="hidden print:block text-sm text-black">{branding.website.replace(/^https?:\/\//, '')}</p>
+              </>
+            )}
+          </div>
         </section>
 
-        <p className="text-center text-xs text-muted-foreground/60 print:text-black/40 mt-10">
-          Generated by Presora — presora.app
+        <p className="text-center text-xs text-muted-foreground/60 print:text-black/40 mt-10 print:mt-6">
+          {branding.isWhiteLabeled
+            ? <>{branding.name} · AI visibility audit · Reference {referenceId}</>
+            : <>Generated by Presora — presora.app · Reference {referenceId}</>}
         </p>
       </main>
     </div>
