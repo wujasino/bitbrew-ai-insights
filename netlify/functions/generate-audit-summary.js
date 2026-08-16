@@ -135,9 +135,15 @@ const callClaude = async (prompt) => {
   });
   if (!res.ok) throw new Error(`Anthropic API error: ${res.status}`);
   const data = await res.json();
-  const text = data.content?.[0]?.text || '';
+  // Was `data.content?.[0]?.text` — wrong whenever the first content block
+  // isn't type "text" (e.g. a "thinking" block ahead of it on models with
+  // extended thinking). A successful call then silently produced an empty
+  // string, which fell straight through to the deterministic template below
+  // — every audit read as generic, with no error anywhere to explain why.
+  const blocks = Array.isArray(data.content) ? data.content : [];
+  const text = blocks.find((b) => typeof b?.text === 'string' && b.text.length > 0)?.text || '';
   const jsonMatch = text.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) throw new Error('No JSON object found in model response');
+  if (!jsonMatch) throw new Error(`No JSON object found in model response (stop_reason: ${data?.stop_reason ?? 'unknown'})`);
   return JSON.parse(jsonMatch[0]);
 };
 
