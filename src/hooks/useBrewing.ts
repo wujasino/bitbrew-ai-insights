@@ -17,6 +17,7 @@ const buildViewFromStored = (
   dims: StoredDimensions,
   trustScore: number,
   createdAt?: string,
+  storedSources?: unknown,
 ): AnalysisResult => {
   const sentimentTrend = Array.from({ length: 7 }).map((_, i) => ({
     date: new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toLocaleDateString(),
@@ -27,11 +28,25 @@ const buildViewFromStored = (
     { name: 'Social', value: Math.max(10, Math.min(60, Math.round((dims.mentions + dims.sentiment) / 2))), color: '#60A5FA' },
     { name: 'Blogs', value: Math.max(5, Math.min(40, Math.round(dims.recency / 2))), color: '#34D399' },
   ];
-  const sources: SourceResult[] = [
-    { model: 'GPT-4o', sentiment: dims.sentiment > 60 ? 'Positive' : 'Neutral', association: `${brandName} product`, confidence: Math.max(30, Math.min(99, dims.authority)) },
-    { model: 'Claude', sentiment: dims.sentiment > 55 ? 'Positive' : 'Neutral', association: `${brandName} brand`, confidence: Math.max(25, Math.min(95, dims.accuracy)) },
-    { model: 'Gemini', sentiment: dims.mentions > 50 ? 'Positive' : 'Neutral', association: `${brandName} mentions`, confidence: Math.max(20, Math.min(92, dims.mentions)) },
-  ];
+  // Real per-model answers, saved at scan time, take priority — reopening a
+  // report must show what the models actually said, not a formula guess
+  // derived from the score. The synthetic 3-source array below only exists
+  // as a last resort for rows saved before `sources` was persisted at all.
+  const sources: SourceResult[] = (Array.isArray(storedSources) && storedSources.length > 0)
+    ? storedSources.map((raw) => {
+        const it = (raw ?? {}) as Record<string, unknown>;
+        return {
+          model: String(it.model ?? 'Unknown'),
+          sentiment: normalizeSentiment(it.sentiment),
+          association: String(it.association ?? ''),
+          confidence: Math.max(0, Math.min(100, Number(it.confidence) || 0)),
+        } satisfies SourceResult;
+      })
+    : [
+        { model: 'GPT-4o', sentiment: dims.sentiment > 60 ? 'Positive' : 'Neutral', association: `${brandName} product`, confidence: Math.max(30, Math.min(99, dims.authority)) },
+        { model: 'Claude', sentiment: dims.sentiment > 55 ? 'Positive' : 'Neutral', association: `${brandName} brand`, confidence: Math.max(25, Math.min(95, dims.accuracy)) },
+        { model: 'Gemini', sentiment: dims.mentions > 50 ? 'Positive' : 'Neutral', association: `${brandName} mentions`, confidence: Math.max(20, Math.min(92, dims.mentions)) },
+      ];
   return {
     id: crypto.randomUUID(),
     brandName,
@@ -303,17 +318,26 @@ export function useBrewing() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
-          const { error: dbError } = await supabase.from('analyses').insert({
-            user_id: user.id,
-            brand_name: brandName,
-            trust_score: analysisResult.trustScore,
-            authority: analysisResult.dimensions.authority,
-            sentiment: analysisResult.dimensions.sentiment,
-            recency: analysisResult.dimensions.recency,
-            mentions: analysisResult.dimensions.mentions,
-            accuracy: analysisResult.dimensions.accuracy,
-            sources: analysisResult.sources
-          });
+          // .select('id').single() so analysisResult.id becomes the REAL row
+          // id instead of the crypto.randomUUID() placeholder above. Without
+          // this, "Client audit" (navigate to /audit/${result.id}) always
+          // pointed at an id that didn't exist in the database — the button
+          // looked like it worked but every click 404'd on AuditReport.
+          const { data: saved, error: dbError } = await supabase
+            .from('analyses')
+            .insert({
+              user_id: user.id,
+              brand_name: brandName,
+              trust_score: analysisResult.trustScore,
+              authority: analysisResult.dimensions.authority,
+              sentiment: analysisResult.dimensions.sentiment,
+              recency: analysisResult.dimensions.recency,
+              mentions: analysisResult.dimensions.mentions,
+              accuracy: analysisResult.dimensions.accuracy,
+              sources: analysisResult.sources
+            })
+            .select('id')
+            .single();
 
           if (dbError) {
             if (dbError.message.includes('Analysis limit reached')) {
@@ -321,6 +345,8 @@ export function useBrewing() {
             } else {
               console.error('Failed to save analysis:', dbError);
             }
+          } else if (saved?.id) {
+            analysisResult.id = saved.id;
           }
         }
       } catch (dbError) {
@@ -385,18 +411,26 @@ export function useBrewing() {
       setProgress(0);
       return null;
     }
-    const view = buildViewFromStored(
-      data.brand_name,
-      {
-        authority: data.authority,
-        sentiment: data.sentiment,
-        recency: data.recency,
-        mentions: data.mentions,
-        accuracy: data.accuracy,
-      },
-      data.trust_score,
-      data.created_at,
-    );
+    const view = {
+      ...buildViewFromStored(
+        data.brand_name,
+        {
+          authority: data.authority,
+          sentiment: data.sentiment,
+          recency: data.recency,
+          mentions: data.mentions,
+          accuracy: data.accuracy,
+        },
+        data.trust_score,
+        data.created_at,
+        data.sources,
+      ),
+      // buildViewFromStored fabricates a fresh id (it has no way to know the
+      // real one) — overwrite with the actual row id so "Client audit" and
+      // any other feature keyed on result.id points at something that
+      // exists.
+      id: data.id,
+    };
     setProgress(100);
     setResult(view);
     setStatus('completed');
