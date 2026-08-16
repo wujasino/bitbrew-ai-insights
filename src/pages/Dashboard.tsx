@@ -9,6 +9,7 @@ import { RadarChartCard } from '@/components/charts/RadarChartCard';
 import { SentimentChart } from '@/components/charts/SentimentChart';
 import { SourceDonutChart } from '@/components/charts/SourceDonutChart';
 import { SourceTable } from '@/components/SourceTable';
+import { ScoreMethodology } from '@/components/ScoreMethodology';
 import { ResultsBreakdown } from '@/components/ResultsBreakdown';
 import BrandKnowledgeForm from '@/components/BrandKnowledgeForm';
 import { useBrewing } from '@/hooks/useBrewing';
@@ -903,6 +904,13 @@ const Dashboard = () => {
                   t={t}
                 />
               )}
+            </div>
+
+            {/* Answers "where does this number come from" right where people
+                ask it — after seeing the raw model answers, before the score
+                methodology gets buried under charts. */}
+            <div className="mb-5">
+              <ScoreMethodology sources={result.sources} />
             </div>
 
             {/* Brand knowledge — collapsed by default, moved here (after the
