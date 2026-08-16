@@ -233,6 +233,21 @@ Only the cases where *every* provider fails still produce `isFallback`.
 The watchdog stays — but it can now only trip when every provider is down,
 which is a real outage rather than one vendor's billing.
 
+## A missing report must say so
+
+`loadStoredAnalysis()` used to answer a failed lookup with a silent
+`setStatus('idle')`. With `?id=` in the URL the page then rendered 24
+characters — "Back / AI Audit / Analyze" — no message, no way back. Opening a
+report that had been deleted (or belonged to another account; RLS makes those
+indistinguishable, deliberately) looked exactly like the app being broken.
+
+It now sets `notFound` plus an explanatory error, and `Dashboard` renders it
+with the same neutral treatment as the paused state — clock icon, no "Try
+again" (retrying cannot help), and links to Reports and Home.
+
+Worth remembering after any cleanup of `analyses`: deleting rows invalidates
+every bookmark and history entry pointing at them.
+
 ## Read-only mode when scanning is paused
 
 `netlify/functions/scan-status.js` is a **public** GET returning only
