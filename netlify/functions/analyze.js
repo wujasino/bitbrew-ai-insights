@@ -173,6 +173,14 @@ export const handler = async (event) => {
       userId: authedUser?.id || null,
     });
 
+    // A fallback result is fabricated (deterministic, not from any real
+    // model) — never present that to the user as a genuine analysis. Throw
+    // into the catch block below so this is handled exactly like any other
+    // scan failure (500 + analysis.failed webhook), not a 200 success.
+    if (result.isFallback) {
+      throw new Error('All model providers failed or OPENROUTER_API_KEY is not configured');
+    }
+
     // Fire-and-forget (best-effort, awaited so it's recorded before the
     // function exits, but never allowed to fail the actual scan response).
     // Guests can't have webhooks configured, so only signed-in users hit this.

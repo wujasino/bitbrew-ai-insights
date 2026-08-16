@@ -99,6 +99,17 @@ export const handler = async () => {
         models: modelsToQuery,
         userId: monitor.user_id,
       });
+
+      // A fallback result is fabricated (deterministic, not from any real
+      // model) — recording it as a real analysis, or worse, alerting the
+      // user off a fake score drop, is actively misleading. Skip this
+      // monitor's cycle entirely and leave last_checked_at untouched so
+      // it's retried on the next scheduled run instead of waiting a full
+      // frequency period.
+      if (result.isFallback) {
+        console.warn(`check-score-alerts: monitor ${monitor.id} (${monitor.brand}) got a fallback result, skipping this cycle`);
+        continue;
+      }
       scanned += 1;
 
       await admin.from('analyses').insert({
