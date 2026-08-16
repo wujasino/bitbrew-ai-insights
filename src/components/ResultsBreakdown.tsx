@@ -2,11 +2,12 @@ import { memo, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   ShieldCheck, Smile, Target, AtSign, Clock,
-  ListChecks, CheckCircle2, AlertTriangle, ArrowUpRight, Sparkles,
+  ListChecks, CheckCircle2, AlertTriangle, ArrowUpRight, Sparkles, Quote,
 } from 'lucide-react';
 import { useTranslation } from '@/lib/locale';
 import { AnalysisResult } from '@/types/analysis';
 import { cn } from '@/lib/utils';
+import { bandOf, needsAction, BAND_LABEL, BAND_STYLE } from '@/lib/dimensionBands';
 
 type DimKey = keyof AnalysisResult['dimensions'];
 
@@ -18,17 +19,6 @@ const DIM_ICON: Record<DimKey, typeof ShieldCheck> = {
   accuracy: Target,
   mentions: AtSign,
   recency: Clock,
-};
-
-// Score → status band. Reserved status palette (good / warning / critical), each
-// shipped with a label — never colour alone. Higher score = healthier.
-type Band = 'strong' | 'moderate' | 'critical';
-const bandOf = (score: number): Band => (score >= 70 ? 'strong' : score >= 50 ? 'moderate' : 'critical');
-
-const BAND_STYLE: Record<Band, { meter: string; text: string; chip: string; labelKey: string }> = {
-  strong:   { meter: 'bg-emerald-500', text: 'text-emerald-600 dark:text-emerald-400', chip: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20', labelKey: 'status_strong' },
-  moderate: { meter: 'bg-amber-500',   text: 'text-amber-600 dark:text-amber-400',     chip: 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20',       labelKey: 'status_moderate' },
-  critical: { meter: 'bg-red-500',     text: 'text-red-600 dark:text-red-400',         chip: 'bg-red-500/10 text-red-700 dark:text-red-300 border-red-500/20',             labelKey: 'status_critical' },
 };
 
 const normalize = (v: number) => {
@@ -63,7 +53,7 @@ const DimensionResult = ({ dim, score, delay }: { dim: DimKey; score: number; de
       </div>
       <div className="mt-2.5">
         <span className={cn('inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border', style.chip)}>
-          {t(style.labelKey)}
+          {BAND_LABEL[band]}
         </span>
       </div>
     </div>
@@ -71,21 +61,55 @@ const DimensionResult = ({ dim, score, delay }: { dim: DimKey; score: number; de
 };
 
 // ── Prioritised action plan derived from the weakest dimensions ─────────────
-const ActionPlan = ({ ranked, brandName }: { ranked: { dim: DimKey; score: number }[]; brandName: string }) => {
+const ActionPlan = ({ ranked, brandName, sources }: { ranked: { dim: DimKey; score: number }[]; brandName: string; sources: AnalysisResult['sources'] }) => {
   const { t } = useTranslation();
-  // Everything below "strong" needs attention; surface the three lowest first.
-  const todo = ranked.filter(r => r.score < 70).slice(0, 3);
+  // "Good" (75-89) is fine as-is — only weak/critical dimensions get a
+  // remediation item. Was `score < 70`, which is why a report scoring
+  // [98,95,90,88,71] showed zero action items: nothing was below 70, so the
+  // one genuinely weak dimension (71, "Weak" under the new bands) never
+  // surfaced and the plan fell through to a bare compliment instead of the
+  // "ranked, plain-English action plan" the product promises.
+  const todo = ranked.filter(r => needsAction(r.score)).slice(0, 3);
 
   if (todo.length === 0) {
+    // Nothing needs fixing, but "keep publishing" alone is a compliment, not
+    // the evidence-backed plan this section promises — name the actual
+    // weakest signal and quote what models are really saying, even when
+    // every dimension is comfortably Good or Strong.
+    const weakest = ranked[0];
+    const weakestBand = weakest ? bandOf(weakest.score) : null;
+    const quotes = (sources ?? []).filter(s => s.association?.trim()).slice(0, 2);
     return (
-      <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.06] p-4 flex items-start gap-3">
-        <div className="shrink-0 w-8 h-8 rounded-lg bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center mt-0.5">
-          <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+      <div className="space-y-2.5">
+        <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.06] p-4 flex items-start gap-3">
+          <div className="shrink-0 w-8 h-8 rounded-lg bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center mt-0.5">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-foreground">{t('results_all_strong_title')}</p>
+            <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{t('results_all_strong_desc')}</p>
+          </div>
         </div>
-        <div>
-          <p className="text-sm font-semibold text-foreground">{t('results_all_strong_title')}</p>
-          <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{t('results_all_strong_desc')}</p>
-        </div>
+        {weakest && weakestBand && (
+          <div className="rounded-xl border border-border bg-card/60 p-4">
+            <p className="text-xs font-semibold text-foreground">
+              Weakest signal: {t(`dim_${weakest.dim}`)} ({weakest.score}%, {BAND_LABEL[weakestBand]})
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+              Still the dimension with the most room to grow — worth reinforcing even though nothing here is urgent.
+            </p>
+            {quotes.length > 0 && (
+              <div className="mt-3 space-y-1.5">
+                {quotes.map((s, i) => (
+                  <p key={i} className="flex items-start gap-1.5 text-xs text-muted-foreground leading-relaxed">
+                    <Quote className="w-3 h-3 shrink-0 mt-0.5 text-muted-foreground/50" />
+                    <span><span className="text-foreground/80 font-medium">{s.model}:</span> {s.association}</span>
+                  </p>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     );
   }
@@ -148,7 +172,7 @@ export const ResultsBreakdown = memo(function ResultsBreakdown({ result }: Resul
       .sort((a, b) => a.score - b.score);
   }, [result.dimensions]);
 
-  const actionsCount = ranked.filter(r => r.score < 70).length;
+  const actionsCount = ranked.filter(r => needsAction(r.score)).length;
 
   return (
     <div className="glass-card p-6">
@@ -180,7 +204,7 @@ export const ResultsBreakdown = memo(function ResultsBreakdown({ result }: Resul
           <Sparkles className="w-3 h-3 text-primary/70" />
           {t('results_action_subtitle')}
         </p>
-        <ActionPlan ranked={ranked} brandName={result.brandName} />
+        <ActionPlan ranked={ranked} brandName={result.brandName} sources={result.sources} />
       </div>
     </div>
   );

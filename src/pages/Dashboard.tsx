@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Sparkles, TrendingUp, TrendingDown, Activity, Layers, Target, RefreshCw, Search, Lock, FileDown, Swords, X, Volume2, Square, Loader2, Presentation, AlertTriangle, Clock, FileText } from 'lucide-react';
+import { ArrowLeft, Sparkles, TrendingUp, TrendingDown, Activity, Layers, Target, RefreshCw, Search, Lock, FileDown, Swords, X, Volume2, Square, Loader2, Presentation, AlertTriangle, Clock, FileText, AlertCircle } from 'lucide-react';
 import HomeHub from '@/components/home/HomeHub';
 import { useTranslation } from '@/lib/locale';
 import { BrewingProgress } from '@/components/BrewingState';
@@ -16,8 +16,11 @@ import { useTTS, loadVoicePrefs } from '@/hooks/useTTS';
 import { usePlan, tierOf, useSessionUser, isAgencyPlan } from '@/hooks/useAccountInfo';
 import { ResultChatWidget } from '@/components/ui/result-chat-widget';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/lib/supabase';
 import { AnalysisResult } from '@/types/analysis';
 import { scoreBrand, type BrandScore } from '@/lib/brandScore';
+import { brandKey, titleCaseIfAllLower } from '@/lib/analyses';
+import { bandOf, BAND_LABEL, BAND_STYLE } from '@/lib/dimensionBands';
 
 // Public origin that serves the embeddable badge endpoint (must be a live,
 // absolute URL so copied snippets work on any external site).
@@ -70,23 +73,40 @@ const getVerdictKey = (s: number) => {
 };
 
 // ── Hero score band ─────────────────────────────────────────────
-const ScoreHero = ({ result, t }: { result: AnalysisResult; t: (k: string) => string }) => {
+const ScoreHero = ({
+  result, t, previousScan, onImproveAccuracy,
+}: {
+  result: AnalysisResult;
+  t: (k: string) => string;
+  /** Real previous scan of THIS brand, or null (first scan / not signed in / still loading). */
+  previousScan: { trust_score: number; created_at: string } | null;
+  onImproveAccuracy: () => void;
+}) => {
   const score = useMemo(() => {
     if (typeof result.trustScore === 'number' && !isNaN(result.trustScore)) return Math.round(result.trustScore);
     const d = result.dimensions;
     return Math.round((d.authority + d.sentiment + d.accuracy + d.mentions + d.recency) / 5);
   }, [result]);
 
-  const trend = result.sentimentTrend;
-  const delta = trend && trend.length >= 2 ? Math.round(trend[trend.length - 1].score - trend[trend.length - 2].score) : 0;
+  // Was derived from `result.sentimentTrend` — a client-fabricated 7-point
+  // sine wave (analyze.js never returns a real trend), so the "+N pts" pill
+  // was mathematically generated from Math.sin(), not a real day-over-day
+  // change. Now a real comparison against the previous saved scan of the
+  // SAME brand, or hidden entirely when there isn't one — never fabricated.
+  const delta = previousScan ? score - Math.round(previousScan.trust_score) : null;
 
-  // Strongest / weakest dimension
+  // Strongest / weakest dimension, each with the SAME band word ResultsBreakdown
+  // shows for that dimension — previously this said a static "Needs attention"
+  // regardless of the real value, which could contradict a "Strong" badge on
+  // the exact same number a few inches below it.
   const [strongest, weakest] = useMemo(() => {
     const dimensions = Object.entries(result.dimensions) as [string, number][];
     const normalized = dimensions.map(([k, v]) => [k, v <= 1 ? v * 100 : v] as [string, number]);
     const sorted = [...normalized].sort((a, b) => b[1] - a[1]);
     return [sorted[0], sorted[sorted.length - 1]];
   }, [result.dimensions]);
+  const strongestBand = bandOf(Math.round(strongest[1]));
+  const weakestBand = bandOf(Math.round(weakest[1]));
 
   // Animated counter
   const [animScore, setAnimScore] = useState(0);
@@ -115,11 +135,24 @@ const ScoreHero = ({ result, t }: { result: AnalysisResult; t: (k: string) => st
     return Math.round(result.sources.reduce((acc, s) => acc + s.confidence, 0) / result.sources.length);
   }, [result.sources]);
 
-  const positiveRatio = useMemo(() => {
-    if (!result.sources?.length) return 0;
-    const pos = result.sources.filter(s => s.sentiment === 'Positive').length;
-    return Math.round((pos / result.sources.length) * 100);
+  // Real spread across models, not a bare average — "62%" alone hides
+  // whether that's every model agreeing at 62, or one model at 90 dragging
+  // three vague ones up from 40. Feeds the confidence banner below.
+  const confidenceRange = useMemo(() => {
+    const values = (result.sources ?? []).map(s => s.confidence);
+    if (!values.length) return null;
+    return { min: Math.min(...values), max: Math.max(...values) };
   }, [result.sources]);
+  const confidenceBand = bandOf(avgConfidence);
+
+  // Count, not a bare percentage — "Positive sentiment ratio: 0%" sitting
+  // next to "Sentiment: 71%" read as two contradictory measurements of the
+  // same thing. They measure different things (how many models used a
+  // literal "Positive" label vs. a 0-100 rated dimension score); a "2/3
+  // models" count doesn't invite the reader to subtract one from the other.
+  const posCount = useMemo(() => (result.sources ?? []).filter(s => s.sentiment === 'Positive').length, [result.sources]);
+  const totalModels = result.sources?.length ?? 0;
+  const positiveRatio = totalModels > 0 ? Math.round((posCount / totalModels) * 100) : 0;
 
   const { speak, stop, playing, loading: ttsLoading, error: ttsError } = useTTS();
   const [voiceEnabled, setVoiceEnabled] = useState(() => loadVoicePrefs().enabled);
@@ -172,13 +205,22 @@ const ScoreHero = ({ result, t }: { result: AnalysisResult; t: (k: string) => st
               <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] uppercase tracking-wider font-medium bg-primary/10 text-primary border border-primary/20">
                 {t(getScoreKey(score))}
               </span>
-              {delta !== 0 && (
-                <span className={cn(
-                  'inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium',
-                  delta > 0 ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-red-500/10 text-red-600 dark:text-red-400'
-                )}>
+              {delta !== null && delta !== 0 && previousScan && (
+                <span
+                  className={cn(
+                    'inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium',
+                    delta > 0 ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-red-500/10 text-red-600 dark:text-red-400'
+                  )}
+                  title={`vs ${new Date(previousScan.created_at).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' })}`}
+                >
                   {delta > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                  {Math.abs(delta)} pts
+                  {delta > 0 ? '+' : ''}{delta} pt{Math.abs(delta) === 1 ? '' : 's'}
+                  {' vs '}{new Date(previousScan.created_at).toLocaleDateString(undefined, { day: '2-digit', month: 'short' })}
+                </span>
+              )}
+              {delta === 0 && previousScan && (
+                <span className="inline-flex items-center px-2 py-1 rounded-md text-[10px] font-medium text-muted-foreground">
+                  No change vs {new Date(previousScan.created_at).toLocaleDateString(undefined, { day: '2-digit', month: 'short' })}
                 </span>
               )}
             </div>
@@ -210,27 +252,37 @@ const ScoreHero = ({ result, t }: { result: AnalysisResult; t: (k: string) => st
               {t('dashboard_verdict')}
             </div>
             <p className="text-sm sm:text-base text-foreground/90 leading-relaxed">
-              {t(getVerdictKey(score))}
+              {t(getVerdictKey(score)).split('{brand}').join(result.brandName)}
             </p>
             <div className="mt-5 grid grid-cols-2 gap-4">
               <div>
                 <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
                   {t('dashboard_strongest')}
                 </div>
-                <div className="flex items-center gap-2">
-                  <Target className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Target className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                   <span className="text-sm font-medium text-foreground capitalize">{t(`dim_${strongest[0]}`)}</span>
                   <span className="text-xs text-emerald-600 dark:text-emerald-400 font-data">{Math.round(strongest[1])}%</span>
+                  <span className={cn('inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium border', BAND_STYLE[strongestBand].chip)}>
+                    {BAND_LABEL[strongestBand]}
+                  </span>
                 </div>
               </div>
               <div>
+                {/* Neutral header ("Weakest dimension", not a static "Needs
+                    attention") — the chip below already carries the real
+                    verdict, computed by the SAME function ResultsBreakdown
+                    uses for the exact same number, so the two can't disagree. */}
                 <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
                   {t('dashboard_weakest')}
                 </div>
-                <div className="flex items-center gap-2">
-                  <Activity className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Activity className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                   <span className="text-sm font-medium text-foreground capitalize">{t(`dim_${weakest[0]}`)}</span>
-                  <span className="text-xs text-amber-600 dark:text-amber-400 font-data">{Math.round(weakest[1])}%</span>
+                  <span className={cn('text-xs font-data', BAND_STYLE[weakestBand].text)}>{Math.round(weakest[1])}%</span>
+                  <span className={cn('inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium border', BAND_STYLE[weakestBand].chip)}>
+                    {BAND_LABEL[weakestBand]}
+                  </span>
                 </div>
               </div>
             </div>
@@ -244,9 +296,48 @@ const ScoreHero = ({ result, t }: { result: AnalysisResult; t: (k: string) => st
             </div>
             <InsightRow label={t('dashboard_insight_1')} value={topModel?.model ?? '—'} />
             <InsightRow label={t('dashboard_insight_2')} value={`${avgConfidence}%`} />
-            <InsightRow label={t('dashboard_insight_3')} value={`${positiveRatio}%`} accent={positiveRatio >= 50} />
+            <InsightRow
+              label={t('dashboard_insight_3')}
+              value={totalModels > 0 ? `${posCount}/${totalModels}` : '—'}
+              accent={totalModels > 0 && posCount === totalModels}
+            />
           </div>
         </div>
+
+        {/* Confidence banner — "Average confidence 62%" used to just sit in
+            the insights list, ignored, while the headline score rendered at
+            full visual confidence regardless. Low average model confidence
+            now visibly qualifies the score and bridges straight into brand
+            knowledge, the actual lever that raises it. */}
+        {(confidenceBand === 'weak' || confidenceBand === 'critical') && confidenceRange && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.4 }}
+            className="mt-5 rounded-xl border border-amber-500/25 bg-amber-500/[0.06] p-4 flex flex-col sm:flex-row sm:items-center gap-3"
+          >
+            <div className="flex items-start gap-3 flex-1 min-w-0">
+              <div className="shrink-0 w-8 h-8 rounded-lg bg-amber-500/15 border border-amber-500/25 flex items-center justify-center mt-0.5">
+                <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-foreground">
+                  Low confidence — {avgConfidence}% average, {confidenceRange.min}–{confidenceRange.max}% across models
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                  Some models returned vague answers about {result.brandName}. Add brand context so future scans have facts to draw from instead of guesses.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={onImproveAccuracy}
+              className="shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-amber-500/15 border border-amber-500/25 text-amber-700 dark:text-amber-300 text-xs font-medium hover:bg-amber-500/25 transition-colors"
+            >
+              Add brand context
+            </button>
+          </motion.div>
+        )}
 
         {/* "o k***wa moment" — competitor urgency banner for low-scoring brands */}
         {score < 60 && (
@@ -322,13 +413,60 @@ const Dashboard = () => {
   const brandFromUrl = searchParams.get('brand') || '';
   const { progress, status, result, startBrewing, reset, loadStoredAnalysis, guestLimitReached, error: brewingError, scansDisabled, notFound, providerUnavailable } = useBrewing();
   const displayBrand = result?.brandName || brandFromUrl;
+  // Display-only casing fix — "facebook" reads as a typo next to properly
+  // cased brands. Doesn't touch the DB or the request payload, so it's safe
+  // to apply even to reports saved before canonicalBrandName() started
+  // fixing this at save time.
+  const displayBrandTitled = titleCaseIfAllLower(displayBrand);
   const [inputValue, setInputValue] = useState(brandFromUrl);
+  // Separate from `inputValue` (which still drives the idle pre-scan screen
+  // below): the results toolbar's "scan a different brand" field used to
+  // share state with the current brand, prefilled with it, which read as
+  // "edit this to overwrite the report" and also silently fed the wrong
+  // brand into BrandKnowledgeForm whenever someone typed ahead. Always
+  // starts empty.
+  const [newScanInput, setNewScanInput] = useState('');
   const [moderationError, setModerationError] = useState('');
   const { data: plan = 'Free' } = usePlan();
   const planTier = tierOf(plan.toLowerCase());
   const { data: sessionUser } = useSessionUser();
   const isLoggedIn = !!sessionUser?.id;
   const isIdle = !brandFromUrl && !analysisId;
+
+  // Real previous scan of THIS brand — replaces the sentimentTrend-derived
+  // fake delta in ScoreHero. Same brandKey-based matching HomeHub uses, so
+  // "presora" and "Presora.app" are treated as the same brand here too.
+  const [previousScan, setPreviousScan] = useState<{ trust_score: number; created_at: string } | null>(null);
+  useEffect(() => {
+    setPreviousScan(null);
+    if (status !== 'completed' || !result?.brandName || !isLoggedIn || !sessionUser?.id) return;
+    let active = true;
+    const key = brandKey(result.brandName);
+    const currentTimestamp = new Date(result.timestamp).getTime();
+    supabase
+      .from('analyses')
+      .select('trust_score, brand_name, created_at')
+      .eq('user_id', sessionUser.id)
+      .order('created_at', { ascending: false })
+      .limit(20)
+      .then(({ data }) => {
+        if (!active || !data) return;
+        const match = data.find(a =>
+          brandKey(a.brand_name) === key &&
+          // Excludes the row THIS scan just wrote (or is about to) rather
+          // than an id comparison — a fresh scan's client-side result.id and
+          // the real DB row id aren't guaranteed to line up within the same
+          // tick this effect runs.
+          Math.abs(new Date(a.created_at).getTime() - currentTimestamp) > 5000
+        );
+        setPreviousScan(match ? { trust_score: match.trust_score, created_at: match.created_at } : null);
+      });
+    return () => { active = false; };
+  }, [status, result?.brandName, result?.timestamp, isLoggedIn, sessionUser?.id]);
+
+  // Bumped by the low-confidence banner's CTA to force-expand and scroll to
+  // the (now collapsed-by-default) brand knowledge section below.
+  const [kbExpandSignal, setKbExpandSignal] = useState(0);
 
   // Competitor comparison (deterministic client-side score — no API/credit cost)
   const [competitorInput, setCompetitorInput] = useState('');
@@ -372,9 +510,8 @@ const Dashboard = () => {
     return () => reset();
   }, [analysisId, brandFromUrl, reset, startBrewing, loadStoredAnalysis]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const val = inputValue?.trim();
+  const submitScanRequest = async (raw: string) => {
+    const val = raw?.trim();
     if (!val) return;
     setModerationError('');
     try {
@@ -396,6 +533,20 @@ const Dashboard = () => {
     // used to double-fire it (two /analyze calls, two saved rows for one
     // scan) whenever brandFromUrl actually changed as a result.
     setSearchParams({ brand: val });
+  };
+
+  // Idle pre-scan screen's form.
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    submitScanRequest(inputValue);
+  };
+
+  // Results toolbar's "scan a different brand" form — deliberately a
+  // separate handler/input from the one above (see newScanInput's comment).
+  const handleNewScanSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    submitScanRequest(newScanInput);
+    setNewScanInput('');
   };
 
   if (isIdle) {
@@ -502,83 +653,122 @@ const Dashboard = () => {
                 {status === 'completed' && <LiveSignal label={t('dashboard_monitoring')} />}
               </div>
               <h1 className="text-3xl sm:text-4xl font-display text-foreground">
-                {displayBrand}{' '}
+                {displayBrandTitled}{' '}
                 <span className="text-muted-foreground font-light">{t('auditSuffix')}</span>
               </h1>
               <p className="text-muted-foreground text-xs mt-1.5 font-data">
-                {status === 'completed' ? t('dashboard_monitoring') : status === 'brewing' ? t('brewingInProgress') : ''}
+                {/* Was t('dashboard_monitoring') again here — the same word
+                    the pill above already shows. Once complete, the
+                    genuinely missing piece is WHEN this scan ran. */}
+                {status === 'completed' && result
+                  ? `Scanned ${new Date(result.timestamp).toLocaleDateString(undefined, { day: '2-digit', month: 'long', year: 'numeric' })}`
+                  : status === 'brewing' ? t('brewingInProgress') : ''}
               </p>
             </div>
 
-            {/* Search input */}
-            <form
-              onSubmit={handleSubmit}
-              className="flex flex-wrap items-center gap-2 sm:max-w-md w-full"
-            >
-              <div className="relative flex-1 min-w-[160px]">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <input
-                  id="dashboard-brand-input"
-                  name="brand"
-                  type="text"
-                  aria-label="Brand name to analyze"
-                  value={inputValue}
-                  onChange={(e) => { setInputValue(e.target.value); setModerationError(''); }}
-                  placeholder={t('placeholderExample')}
-                  className="w-full bg-card/40 backdrop-blur-xl border border-[hsl(var(--glass-border))] text-foreground placeholder:text-muted-foreground text-sm rounded-xl py-2.5 pl-10 pr-3 focus:outline-none focus:border-primary/40 transition-colors"
-                />
+            {status === 'completed' ? (
+              /* Results toolbar. "Analyze" sitting next to a same-brand
+                 refresh icon used to be ambiguous — which one re-runs THIS
+                 report vs. starts a different one? Split: a "New scan" field
+                 that starts empty (never prefilled with the current brand,
+                 so it can't read as "edit this to overwrite"), and a
+                 separately labeled "Re-scan" for the current brand. Export
+                 PDF and Client audit keep a visible label at every width —
+                 for an agency, Client audit is not a secondary action. */
+              <div className="flex flex-wrap items-center gap-2 sm:max-w-lg w-full">
+                <form onSubmit={handleNewScanSubmit} className="flex items-center gap-2 flex-1 min-w-[200px]">
+                  <div className="relative flex-1 min-w-[140px]">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <input
+                      id="dashboard-new-scan-input"
+                      name="newBrand"
+                      type="text"
+                      aria-label="Scan a different brand"
+                      value={newScanInput}
+                      onChange={(e) => { setNewScanInput(e.target.value); setModerationError(''); }}
+                      placeholder="Scan a different brand…"
+                      className="w-full bg-card/40 backdrop-blur-xl border border-[hsl(var(--glass-border))] text-foreground placeholder:text-muted-foreground text-sm rounded-xl py-2.5 pl-10 pr-3 focus:outline-none focus:border-primary/40 transition-colors"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={!newScanInput.trim()}
+                    className="bg-primary text-primary-foreground px-4 py-2.5 rounded-xl text-sm font-medium hover:opacity-90 transition-opacity whitespace-nowrap disabled:opacity-40"
+                  >
+                    New scan
+                  </button>
+                </form>
+                <button
+                  type="button"
+                  onClick={() => {
+                    reset();
+                    setSearchParams({ brand: displayBrand });
+                    setTimeout(() => startBrewing(displayBrand), 100);
+                  }}
+                  className="inline-flex items-center gap-1.5 bg-card/40 backdrop-blur-xl border border-[hsl(var(--glass-border))] text-foreground px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-card/60 transition-colors"
+                  title={`Re-scan ${displayBrandTitled}`}
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  <span className="text-xs">Re-scan</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  className="inline-flex items-center gap-1.5 bg-card/40 backdrop-blur-xl border border-[hsl(var(--glass-border))] text-foreground px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-card/60 transition-colors"
+                  title={t('dashboard_export_pdf')}
+                >
+                  <FileDown className="w-3.5 h-3.5" />
+                  <span className="text-xs">{t('dashboard_export_pdf')}</span>
+                </button>
+                {result?.id && (
+                  <button
+                    type="button"
+                    onClick={() => navigate(canCreateAudit ? `/audit/${result.id}` : '/pricing')}
+                    className="inline-flex items-center gap-1.5 bg-card/40 backdrop-blur-xl border border-[hsl(var(--glass-border))] text-foreground px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-card/60 transition-colors disabled:opacity-50"
+                    title={canCreateAudit ? 'Open as client-ready audit' : 'Client-ready audit — Agency plan only'}
+                  >
+                    {canCreateAudit ? <Presentation className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
+                    <span className="text-xs">Client audit</span>
+                  </button>
+                )}
               </div>
-              <button
-                type="submit"
-                className="bg-primary text-primary-foreground px-4 py-2.5 rounded-xl text-sm font-medium hover:opacity-90 transition-opacity whitespace-nowrap"
+            ) : (
+              <form
+                onSubmit={handleSubmit}
+                className="flex flex-wrap items-center gap-2 sm:max-w-md w-full"
               >
-                {t('analyze')}
-              </button>
-              {status === 'completed' && (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      reset();
-                      setSearchParams({ brand: displayBrand });
-                      setTimeout(() => startBrewing(displayBrand), 100);
-                    }}
-                    className="inline-flex items-center gap-1.5 bg-card/40 backdrop-blur-xl border border-[hsl(var(--glass-border))] text-foreground px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-card/60 transition-colors"
-                    title={t('reBrew')}
-                  >
-                    <RefreshCw className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => window.print()}
-                    className="inline-flex items-center gap-1.5 bg-card/40 backdrop-blur-xl border border-[hsl(var(--glass-border))] text-foreground px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-card/60 transition-colors"
-                    title={t('dashboard_export_pdf')}
-                  >
-                    <FileDown className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline text-xs">{t('dashboard_export_pdf')}</span>
-                  </button>
-                  {result?.id && (
-                    <button
-                      type="button"
-                      onClick={() => navigate(canCreateAudit ? `/audit/${result.id}` : '/pricing')}
-                      className="inline-flex items-center gap-1.5 bg-card/40 backdrop-blur-xl border border-[hsl(var(--glass-border))] text-foreground px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-card/60 transition-colors disabled:opacity-50"
-                      title={canCreateAudit ? 'Open as client-ready audit' : 'Client-ready audit — Agency plan only'}
-                    >
-                      {canCreateAudit ? <Presentation className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
-                      <span className="hidden sm:inline text-xs">Client audit</span>
-                    </button>
-                  )}
-                </>
-              )}
-            </form>
+                <div className="relative flex-1 min-w-[160px]">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <input
+                    id="dashboard-brand-input"
+                    name="brand"
+                    type="text"
+                    aria-label="Brand name to analyze"
+                    value={inputValue}
+                    onChange={(e) => { setInputValue(e.target.value); setModerationError(''); }}
+                    placeholder={t('placeholderExample')}
+                    className="w-full bg-card/40 backdrop-blur-xl border border-[hsl(var(--glass-border))] text-foreground placeholder:text-muted-foreground text-sm rounded-xl py-2.5 pl-10 pr-3 focus:outline-none focus:border-primary/40 transition-colors"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="bg-primary text-primary-foreground px-4 py-2.5 rounded-xl text-sm font-medium hover:opacity-90 transition-opacity whitespace-nowrap"
+                >
+                  {t('analyze')}
+                </button>
+              </form>
+            )}
           </div>
 
           {moderationError && (
             <p className="text-xs text-destructive mt-1">{moderationError}</p>
           )}
 
-          {/* Brand knowledge */}
-          {inputValue.trim().length > 1 && (
+          {/* Brand knowledge — only shown here (above results) before a
+              result exists; once completed it moves below the score and
+              action plan (see the results section), collapsed by default,
+              so it stops pushing the actual scan below the fold. */}
+          {status !== 'completed' && inputValue.trim().length > 1 && (
             <BrandKnowledgeForm brandName={inputValue} />
           )}
 
@@ -684,11 +874,44 @@ const Dashboard = () => {
             transition={{ duration: 0.5 }}
           >
             {/* Hero band */}
-            <ScoreHero result={result} t={t} />
+            <ScoreHero
+              result={result}
+              t={t}
+              previousScan={previousScan}
+              onImproveAccuracy={() => setKbExpandSignal(v => v + 1)}
+            />
 
             {/* Results by dimension + recommended actions — the concrete takeaway */}
             <div className="mb-5">
               <ResultsBreakdown result={result} />
+            </div>
+
+            {/* Raw model answers — the evidence behind every score above, and
+                the landing page's single strongest claim ("raw model answers
+                behind every metric"). Used to sit at the very bottom of the
+                page, after every chart; moved directly under the action
+                plan so it reads as core content, not an appendix. */}
+            <div className="relative mb-5">
+              <div className={canSeeSources ? '' : 'pointer-events-none blur-sm select-none'} aria-hidden={!canSeeSources}>
+                <SourceTable sources={result.sources} />
+              </div>
+              {!canSeeSources && (
+                <LockedOverlay
+                  title={t('dashboard_locked_table_title')}
+                  description={t('dashboard_locked_table_desc')}
+                  onUpgrade={() => navigate('/pricing')}
+                  t={t}
+                />
+              )}
+            </div>
+
+            {/* Brand knowledge — collapsed by default, moved here (after the
+                score, the action plan and the raw model answers) instead of
+                sitting expanded above everything else. Keyed to the actual
+                displayed brand, not whatever's in the "scan a different
+                brand" field. */}
+            <div className="mb-5">
+              <BrandKnowledgeForm brandName={displayBrand} forceExpandSignal={kbExpandSignal} />
             </div>
 
             {/* Grid */}
@@ -780,20 +1003,6 @@ const Dashboard = () => {
                   />
                 )}
               </div>
-              <div className="col-span-12 relative">
-                <div className={canSeeSources ? '' : 'pointer-events-none blur-sm select-none'} aria-hidden={!canSeeSources}>
-                  <SourceTable sources={result.sources} />
-                </div>
-                {!canSeeSources && (
-                  <LockedOverlay
-                    title={t('dashboard_locked_table_title')}
-                    description={t('dashboard_locked_table_desc')}
-                    onUpgrade={() => navigate('/pricing')}
-                    t={t}
-                  />
-                )}
-              </div>
-
               {/* Embeddable badge */}
               <div className="col-span-12">
                 <div className="glass-card p-6">

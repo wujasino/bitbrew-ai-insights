@@ -14,6 +14,7 @@ import { MODEL_CATALOG, loadModelPrefs, saveModelPrefs } from '@/lib/models';
 import { BrandScanInput } from '@/components/BrandScanInput';
 import { brandKey, dedupeAnalyses } from '@/lib/analyses';
 import { useScanStatus } from '@/hooks/useScanStatus';
+import { bandOf, BAND_LABEL, BAND_HEX, BAND_STYLE, type Band } from '@/lib/dimensionBands';
 
 interface Analysis {
   id: string;
@@ -40,28 +41,25 @@ const DIMENSIONS: { key: keyof Pick<Analysis, 'authority' | 'sentiment' | 'accur
   { key: 'recency', label: 'Recency', Icon: Clock },
 ];
 
-// Matches scoreColor()'s 75/60 bands below. Was 70/50, which painted a 70
-// Mentions and a 73 Accuracy the same green as a 95 — on a screen selling
-// "what to fix first", every bar being green is the one thing it must not do.
-const barColor = (s: number) => (s >= 75 ? 'bg-emerald-500' : s >= 60 ? 'bg-amber-500' : 'bg-red-500');
-
-// Same score → status band thresholds as ResultsBreakdown.tsx, kept in sync
-// so "Strong"/"Needs work"/"Critical" mean the same thing everywhere.
-type Band = 'strong' | 'moderate' | 'critical';
-const bandOf = (score: number): Band => (score >= 75 ? 'strong' : score >= 60 ? 'moderate' : 'critical');
-const BAND_COLOR: Record<Band, string> = { strong: '#10b981', moderate: '#f59e0b', critical: '#ef4444' };
-const BAND_LABEL: Record<Band, string> = { strong: 'Strong', moderate: 'Needs work', critical: 'Critical' };
+// Shared with ResultsBreakdown.tsx, AuditReport.tsx and the Dashboard hero
+// (src/lib/dimensionBands.ts) — one set of thresholds and words, so the same
+// dimension score never reads "Strong" on one screen and something implying
+// trouble on another. 4 tiers (Strong/Good/Weak/Critical, 90/75/60) instead
+// of the old 3 (70/50), which painted a 71 and a 95 the same green.
+const barColor = (s: number) => BAND_STYLE[bandOf(s)].meter;
 
 /* ── Visibility health ring — at-a-glance donut of how many of the 5
    dimensions are Strong/Needs work/Critical, with the overall score in
    the center. Complements the linear dimension strip in the score card. */
+const BAND_ORDER: Band[] = ['strong', 'good', 'weak', 'critical'];
+
 const HealthRing = ({ analysis }: { analysis: Analysis }) => {
   const counts = useMemo(() => {
-    const c: Record<Band, number> = { strong: 0, moderate: 0, critical: 0 };
+    const c: Record<Band, number> = { strong: 0, good: 0, weak: 0, critical: 0 };
     DIMENSIONS.forEach(({ key }) => { c[bandOf(analysis[key])] += 1; });
     return c;
   }, [analysis]);
-  const data = (['strong', 'moderate', 'critical'] as Band[])
+  const data = BAND_ORDER
     .filter(b => counts[b] > 0)
     .map(b => ({ band: b, value: counts[b] }));
 
@@ -71,7 +69,7 @@ const HealthRing = ({ analysis }: { analysis: Analysis }) => {
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie data={data} dataKey="value" cx="50%" cy="50%" innerRadius={14} outerRadius={20} paddingAngle={3} stroke="none">
-              {data.map(d => <Cell key={d.band} fill={BAND_COLOR[d.band]} />)}
+              {data.map(d => <Cell key={d.band} fill={BAND_HEX[d.band]} />)}
             </Pie>
           </PieChart>
         </ResponsiveContainer>
@@ -81,12 +79,12 @@ const HealthRing = ({ analysis }: { analysis: Analysis }) => {
       </div>
       <div className="text-xs leading-tight">
         <p className="text-muted-foreground mb-1">Dimension health</p>
-        {/* Spelled out rather than three coloured dots with bare counts —
+        {/* Spelled out rather than coloured dots with bare counts —
             "5 · 0 · 0" told the reader nothing without a legend. */}
         <div className="flex items-center gap-2 flex-wrap">
-          {(['strong', 'moderate', 'critical'] as Band[]).map(b => (
+          {BAND_ORDER.filter(b => counts[b] > 0).map(b => (
             <span key={b} className="inline-flex items-center gap-1 text-muted-foreground whitespace-nowrap">
-              <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: BAND_COLOR[b] }} />
+              <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: BAND_HEX[b] }} />
               {counts[b]} {BAND_LABEL[b].toLowerCase()}
             </span>
           ))}
