@@ -204,8 +204,6 @@ export const AppNavbar = ({ collapsed = false, onToggle, onMobileToggle, chatOpe
                 <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Credits</span>
                 <Link
                   to="/pricing"
-                  target="_blank"
-                  rel="noopener noreferrer"
                   onClick={() => setOpen(false)}
                   className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
                 >
