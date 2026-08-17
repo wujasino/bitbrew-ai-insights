@@ -7,6 +7,8 @@ import { USD, PLANS } from '@/lib/plans';
 import { CreditsUsageWidget } from '@/components/CreditsUsageWidget';
 import { ContactForm } from '@/components/ui/contact-form';
 import { useSessionUser } from '@/hooks/useAccountInfo';
+import { Navbar } from '@/components/layout/Navbar';
+import { Footer } from '@/components/layout/Footer';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import {
@@ -168,6 +170,12 @@ const Pricing = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Standalone page (see App.tsx route comment) — own Navbar, since this
+          isn't nested inside AppShell anymore. Navbar is fixed, hence the
+          pt-28 below instead of the old pt-10 that assumed AppShell's
+          in-flow topbar. */}
+      <Navbar />
+
       {/* Downgrade dialog */}
       <Dialog open={showDowngradeDialog} onOpenChange={setShowDowngradeDialog}>
         <DialogContent className="max-w-md">
@@ -220,7 +228,7 @@ const Pricing = () => {
 
       <div className="pb-20 px-4 max-w-7xl mx-auto">
         {/* Page header */}
-        <div className="text-center pt-10">
+        <div className="text-center pt-28">
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[11px] font-medium text-primary mb-4 uppercase tracking-wider">
             Subscription
           </span>
@@ -411,6 +419,8 @@ const Pricing = () => {
           </div>
         </div>
       </div>
+
+      <Footer />
     </div>
   );
 };

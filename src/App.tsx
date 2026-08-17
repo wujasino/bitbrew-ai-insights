@@ -117,7 +117,11 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
-            <Route path="/pricing" element={<AppShell><Pricing /></AppShell>} />
+            {/* Not wrapped in AppShell on purpose: opened from the app navbar's
+                "Subscription" link in a new tab, it should read as a normal
+                page you can navigate away from (its own Navbar/Footer), not
+                a nested copy of the dashboard chrome. */}
+            <Route path="/pricing" element={<Pricing />} />
             <Route
               path="/profile"
               element={
