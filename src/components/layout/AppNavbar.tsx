@@ -10,10 +10,11 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { cn } from '@/lib/utils';
 import { PLAN_LIMITS, PLAN_LABELS, usePlan, useAnalysesUsedThisMonth, useSessionUser, useAvatarUrl } from '@/hooks/useAccountInfo';
 
-const DropdownLink = ({ to, icon: Icon, label, onClick }: { to: string; icon: React.FC<{ className?: string }>; label: string; onClick?: () => void }) => (
+const DropdownLink = ({ to, icon: Icon, label, onClick, openInNewTab }: { to: string; icon: React.FC<{ className?: string }>; label: string; onClick?: () => void; openInNewTab?: boolean }) => (
   <Link
     to={to}
     onClick={onClick}
+    {...(openInNewTab ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
     className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-foreground hover:bg-accent transition-colors"
   >
     <Icon className="w-4 h-4 text-muted-foreground" />
@@ -236,7 +237,7 @@ export const AppNavbar = ({ collapsed = false, onToggle, onMobileToggle, chatOpe
             <div className="p-2 border-b border-border space-y-0.5">
               <DropdownLink to="/profile"    icon={User}       label="Profile"       onClick={() => setOpen(false)} />
               <DropdownLink to="/settings"   icon={Settings}   label="Settings"   onClick={() => setOpen(false)} />
-              <DropdownLink to="/pricing"    icon={CreditCard} label="Subscription"  onClick={() => setOpen(false)} />
+              <DropdownLink to="/pricing"    icon={CreditCard} label="Subscription"  onClick={() => setOpen(false)} openInNewTab />
               <DropdownLink to="/developers" icon={Code2}      label="Developers"   onClick={() => setOpen(false)} />
             </div>
 

@@ -9,6 +9,7 @@ import { RadarChartCard } from '@/components/charts/RadarChartCard';
 import { SentimentChart } from '@/components/charts/SentimentChart';
 import { SourceDonutChart } from '@/components/charts/SourceDonutChart';
 import { SourceTable } from '@/components/SourceTable';
+import { ScoreMethodology } from '@/components/ScoreMethodology';
 import { ResultsBreakdown } from '@/components/ResultsBreakdown';
 import BrandKnowledgeForm from '@/components/BrandKnowledgeForm';
 import { useBrewing } from '@/hooks/useBrewing';
@@ -20,6 +21,7 @@ import { supabase } from '@/lib/supabase';
 import { AnalysisResult } from '@/types/analysis';
 import { scoreBrand, type BrandScore } from '@/lib/brandScore';
 import { brandKey, titleCaseIfAllLower } from '@/lib/analyses';
+import { MODEL_CATALOG, loadModelPrefs } from '@/lib/models';
 import { bandOf, BAND_LABEL, BAND_STYLE } from '@/lib/dimensionBands';
 
 // Public origin that serves the embeddable badge endpoint (must be a live,
@@ -804,9 +806,21 @@ const Dashboard = () => {
           )}
         </header>
 
-        {/* Brewing State — live AI scan in progress */}
+        {/* Brewing State — live AI scan in progress. `queriedModels` mirrors
+            exactly what startBrewing sends as `models` (loadModelPrefs().
+            selected) — the same single source of truth the request body
+            uses, so this screen can't show a model count that disagrees
+            with what's actually being queried. */}
         {status === 'brewing' && (
-          <BrewingProgress progress={progress} brandName={displayBrand} />
+          <BrewingProgress
+            progress={progress}
+            brandName={displayBrand}
+            models={loadModelPrefs().selected.map(id => {
+              const known = MODEL_CATALOG.find(m => m.id === id);
+              return { id, label: known?.label ?? id };
+            })}
+            onCancel={reset}
+          />
         )}
 
         {/* Loading State — fetching an already-saved report, not scanning */}
@@ -903,6 +917,13 @@ const Dashboard = () => {
                   t={t}
                 />
               )}
+            </div>
+
+            {/* Answers "where does this number come from" right where people
+                ask it — after seeing the raw model answers, before the score
+                methodology gets buried under charts. */}
+            <div className="mb-5">
+              <ScoreMethodology sources={result.sources} />
             </div>
 
             {/* Brand knowledge — collapsed by default, moved here (after the
