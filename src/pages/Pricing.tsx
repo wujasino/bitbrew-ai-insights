@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Zap, AlertTriangle, Clock, Check } from 'lucide-react';
+import { Zap, AlertTriangle, Clock, Check, ShieldCheck, Percent, Coffee, Sparkles } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { PricingCards } from '@/components/ui/pricing-cards';
 import { USD, PLANS } from '@/lib/plans';
@@ -158,6 +158,16 @@ const Pricing = () => {
 
   const plans = PLANS;
 
+  // Real $ saved by switching to yearly billing — computed from the same USD
+  // source of truth pricing-cards reads from, not a separate hardcoded
+  // number that could drift from what checkout actually charges.
+  const parseUSD = (v: string) => Number(v.replace(/[^0-9.]/g, '')) || 0;
+  const yearlySavings = [
+    { plan: 'Starter', monthly: parseUSD(USD.starter_monthly), yearly: parseUSD(USD.starter_yearly) },
+    { plan: 'Solo', monthly: parseUSD(USD.solo_monthly), yearly: parseUSD(USD.solo_yearly) },
+    { plan: 'Business', monthly: parseUSD(USD.growth_monthly), yearly: parseUSD(USD.growth_yearly) },
+  ].map(p => ({ ...p, savedPerYear: Math.round(p.monthly * 12 - p.yearly) }));
+
   const faqItems = [
     { q: 'Can I cancel anytime?',             a: 'Yes — cancel at any time and keep access until the end of your billing period.' },
     { q: 'What happens if I exceed my limit?', a: 'If you hit your plan limit, you can upgrade instantly or purchase additional analysis credits.' },
@@ -227,15 +237,33 @@ const Pricing = () => {
       </Dialog>
 
       <div className="pb-20 px-4 max-w-7xl mx-auto">
-        {/* Page header */}
+        {/* Page header — promise, what you get, present-tense payoff, who
+            carries the risk. The Free plan (no card) is the soft offer;
+            Agency (quoted after a call) is the qualified one. */}
         <div className="text-center pt-28">
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[11px] font-medium text-primary mb-4 uppercase tracking-wider">
             Subscription
           </span>
-          <h1 className="text-3xl sm:text-4xl font-display text-foreground mb-2">Subscription</h1>
-          <p className="text-sm text-muted-foreground max-w-lg mx-auto">
-            Choose the plan that fits — upgrade, downgrade or cancel anytime.
+          <h1 className="text-3xl sm:text-4xl font-display text-foreground mb-3 max-w-2xl mx-auto">
+            Know exactly what AI models tell your customers about you.
+          </h1>
+          <p className="text-sm text-muted-foreground max-w-xl mx-auto leading-relaxed">
+            You open Presora and see, right now, what ChatGPT, Claude and Gemini actually
+            say when someone asks about your brand — a trust score, the real quotes behind
+            it, and a prioritized list of what to fix first.
           </p>
+
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 mt-5 text-xs text-muted-foreground">
+            <span className="inline-flex items-center gap-1.5">
+              <ShieldCheck className="w-3.5 h-3.5 text-primary" /> Free plan, no card required
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <Check className="w-3.5 h-3.5 text-primary" /> Cancel any paid plan anytime
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-primary" /> Agency: quoted around your exact volume
+            </span>
+          </div>
         </div>
 
         {message && (
@@ -268,6 +296,17 @@ const Pricing = () => {
           <CreditsUsageWidget />
         </div>
 
+        {/* Real $ saved by switching — no countdown timer, no invented
+            urgency; the -20% is a standing rate, always available, so we
+            say that plainly instead of dressing it up as a limited-time
+            deal it isn't. */}
+        {billingCycle === 'yearly' && (
+          <p className="text-center text-xs text-muted-foreground -mt-4 mb-8">
+            <Percent className="w-3 h-3 inline -mt-0.5 mr-1 text-primary" />
+            Yearly billing saves ${yearlySavings[0].savedPerYear}–${yearlySavings[2].savedPerYear}/year depending on plan — applied automatically above, no code needed.
+          </p>
+        )}
+
         {/* Pricing cards */}
         <PricingCards
           plans={plans}
@@ -277,6 +316,83 @@ const Pricing = () => {
           loadingPlan={loading}
           showBillingToggle={false}
         />
+
+        {/* Why the price is what it is — trivialized to a daily cost, put
+            next to a spending category people already have a feel for, and
+            one honest limitation named up front rather than left for
+            someone to discover after paying. */}
+        <motion.div
+          className="mt-16 max-w-4xl mx-auto"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+        >
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="rounded-2xl border border-[hsl(var(--glass-border))] bg-card/40 p-5">
+              <Coffee className="w-4 h-4 text-primary mb-2" />
+              <p className="text-sm font-semibold text-foreground">${(parseUSD(USD.starter_monthly) / 30).toFixed(2)}/day</p>
+              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                Starter works out to less than a coffee a day — for knowing what AI tells people about your brand every day of the month.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-[hsl(var(--glass-border))] bg-card/40 p-5">
+              <Zap className="w-4 h-4 text-primary mb-2" />
+              <p className="text-sm font-semibold text-foreground">Less than one agency hour</p>
+              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                A marketing agency typically bills $150–300/hour. Starter costs less than that per month — and re-checks automatically, every month.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-amber-500/25 bg-amber-500/[0.05] p-5">
+              <AlertTriangle className="w-4 h-4 text-amber-500 mb-2" />
+              <p className="text-sm font-semibold text-foreground">Where it's not a fit yet</p>
+              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                We cover 6 mainstream AI assistants (see below). If your customers mostly ask a
+                niche or internal AI tool we don't query, this won't cover that yet.
+              </p>
+            </div>
+          </div>
+
+          {/* Turbo — a real bonus, sold on its own merit, included free
+              rather than mentioned as an afterthought. */}
+          <div className="mt-4 rounded-2xl border border-primary/25 bg-primary/[0.05] p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
+              <Sparkles className="w-5 h-5 text-primary" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-foreground">Included free with every plan: Google Visibility</p>
+              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                On-page SEO audit and a meta-tag/structured-data generator for your site — a second,
+                complementary check on top of the AI-model score, at no extra cost.
+              </p>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Our promise vs. what most AI-visibility tools promise — short and
+            specific rather than a repeat of the full feature matrix already
+            on the landing page. */}
+        <motion.div
+          className="mt-16 max-w-4xl mx-auto"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+        >
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="rounded-2xl border border-primary/30 bg-primary/[0.05] p-5">
+              <p className="text-[10px] uppercase tracking-wider text-primary font-semibold mb-2">Our promise</p>
+              <p className="text-sm text-foreground leading-relaxed">
+                We show you the exact question we asked each AI model and the exact answer it gave —
+                every score traces back to real, checkable evidence.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-[hsl(var(--glass-border))] bg-card/30 p-5">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-2">What most AI-visibility tools promise</p>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                A single score, updated on their schedule — with no way to see how they got there or verify it yourself.
+              </p>
+            </div>
+          </div>
+        </motion.div>
 
         {/* How long this takes everyone else vs Presora */}
         <motion.div
