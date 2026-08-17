@@ -1,6 +1,14 @@
 import { Link } from 'react-router-dom';
-import { Github, Twitter, Linkedin } from 'lucide-react';
+import { Github, Twitter, Linkedin, Instagram } from 'lucide-react';
 import { Wordmark } from '@/components/Wordmark';
+
+// lucide-react doesn't ship a TikTok glyph — hand-drawn to match the stroke
+// weight/viewBox of the lucide icons it sits next to in the socials row.
+const TikTokIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" />
+  </svg>
+);
 
 const LINKS = [
   { label: 'About', to: '/about' },
@@ -18,6 +26,8 @@ const SOCIALS = [
   { href: 'https://twitter.com/presora_ai', Icon: Twitter, label: 'Twitter/X' },
   { href: 'https://linkedin.com/company/presora', Icon: Linkedin, label: 'LinkedIn' },
   { href: 'https://github.com/presora-ai', Icon: Github, label: 'GitHub' },
+  { href: 'https://www.instagram.com/presora.app', Icon: Instagram, label: 'Instagram' },
+  { href: 'https://www.tiktok.com/@presora.app', Icon: TikTokIcon, label: 'TikTok' },
 ];
 
 export const Footer = () => {
