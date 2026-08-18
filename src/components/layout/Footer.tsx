@@ -63,7 +63,7 @@ export const Footer = () => {
       </div>
 
       <div className="max-w-6xl mx-auto mt-8 pt-6 border-t border-[hsl(var(--glass-border))] text-center">
-        <p className="text-xs text-muted-foreground/60">© 2026 Presora. All rights reserved.</p>
+        <p className="text-xs text-muted-foreground">© 2026 Presora. All rights reserved.</p>
       </div>
     </footer>
   );

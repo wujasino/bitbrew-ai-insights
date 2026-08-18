@@ -513,7 +513,7 @@ const Landing = () => {
           {/* Said plainly next to the numbers, not just in the badge above:
               unattributed before/after figures read as invented and cost more
               credibility than they buy. */}
-          <p className="text-center text-xs text-muted-foreground/70 mt-6 max-w-xl mx-auto">
+          <p className="text-center text-xs text-muted-foreground mt-6 max-w-xl mx-auto">
             Illustrative figures showing how these metrics relate, not results from a
             named customer. Your own numbers come from a real scan — run one above.
           </p>
@@ -918,7 +918,7 @@ const Landing = () => {
             ))}
           </div>
 
-          <p className="text-center text-xs text-muted-foreground/70 mt-8">
+          <p className="text-center text-xs text-muted-foreground mt-8">
             <Link to="/status" className="hover:text-foreground transition-colors underline underline-offset-2">Live system status</Link>
             {' · '}
             <Link to="/polityka-prywatnosci" className="hover:text-foreground transition-colors underline underline-offset-2">Privacy policy</Link>
@@ -1062,9 +1062,9 @@ const Landing = () => {
             />
           </motion.div>
 
-          <p className="text-center text-xs text-muted-foreground/70 mt-8">
+          <p className="text-center text-xs text-muted-foreground mt-8">
             Cancel anytime, no contracts.{' '}
-            <Link to="/pricing" className="text-primary hover:underline">
+            <Link to="/pricing" className="text-primary underline underline-offset-2">
               Compare every plan in detail
             </Link>
           </p>
