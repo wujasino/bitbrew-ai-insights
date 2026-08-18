@@ -392,7 +392,8 @@ const HomeHub = () => {
                   // Real per-model confidence from the scan, when this report has it
                   // (sources wasn't persisted before this was added — older rows are
                   // null). Never fabricate a number for a model that wasn't actually
-                  // queried; show "–" instead of a misleading fake bar.
+                  // queried — offer "Enable & rescan" (or "not queried" while
+                  // scanning is paused) instead of a misleading fake bar.
                   const source = latest.sources?.find(s => s.model === m.label);
                   const conf = source ? Math.max(0, Math.min(100, Math.round(source.confidence))) : null;
                   return (

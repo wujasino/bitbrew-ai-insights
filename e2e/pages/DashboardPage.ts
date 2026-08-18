@@ -5,10 +5,12 @@ export class DashboardPage {
   readonly signOutButton: Locator;
 
   constructor(private page: Page) {
-    // AppNavbar's avatar-popover trigger has no aria-label — its accessible
-    // name is the AvatarFallback initials, derived from the mocked user's
-    // email/name in e2e/mocks/supabase.ts (TEST_USER.email -> "E").
-    this.avatarMenuButton = page.getByRole('button', { name: 'E', exact: true });
+    // AppNavbar's avatar-popover trigger has an explicit aria-label, which
+    // is what the accessible name computes to (an aria-label always wins
+    // over visible text content) — matching on the AvatarFallback initials
+    // ("E", from TEST_USER.email in e2e/mocks/supabase.ts) stopped working
+    // the moment the aria-label was added and never found the button again.
+    this.avatarMenuButton = page.getByRole('button', { name: 'Account menu' });
     this.signOutButton = page.getByRole('button', { name: 'Sign out' });
   }
 
