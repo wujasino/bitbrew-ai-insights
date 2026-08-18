@@ -35,6 +35,29 @@ jobs:
         run: npm install --legacy-peer-deps
 
       - name: Build
+        env:
+          # Vite bakes VITE_* vars into the client bundle at build time, not
+          # at deploy time — Netlify's own build used to inject these
+          # automatically from its Site configuration → Environment
+          # variables. Building on GitHub Actions instead means they have to
+          # be repeated here as repo secrets, or the shipped bundle throws
+          # "Missing Supabase env vars" on load (src/lib/supabase.ts reads
+          # these at import time and has no fallback).
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_STRIPE_STARTER_PRICE_ID: ${{ secrets.VITE_STRIPE_STARTER_PRICE_ID }}
+          VITE_STRIPE_STARTER_YEARLY_PRICE_ID: ${{ secrets.VITE_STRIPE_STARTER_YEARLY_PRICE_ID }}
+          VITE_STRIPE_SOLO_PRICE_ID: ${{ secrets.VITE_STRIPE_SOLO_PRICE_ID }}
+          VITE_STRIPE_SOLO_YEARLY_PRICE_ID: ${{ secrets.VITE_STRIPE_SOLO_YEARLY_PRICE_ID }}
+          VITE_STRIPE_GROWTH_PRICE_ID: ${{ secrets.VITE_STRIPE_GROWTH_PRICE_ID }}
+          VITE_STRIPE_GROWTH_YEARLY_PRICE_ID: ${{ secrets.VITE_STRIPE_GROWTH_YEARLY_PRICE_ID }}
+          VITE_STRIPE_CREDITS_20: ${{ secrets.VITE_STRIPE_CREDITS_20 }}
+          VITE_STRIPE_CREDITS_50: ${{ secrets.VITE_STRIPE_CREDITS_50 }}
+          VITE_STRIPE_CREDITS_120: ${{ secrets.VITE_STRIPE_CREDITS_120 }}
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+          VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
+          VITE_PLAUSIBLE_DOMAIN: ${{ secrets.VITE_PLAUSIBLE_DOMAIN }}
+          VITE_SITE_URL: ${{ secrets.VITE_SITE_URL }}
         run: npm run build
 
       - name: Deploy to Netlify
