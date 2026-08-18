@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Github, Twitter, Linkedin, Instagram } from 'lucide-react';
+import { Instagram } from 'lucide-react';
 import { Wordmark } from '@/components/Wordmark';
 
 // lucide-react doesn't ship a TikTok glyph — hand-drawn to match the stroke
@@ -22,10 +22,10 @@ const LINKS = [
   { label: 'Terms of Service', to: '/regulamin' },
 ];
 
+// Only profiles that actually exist. The Twitter/LinkedIn/GitHub entries
+// removed here pointed at placeholder handles that were never registered —
+// a dead social icon in the footer reads as an abandoned product.
 const SOCIALS = [
-  { href: 'https://twitter.com/presora_ai', Icon: Twitter, label: 'Twitter/X' },
-  { href: 'https://linkedin.com/company/presora', Icon: Linkedin, label: 'LinkedIn' },
-  { href: 'https://github.com/presora-ai', Icon: Github, label: 'GitHub' },
   { href: 'https://www.instagram.com/presora.app', Icon: Instagram, label: 'Instagram' },
   { href: 'https://www.tiktok.com/@presora.app', Icon: TikTokIcon, label: 'TikTok' },
 ];
