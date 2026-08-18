@@ -1,11 +1,13 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  Presentation, ArrowRight, Sparkles, FileText, Send, CheckCircle2,
-  Building2, Printer, Mail, ShieldCheck, ClipboardList, Palette,
+  Presentation, ArrowRight, Sparkles, FileText, CheckCircle2,
+  Building2, Printer, Mail, ShieldCheck, ClipboardList,
+  EyeOff, Wallet, Repeat, Play,
 } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
+import { AgencyRoiCalculator } from '@/components/agencies/AgencyRoiCalculator';
 
 const STEPS = [
   {
@@ -176,6 +178,83 @@ const Agencies = () => {
           </div>
         </section>
 
+        {/* ── White-label ─────────────────────────────────────────────
+            The single strongest argument for an agency, and it was
+            previously buried as step 3 plus one bullet in the list below.
+            Everything claimed here already ships: profiles.agency_{name,
+            logo_url,contact_email,website} drive the letterhead, the
+            "Prepared by" line and the closing CTA, edited at
+            /audit-branding and read by useAuditBranding.ts. */}
+        <section className="py-16 px-4 border-t border-border">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center mb-10">
+              <span className="inline-block px-3 py-1 text-xs badge rounded-lg mb-4 uppercase tracking-wider">
+                White-label
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-bold text-foreground">
+                Your logo on it. Your name on it. <span className="text-primary">Not ours.</span>
+              </h2>
+              <p className="text-sm text-muted-foreground mt-3 max-w-xl mx-auto leading-relaxed">
+                Set your agency's branding once and every audit you export carries it.
+                The client who opens that PDF sees your firm — there is no Presora
+                logo, no footer credit, and no link back to us anywhere on the page.
+              </p>
+            </div>
+
+            <div className="grid sm:grid-cols-3 gap-4 mb-6">
+              {[
+                {
+                  Icon: EyeOff,
+                  title: 'Presora stays invisible',
+                  desc: 'No watermark, no "powered by", no mention in the document your client reads or forwards.',
+                },
+                {
+                  Icon: Mail,
+                  title: 'Replies come back to you',
+                  desc: 'The closing "get in touch" block carries your email and website, so a forwarded PDF sends their client to your inbox — not ours.',
+                },
+                {
+                  Icon: Repeat,
+                  title: 'Configured once',
+                  desc: 'Logo, agency name, contact email and website live under Tools → Audit Branding, and apply to every audit from then on.',
+                },
+              ].map(({ Icon, title, desc }) => (
+                <div key={title} className="rounded-2xl border border-border bg-card/60 p-5">
+                  <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 mb-3">
+                    <Icon className="w-4 h-4 text-primary" />
+                  </div>
+                  <h3 className="text-sm font-semibold text-foreground mb-1.5">{title}</h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{desc}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Letterhead before/after — the concrete version of the claim */}
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div className="rounded-2xl border border-border bg-card/30 p-5">
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground/60 mb-3">Without branding set</p>
+                <div className="rounded-xl border border-border bg-background/60 p-4">
+                  <p className="text-sm font-semibold text-muted-foreground">Presora</p>
+                  <p className="text-[11px] text-muted-foreground/60 mt-1">contact.presora@gmail.com</p>
+                </div>
+                <p className="text-[11px] text-muted-foreground/60 mt-3 leading-relaxed">
+                  Your client emails us instead of you.
+                </p>
+              </div>
+              <div className="rounded-2xl border border-primary/25 bg-primary/[0.05] p-5">
+                <p className="text-[10px] uppercase tracking-wider text-primary/70 mb-3">With branding set</p>
+                <div className="rounded-xl border border-primary/20 bg-background/60 p-4">
+                  <p className="text-sm font-semibold text-foreground">Your Agency</p>
+                  <p className="text-[11px] text-muted-foreground mt-1">hello@youragency.com</p>
+                </div>
+                <p className="text-[11px] text-muted-foreground mt-3 leading-relaxed">
+                  The audit reads as a deliverable your agency produced.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* ── What's included ─────────────────────────────────────── */}
         <section className="py-16 px-4 border-t border-border">
           <div className="max-w-3xl mx-auto">
@@ -196,29 +275,112 @@ const Agencies = () => {
           </div>
         </section>
 
-        {/* ── Who it's for ────────────────────────────────────────── */}
+        {/* ── ROI ─────────────────────────────────────────────────────
+            Interactive rather than asserted: the agency moves the sliders
+            and reads their own arithmetic back. Deliberately not seeded
+            with "agencies save X hours on average" — there is no customer
+            base to derive such an average from, and quoting one would be
+            inventing the exact kind of figure this product exists to
+            expose. See AgencyRoiCalculator for the held-back 30%. */}
         <section className="py-16 px-4 border-t border-border">
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-10">
               <span className="inline-block px-3 py-1 text-xs badge rounded-lg mb-4 uppercase tracking-wider">
-                Built for
+                Return on investment
               </span>
-              <h2 className="text-2xl sm:text-3xl font-bold text-foreground">Who this is for</h2>
+              <h2 className="text-2xl sm:text-3xl font-bold text-foreground">Does this pay for itself?</h2>
+              <p className="text-sm text-muted-foreground mt-3 max-w-lg mx-auto">
+                Put your own volume, production time and billable rate in — the maths
+                below is yours, not a number we made up.
+              </p>
+            </div>
+            <AgencyRoiCalculator />
+          </div>
+        </section>
+
+        {/* ── Decision-maker problems ─────────────────────────────────
+            Was a persona list ("SEO agencies / consultants / freelancers"),
+            which described who the reader IS rather than what they're
+            accountable for. The buyer here is an owner, a COO or a head of
+            delivery, and each signs off for a different reason. */}
+        <section className="py-16 px-4 border-t border-border">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center mb-10">
+              <span className="inline-block px-3 py-1 text-xs badge rounded-lg mb-4 uppercase tracking-wider">
+                Whose problem this solves
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-bold text-foreground">
+                Three people sign off — for three different reasons
+              </h2>
             </div>
             <div className="grid sm:grid-cols-3 gap-4">
               {[
-                { Icon: Building2, title: 'SEO & GEO agencies', desc: 'Add an "AI visibility audit" line item to every new-business pitch, backed by real numbers.' },
-                { Icon: Palette, title: 'Marketing consultants', desc: 'Show a prospect exactly where they\'re invisible to AI before you propose the fix.' },
-                { Icon: Send, title: 'Freelancers & solos', desc: 'One scan, one export, one email — no design work, no report template to maintain.' },
-              ].map(({ Icon, title, desc }) => (
-                <div key={title} className="rounded-2xl border border-border bg-card/60 p-6 text-center">
+                {
+                  Icon: Building2,
+                  role: 'Founder / owner',
+                  problem: 'Cold outreach gets ignored.',
+                  desc: 'An audit of the prospect\'s own brand, attached to the first email, is a reason to reply that a capabilities deck isn\'t. You lead with their problem instead of your services.',
+                },
+                {
+                  Icon: Wallet,
+                  role: 'COO / head of ops',
+                  problem: 'Pitch work burns unbillable hours.',
+                  desc: 'Research and report production for a prospect who may never sign comes straight out of margin. This collapses that step to a scan and an export.',
+                },
+                {
+                  Icon: Repeat,
+                  role: 'Head of delivery',
+                  problem: 'Retainers go quiet between campaigns.',
+                  desc: 'A re-scan on a schedule gives you a movement to report every month, so the client sees progress in the gaps where there\'s nothing else to show.',
+                },
+              ].map(({ Icon, role, problem, desc }) => (
+                <div key={role} className="rounded-2xl border border-border bg-card/60 p-6">
                   <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-primary/10 border border-primary/20 mb-4">
                     <Icon className="w-5 h-5 text-primary" />
                   </div>
-                  <h3 className="text-sm font-semibold text-foreground mb-1.5">{title}</h3>
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground/60 mb-1.5">{role}</p>
+                  <h3 className="text-sm font-semibold text-foreground mb-2">{problem}</h3>
                   <p className="text-xs text-muted-foreground leading-relaxed">{desc}</p>
                 </div>
               ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── Proof ───────────────────────────────────────────────────
+            Where customer case studies would normally sit. Presora has no
+            attributable agency results yet, and a fabricated one is a
+            fabricated record — so this offers the honest substitute: run
+            the thing on a brand the reader already has an opinion about
+            and judge the output directly. Replace this section with real,
+            named case studies the moment there is a customer willing to
+            be quoted. */}
+        <section className="py-16 px-4 border-t border-border">
+          <div className="max-w-3xl mx-auto">
+            <div className="rounded-2xl border border-border bg-card/60 p-8 text-center">
+              <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-primary/10 border border-primary/20 mb-4">
+                <Play className="w-5 h-5 text-primary" />
+              </div>
+              <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-3">
+                We'd rather you tested it than read a testimonial
+              </h2>
+              <p className="text-sm text-muted-foreground leading-relaxed max-w-xl mx-auto mb-6">
+                Presora is early, and we're not going to dress up invented client results
+                as proof — you audit brand visibility for a living, so you'd see through it.
+                Instead: scan a brand whose reputation you already know well. If what the
+                models say about it doesn't match your read of that market, you'll know
+                inside a minute and it costs you nothing.
+              </p>
+              <button
+                onClick={() => navigate('/brand-visibility')}
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
+              >
+                Scan a brand you know
+                <ArrowRight className="w-4 h-4" />
+              </button>
+              <p className="text-xs text-muted-foreground/60 mt-4">
+                No account needed for the first scan.
+              </p>
             </div>
           </div>
         </section>
@@ -249,7 +411,11 @@ const Agencies = () => {
             </div>
             <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 mt-6 text-xs text-muted-foreground">
               <span className="inline-flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5 text-primary" /> No credit card to start</span>
-              <span className="inline-flex items-center gap-1.5"><FileText className="w-3.5 h-3.5 text-primary" /> Unlimited free scans</span>
+              {/* Was "Unlimited free scans" — the Free plan is 3 analyses a
+                  month (see PLANS in src/lib/plans.ts), so that promise was
+                  simply false, and it's the kind an agency discovers on
+                  audit four. */}
+              <span className="inline-flex items-center gap-1.5"><FileText className="w-3.5 h-3.5 text-primary" /> 3 free scans a month</span>
             </div>
             <p className="text-xs text-muted-foreground/60 mt-8">
               Questions first? <a href="mailto:contact.presora@gmail.com" className="text-primary hover:underline inline-flex items-center gap-1"><Mail className="w-3 h-3" />contact.presora@gmail.com</a>
