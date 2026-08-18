@@ -17,7 +17,7 @@ This category of work is sometimes called GEO (Generative Engine Optimization) o
 ## Product
 
 - [Homepage](https://www.presora.app/): overview, live demo scan, pricing.
-- [Pricing](https://www.presora.app/pricing): Free (3 analyses/month, GPT-4o), Solo ($29/mo, weekly monitoring + Claude + Gemini), Growth ($79/mo, all 6 models + competitor comparison + API), Enterprise (custom).
+- [Pricing](https://www.presora.app/pricing): Free (3 analyses/month, GPT-4o), Starter ($39/mo, adds Claude + Gemini), Solo ($59/mo, brand knowledge RAG + CSV export), Business ($89.99/mo, all 6 models + competitor comparison + API), Agency (from $220/mo, custom volume).
 - [API docs](https://www.presora.app/docs/api): REST API and webhooks for programmatic access to brand scans.
 - [Changelog](https://www.presora.app/changelog): product updates.
 
