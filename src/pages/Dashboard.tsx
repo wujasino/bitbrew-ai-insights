@@ -11,6 +11,10 @@ import { SourceDonutChart } from '@/components/charts/SourceDonutChart';
 import { SourceTable } from '@/components/SourceTable';
 import { ScoreMethodology } from '@/components/ScoreMethodology';
 import { AveEstimate } from '@/components/AveEstimate';
+import { SourceIdentification } from '@/components/SourceIdentification';
+import { VisibilityGapAnalysis } from '@/components/VisibilityGapAnalysis';
+import { HallucinationAlerts } from '@/components/HallucinationAlerts';
+import { AgencyReportCallout } from '@/components/AgencyReportCallout';
 import { ResultsBreakdown } from '@/components/ResultsBreakdown';
 import BrandKnowledgeForm from '@/components/BrandKnowledgeForm';
 import { useBrewing } from '@/hooks/useBrewing';
@@ -934,6 +938,32 @@ const Dashboard = () => {
                 industry average presented as fact. */}
             <div className="mb-5">
               <AveEstimate sources={result.sources} />
+            </div>
+
+            {/* Which models answered, and how confidently — the honest
+                version of "source identification" this product's data can
+                actually support (see the component's own comment). */}
+            <div className="mb-5">
+              <SourceIdentification sources={result.sources} planTier={planTier} />
+            </div>
+
+            {/* Same five dimension scores as the breakdown above, read as a
+                quantified distance-to-target instead of a plain-English
+                action plan. */}
+            <div className="mb-5">
+              <VisibilityGapAnalysis result={result} />
+            </div>
+
+            {/* Accuracy-band + hedging-language flags — not a fact-check,
+                just the honest signals this scan's own data can support. */}
+            <div className="mb-5">
+              <HallucinationAlerts result={result} />
+            </div>
+
+            {/* Points at the existing "Client audit" toolbar action rather
+                than duplicating it. */}
+            <div className="mb-5">
+              <AgencyReportCallout resultId={result.id} canCreateAudit={canCreateAudit} />
             </div>
 
             {/* Brand knowledge — collapsed by default, moved here (after the
