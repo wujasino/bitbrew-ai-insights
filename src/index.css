@@ -121,6 +121,19 @@
     @apply border-border;
   }
 
+  html, body {
+    /* Belt-and-braces against accidental horizontal scroll on mobile.
+       Found via the legal pages (/regulamin, /polityka-prywatnosci):
+       the sr-only "GEO content" block in index.html (position:absolute,
+       clip:rect(0,0,0,0), meant to be invisible) was still expanding
+       document.documentElement.scrollWidth on some routes despite being
+       visually clipped — a real, if obscure, engine quirk with clipped
+       absolutely-positioned nowrap text. Nothing legitimate on this site
+       needs page-level horizontal scroll, so containing it here is safer
+       than chasing every element that could trigger the same quirk. */
+    overflow-x: hidden;
+  }
+
   body {
     @apply bg-background text-foreground antialiased;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;

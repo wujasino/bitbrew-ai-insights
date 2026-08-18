@@ -69,28 +69,23 @@ export default defineConfig(({ mode }) => ({
     target: 'es2020',
     cssCodeSplit: true,
     rollupOptions: {
-      output: {
-        manualChunks(id: string) {
-          if (id.includes('node_modules/framer-motion')) return 'vendor-motion';
-          if (id.includes('node_modules/recharts') || id.includes('node_modules/d3-')) return 'vendor-charts';
-          if (id.includes('node_modules/@supabase')) return 'vendor-supabase';
-          if (id.includes('node_modules/@sentry')) return 'vendor-sentry';
-          if (id.includes('node_modules/@radix-ui')) return 'vendor-radix';
-          if (id.includes('node_modules/react-dom') || id.includes('node_modules/react-router-dom')) return 'vendor-react';
-          if (/node_modules\/react\//.test(id)) return 'vendor-react';
-          if (id.includes('node_modules/lucide-react')) return 'vendor-icons';
-          // three.js + the force-graph stack it powers are the bulk of
-          // AutomationGraph3D's ~1.3MB chunk. That chunk is already lazy
-          // (route-split, and only fetched once a user clicks Automations'
-          // "Preview" tab) so this split doesn't shrink first load — it
-          // means a future code change to AutomationGraph3D.tsx itself
-          // doesn't force re-downloading three.js too, since it stays
-          // cached separately across deploys.
-          if (id.includes('node_modules/three') || id.includes('node_modules/3d-force-graph')
-            || id.includes('node_modules/react-force-graph-3d') || id.includes('node_modules/d3-force-3d')
-            || id.includes('node_modules/react-kapsule')) return 'vendor-three';
-        },
-      },
+      // No `manualChunks` here on purpose. The hand-written version this
+      // replaces was actively hurting first load: rolldown does not honour
+      // manualChunks for CommonJS modules, so React's CJS build ended up
+      // inside the `vendor-charts` chunk (and react/jsx-runtime inside
+      // `vendor-motion`) no matter where the react rule sat in that
+      // function — confirmed by decoding the emitted chunk sourcemaps.
+      // Because React lived in the charts chunk, every page had to preload
+      // it, so the landing page — which renders no charts at all — was
+      // downloading ~446 KiB of recharts before it could paint.
+      //
+      // Measured on the landing page, uncompressed JS over the wire:
+      //   with manualChunks: 28 requests, 1362.5 KiB
+      //   rolldown default:  67 requests,  865.5 KiB   (-36%)
+      // Adding explicit advancedChunks groups on top of this was tested
+      // and changed nothing (byte-identical output), so none are kept.
+      // The extra requests are content-hashed, immutable assets served
+      // over HTTP/2 — see netlify.toml's /assets/* cache rule.
       treeshake: {
         moduleSideEffects: false,
         propertyReadSideEffects: false,

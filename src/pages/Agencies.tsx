@@ -142,7 +142,7 @@ const Agencies = () => {
               <div className="flex items-center gap-6 mb-6 pb-6 border-b border-border">
                 <div className="text-5xl font-bold text-primary tabular-nums">62</div>
                 <div>
-                  <p className="text-xs uppercase tracking-wider text-muted-foreground">Trust score / 100</p>
+                  <p className="text-xs uppercase tracking-wider text-muted-foreground">AI visibility score / 100</p>
                   <p className="text-sm font-medium text-foreground mt-1">
                     Nike AI visibility is developing — there's a closeable gap
                   </p>

@@ -16,10 +16,11 @@ const Terms = () => {
         <ArrowLeft className="w-4 h-4" /> Powrót
       </button>
       <div
-        style={{ background: '#111827', border: '1px solid #334155', borderRadius: 12, padding: '2em' }}
+        className="p-4 sm:p-8"
+        style={{ background: '#111827', border: '1px solid #334155', borderRadius: 12 }}
         dangerouslySetInnerHTML={{
           __html: `
-<style>.legal-doc a { color: #6366F1; } .legal-doc a:hover { color: #4F46E5; }</style>
+<style>.legal-doc a { color: #6366F1; } .legal-doc a:hover { color: #4F46E5; } @media (max-width: 640px) { .legal-doc, .legal-doc table { display: block !important; width: 100% !important; max-width: 100% !important; } .legal-doc tr, .legal-doc thead, .legal-doc tbody { display: block !important; width: 100% !important; } .legal-doc td, .legal-doc th { display: block !important; width: 100% !important; max-width: 100% !important; box-sizing: border-box !important; text-align: left !important; } .legal-doc svg { width: 40px !important; height: 40px !important; } }</style>
 <table class="legal-doc" style="width:85%;border-collapse:collapse;margin-left:auto;margin-right:auto;font-family:sans-serif;font-size:12pt;">
 
   <!-- NAGŁÓWEK -->
