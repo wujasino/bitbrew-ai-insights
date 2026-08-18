@@ -168,7 +168,7 @@ const ScoreHero = ({
   const buildReportText = () => {
     const lines = [
       `Report for brand ${result.brandName}.`,
-      `AI trust score: ${score} percent.`,
+      `AI visibility score: ${score} percent.`,
       `Strongest dimension: ${strongest[0]}, ${Math.round(strongest[1])} percent.`,
       `Weakest dimension: ${weakest[0]}, ${Math.round(weakest[1])} percent.`,
       `Average model confidence: ${avgConfidence} percent.`,

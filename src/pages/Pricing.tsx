@@ -249,7 +249,7 @@ const Pricing = () => {
           </h1>
           <p className="text-sm text-muted-foreground max-w-xl mx-auto leading-relaxed">
             You open Presora and see, right now, what ChatGPT, Claude and Gemini actually
-            say when someone asks about your brand — a trust score, the real quotes behind
+            say when someone asks about your brand — an AI visibility score, the real quotes behind
             it, and a prioritized list of what to fix first.
           </p>
 
