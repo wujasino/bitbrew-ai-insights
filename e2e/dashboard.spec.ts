@@ -32,14 +32,18 @@ test.describe('Dashboard', () => {
     await expect(page.getByText('62')).toBeVisible();
   });
 
-  test('renders a dash instead of a fabricated number when sources is missing', async ({ page, dashboardPage }) => {
+  test('offers to enable a model instead of a fabricated number when sources is missing', async ({ page, dashboardPage }) => {
     await mockAuthenticatedApp(page, {
       analyses: [buildAnalysis({ sources: null })],
     });
 
     await dashboardPage.goto();
 
-    await expect(page.getByText('–').first()).toBeVisible();
+    // HomeHub used to render a bare "–" for a model with no real per-model
+    // data; it now offers a concrete next step instead ("Enable & rescan"
+    // while scanning is on, "not queried" while it's paused) — either way,
+    // never a fabricated confidence number standing in for real data.
+    await expect(page.getByText('Enable & rescan').first()).toBeVisible();
   });
 
   test('user menu shows the signed-in email and can sign out', async ({ page, dashboardPage }) => {
