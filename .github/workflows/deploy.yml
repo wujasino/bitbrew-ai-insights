@@ -1,0 +1,44 @@
+name: Deploy to Netlify
+
+# Builds here instead of on Netlify's own CI, so pushes/merges to main don't
+# spend Netlify's monthly build quota. Netlify itself should have "Stop
+# builds" enabled in its dashboard (Site configuration → Build & deploy →
+# Continuous deployment) so it doesn't also try to build the same push —
+# that toggle lives on Netlify's side and can't be set from this repo.
+#
+# `netlify deploy --no-build` uploads the already-built dist/ and functions
+# straight to the existing site (same domain, same Functions, same
+# netlify.toml redirects/headers) without asking Netlify to run a build of
+# its own, which is what actually consumes build minutes/count.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+concurrency:
+  group: netlify-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Build
+        run: npm run build
+
+      - name: Deploy to Netlify
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        run: npx netlify-cli deploy --prod --no-build --dir=dist
