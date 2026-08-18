@@ -10,6 +10,7 @@ import { SentimentChart } from '@/components/charts/SentimentChart';
 import { SourceDonutChart } from '@/components/charts/SourceDonutChart';
 import { SourceTable } from '@/components/SourceTable';
 import { ScoreMethodology } from '@/components/ScoreMethodology';
+import { AveEstimate } from '@/components/AveEstimate';
 import { ResultsBreakdown } from '@/components/ResultsBreakdown';
 import BrandKnowledgeForm from '@/components/BrandKnowledgeForm';
 import { useBrewing } from '@/hooks/useBrewing';
@@ -924,6 +925,15 @@ const Dashboard = () => {
                 methodology gets buried under charts. */}
             <div className="mb-5">
               <ScoreMethodology sources={result.sources} />
+            </div>
+
+            {/* AVE — a metric agencies get asked for, so it lives right next
+                to the methodology card that already explains what counts
+                as "favorable" here. See AveEstimate's own comment for why
+                the $/mention is the reader's input, not an invented
+                industry average presented as fact. */}
+            <div className="mb-5">
+              <AveEstimate sources={result.sources} />
             </div>
 
             {/* Brand knowledge — collapsed by default, moved here (after the
