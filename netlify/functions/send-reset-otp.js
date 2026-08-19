@@ -49,6 +49,28 @@ function json(statusCode, body, event) {
   return { statusCode, headers: corsHeaders(event), body: JSON.stringify(body) };
 }
 
+// Same server-side reCAPTCHA v3 check as contact.js — fails open when the
+// secret isn't configured, so this is additive on top of the IP throttle
+// above, not a hard dependency on it being set up.
+const RECAPTCHA_MIN_SCORE = 0.5;
+async function verifyRecaptcha(token) {
+  const secret = process.env.RECAPTCHA_SECRET_KEY;
+  if (!secret) return true;
+  if (!token) return false;
+  try {
+    const res = await fetch('https://www.google.com/recaptcha/api/siteverify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ secret, response: token }),
+    });
+    const data = await res.json();
+    return data.success === true && (data.score === undefined || data.score >= RECAPTCHA_MIN_SCORE);
+  } catch (err) {
+    console.error('reCAPTCHA verify error:', err.message);
+    return true;
+  }
+}
+
 // Cryptographically random 6-digit code
 function generateOtp() {
   const arr = new Uint32Array(1);
@@ -104,15 +126,19 @@ export const handler = async (event) => {
     return json(429, { error: 'Zbyt wiele prób. Spróbuj za 10 minut.' }, event);
   }
 
-  let email;
+  let email, recaptchaToken;
   try {
-    ({ email } = JSON.parse(event.body ?? '{}'));
+    ({ email, recaptchaToken } = JSON.parse(event.body ?? '{}'));
   } catch {
     return json(400, { error: 'Invalid JSON' }, event);
   }
 
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
     return json(400, { error: 'Invalid email' }, event);
+  }
+
+  if (!(await verifyRecaptcha(recaptchaToken))) {
+    return json(400, { error: 'reCAPTCHA verification failed.' }, event);
   }
 
   const normalizedEmail = email.trim().toLowerCase();

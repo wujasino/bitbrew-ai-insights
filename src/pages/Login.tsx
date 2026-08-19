@@ -11,6 +11,7 @@ import { getAuthUser, loginUser, logoutAndClearSession } from '@/lib/auth';
 import { signInWithGoogle } from '@/lib/googleAuth';
 import { signInWithSSODomain } from '@/lib/samlAuth';
 import { supabase } from '@/lib/supabase';
+import { getRecaptchaToken } from '@/lib/recaptcha';
 import { FloatingPathsBackground } from '@/components/ui/floating-paths';
 import { Wordmark } from '@/components/Wordmark';
 import { GoogleIcon } from '@/components/ui/google-icon';
@@ -141,10 +142,11 @@ const Login = () => {
     setError('');
     setNotice('');
     try {
+      const recaptchaToken = await getRecaptchaToken('reset_password');
       const res = await fetch('/.netlify/functions/send-reset-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: resetEmail.trim() }),
+        body: JSON.stringify({ email: resetEmail.trim(), recaptchaToken }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Error sending code.');

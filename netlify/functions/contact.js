@@ -34,6 +34,30 @@ const shouldRateLimit = (key) => {
   return entry.count > MAX_REQUESTS_PER_WINDOW;
 };
 
+// Verifies a reCAPTCHA v3 token server-side against Google's siteverify API.
+// Fails open (returns true) when RECAPTCHA_SECRET_KEY isn't configured, so
+// this doesn't break the contact form before the key is set up in Netlify —
+// it's an additive layer on top of the IP rate limit above, not a
+// replacement for it.
+const RECAPTCHA_MIN_SCORE = 0.5;
+async function verifyRecaptcha(token) {
+  const secret = process.env.RECAPTCHA_SECRET_KEY;
+  if (!secret) return true;
+  if (!token) return false;
+  try {
+    const res = await fetch('https://www.google.com/recaptcha/api/siteverify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ secret, response: token }),
+    });
+    const data = await res.json();
+    return data.success === true && (data.score === undefined || data.score >= RECAPTCHA_MIN_SCORE);
+  } catch (err) {
+    console.error('reCAPTCHA verify error:', err.message);
+    return true; // Google being unreachable must never block real contact submissions.
+  }
+}
+
 const corsHeaders = (origin) => ({
   'Access-Control-Allow-Origin': ALLOWED_ORIGINS.has(origin) ? origin : 'https://presora.app',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -53,11 +77,15 @@ exports.handler = async (event) => {
     return { statusCode: 429, headers, body: JSON.stringify({ error: 'Too many requests. Please try again later.' }) };
   }
 
-  let name, email, subject, message;
+  let name, email, subject, message, recaptchaToken;
   try {
-    ({ name, email, subject, message } = JSON.parse(event.body || '{}'));
+    ({ name, email, subject, message, recaptchaToken } = JSON.parse(event.body || '{}'));
   } catch {
     return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid JSON' }) };
+  }
+
+  if (!(await verifyRecaptcha(recaptchaToken))) {
+    return { statusCode: 400, headers, body: JSON.stringify({ error: 'reCAPTCHA verification failed.' }) };
   }
 
   if (!name || typeof name !== 'string' || name.trim().length < 2) {
