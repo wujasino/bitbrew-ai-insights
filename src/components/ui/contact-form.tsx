@@ -4,6 +4,7 @@ import { Send, CheckCircle2, Loader2, Mail, Zap, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { getRecaptchaToken } from '@/lib/recaptcha';
 
 type Status = 'idle' | 'sending' | 'success' | 'error';
 
@@ -28,10 +29,11 @@ export function ContactForm({ defaultSubject = '', compact = false }: ContactFor
     setStatus('sending');
     setErrorMsg('');
     try {
+      const recaptchaToken = await getRecaptchaToken('contact');
       const res = await fetch('/.netlify/functions/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, subject, message }),
+        body: JSON.stringify({ name, email, subject, message, recaptchaToken }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
