@@ -35,11 +35,11 @@ const page = (title, body) => ({
   headers: { 'Content-Type': 'text/html; charset=utf-8' },
   body: `<!DOCTYPE html><html lang="pl"><head><meta charset="UTF-8" /><title>${title}</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" /></head>
-<body style="margin:0;padding:0;background-color:#0f0f0f;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#0f0f0f;min-height:100vh;"><tr><td align="center" style="padding:48px 16px;">
-<table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:420px;background-color:#1a1a1a;border-radius:16px;border:1px solid #2a2a2a;padding:40px;text-align:center;">
-<div style="font-size:18px;font-weight:700;color:#F7F1DD;margin-bottom:16px;">Presora</div>
-<p style="font-size:14px;line-height:1.6;color:#ccc;margin:0;">${body}</p>
+<body style="margin:0;padding:0;background-color:#0B0F19;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#0B0F19;min-height:100vh;"><tr><td align="center" style="padding:48px 16px;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:420px;background-color:#111827;border-radius:16px;border:1px solid #334155;padding:40px;text-align:center;">
+<div style="font-size:18px;font-weight:700;color:#F8FAFC;margin-bottom:16px;">Presora</div>
+<p style="font-size:14px;line-height:1.6;color:#94A3B8;margin:0;">${body}</p>
 </table></td></tr></table></body></html>`,
 });
 
@@ -76,5 +76,5 @@ exports.handler = async (event) => {
     return page('Coś poszło nie tak', 'Spróbuj ponownie później albo napisz do nas.');
   }
 
-  return page('Wypisano', `Adres <strong style="color:#F7F1DD;">${escapeHtml(normalizedEmail)}</strong> został wypisany z newslettera Presora.`);
+  return page('Wypisano', `Adres <strong style="color:#F8FAFC;">${escapeHtml(normalizedEmail)}</strong> został wypisany z newslettera Presora.`);
 };
