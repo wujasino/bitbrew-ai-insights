@@ -68,7 +68,10 @@ const Profile = () => {
 
   const initials = email ? email[0].toUpperCase() : '?';
   const limit = PLAN_LIMITS[plan] ?? 3;
-  const usagePercent = Math.min(Math.round((analyses.length / limit) * 100), 100);
+  // Agency/Enterprise store their "no real cap" as 999999 in PLAN_LIMITS —
+  // showing that raw number here would read as "N / 999999", not a perk.
+  const unlimited = limit >= 9999;
+  const usagePercent = unlimited ? 0 : Math.min(Math.round((analyses.length / limit) * 100), 100);
   const avgScore = analyses.length
     ? Math.round(analyses.reduce((s, a) => s + a.trust_score, 0) / analyses.length)
     : 0;
@@ -241,12 +244,19 @@ const Profile = () => {
           className="glass-card px-6 py-4">
           <div className="flex items-center justify-between text-sm mb-2">
             <span className="text-muted-foreground">{t('profile_usage')}</span>
-            <span className="text-muted-foreground">{analyses.length} / {limit} <span className="text-primary font-medium">({usagePercent}%)</span></span>
+            <span className="text-muted-foreground">
+              {unlimited
+                ? <>{analyses.length} / <span className="text-primary font-medium">∞</span></>
+                : <>{analyses.length} / {limit} <span className="text-primary font-medium">({usagePercent}%)</span></>}
+            </span>
           </div>
-          <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
-            <motion.div className="h-full rounded-full bg-gradient-to-r from-primary/70 to-primary"
-              initial={{ width: 0 }} animate={{ width: `${usagePercent}%` }} transition={{ duration: 0.8, delay: 0.3 }} />
-          </div>
+          {/* No progress bar on an unlimited plan — a bar against infinity has nothing to fill. */}
+          {!unlimited && (
+            <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+              <motion.div className="h-full rounded-full bg-gradient-to-r from-primary/70 to-primary"
+                initial={{ width: 0 }} animate={{ width: `${usagePercent}%` }} transition={{ duration: 0.8, delay: 0.3 }} />
+            </div>
+          )}
         </motion.div>
 
         {/* ── ALERTS ───────────────────────────────────────────────── */}
