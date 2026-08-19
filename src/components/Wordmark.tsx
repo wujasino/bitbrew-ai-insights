@@ -9,6 +9,16 @@ import { cn } from '@/lib/utils';
 // presora-mark-new-dark.png the same shape recolored to the app's
 // --foreground) swapped via Tailwind's dark: variant, mirroring
 // useFaviconTheme.ts's light/dark favicon swap.
+//
+// Both files are 256x256 — downsized from the original 512x512 masked
+// exports (still ~89 KB combined at 512, since both light/dark variants
+// download regardless of which one the `dark:` class hides). The largest
+// real render size anywhere in the app is Login/Register's `text-3xl`
+// lockup at ~66px, so 256px gives ~4x headroom for retina/3x-DPI screens
+// with room to spare — verified with no visible blur at 3x device scale.
+// Re-derive from the 512px masked source (see the note in CLAUDE.md on
+// this mark) rather than re-compressing this file if it ever needs to
+// change.
 const MARK_LIGHT = '/presora-mark-new.png';
 const MARK_DARK = '/presora-mark-new-dark.png';
 
