@@ -13,6 +13,28 @@ const MILESTONE_SIZE = 10;
 const DISCOUNT_COUPON_ID = 'referral-10-20off'; // Stripe coupon: 20% off, duration 'once'
 const FREE_PLAN_CREDIT_REWARD = 50; // matches the $55 "50 extra analyses" pack — sensible free-tier equivalent
 
+// Per-user throttle on the 'claim' action only — 'status' is a cheap read
+// and doesn't need one. Without this, one authenticated account could spam
+// claim attempts and hammer the Stripe API (subscriptions.retrieve/update)
+// on every call, same class of cost-abuse risk the other functions in this
+// codebase already guard against. Same in-memory-per-instance pattern used
+// elsewhere here (contact.js, newsletter.js) — good enough for a single
+// user's own account, not meant to survive a cold start or span instances.
+const CLAIM_RATE_LIMIT_WINDOW_MS = 60_000;
+const MAX_CLAIMS_PER_WINDOW = 3;
+const claimAttempts = new Map();
+const shouldThrottleClaim = (userId) => {
+  const now = Date.now();
+  const entry = claimAttempts.get(userId) || { count: 0, windowStart: now };
+  if (now - entry.windowStart > CLAIM_RATE_LIMIT_WINDOW_MS) {
+    entry.windowStart = now;
+    entry.count = 0;
+  }
+  entry.count += 1;
+  claimAttempts.set(userId, entry);
+  return entry.count > MAX_CLAIMS_PER_WINDOW;
+};
+
 const createAdminClient = () => createClient(
   process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL,
   process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY,
@@ -101,6 +123,9 @@ export const handler = async (event) => {
   }
 
   // action === 'claim'
+  if (shouldThrottleClaim(user.id)) {
+    return { statusCode: 429, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Too many attempts. Try again in a minute.' }) };
+  }
   if (milestonesAvailable <= 0) {
     return { statusCode: 400, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'No reward available yet.' }) };
   }
