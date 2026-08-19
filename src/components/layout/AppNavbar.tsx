@@ -60,8 +60,12 @@ export const AppNavbar = ({ collapsed = false, onToggle, onMobileToggle, chatOpe
     : userEmail ? userEmail[0].toUpperCase() : '?';
 
   const limit = PLAN_LIMITS[plan] ?? 3;
-  const usedPct = Math.min(100, Math.round((analysesUsed / limit) * 100));
-  const remaining = Math.max(0, limit - analysesUsed);
+  // Agency/Enterprise store their "no real cap" as 999999 in PLAN_LIMITS —
+  // real for the DB check constraint, but showing that raw number as
+  // "999999 analyses" / "999999 remaining" reads as a bug, not a plan perk.
+  const unlimited = limit >= 9999;
+  const usedPct = unlimited ? 0 : Math.min(100, Math.round((analysesUsed / limit) * 100));
+  const remaining = unlimited ? Infinity : Math.max(0, limit - analysesUsed);
 
   // Feedback state
   const [feedbackOpen, setFeedbackOpen] = useState(false);
@@ -194,7 +198,7 @@ export const AppNavbar = ({ collapsed = false, onToggle, onMobileToggle, chatOpe
               </TooltipTrigger>
               <TooltipContent side="bottom" className="text-xs">
                 <p className="font-medium">{PLAN_LABELS[plan] ?? plan} — credits this month</p>
-                <p className="text-muted-foreground">{analysesUsed} / {limit} used ({usedPct}%)</p>
+                <p className="text-muted-foreground">{unlimited ? `${analysesUsed} used · unlimited` : `${analysesUsed} / ${limit} used (${usedPct}%)`}</p>
               </TooltipContent>
 
           <PopoverContent align="end" className="w-[calc(100vw-1.5rem)] max-w-64 p-0 overflow-hidden">
@@ -212,18 +216,21 @@ export const AppNavbar = ({ collapsed = false, onToggle, onMobileToggle, chatOpe
               </div>
               <div className="flex justify-between text-xs text-muted-foreground mb-1.5">
                 <span>Total</span>
-                <span className="font-medium text-foreground">{limit} analyses</span>
+                <span className="font-medium text-foreground">{unlimited ? '∞' : `${limit} analyses`}</span>
               </div>
               <div className="flex justify-between text-xs text-muted-foreground mb-2">
                 <span>Remaining</span>
-                <span className={cn('font-medium', remaining <= 2 ? 'text-destructive' : 'text-foreground')}>{remaining}</span>
+                <span className={cn('font-medium', !unlimited && remaining <= 2 ? 'text-destructive' : 'text-foreground')}>{unlimited ? '∞' : remaining}</span>
               </div>
-              <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                <div
-                  className={cn('h-full rounded-full transition-all', usedPct >= 80 ? 'bg-destructive' : 'bg-primary')}
-                  style={{ width: `${usedPct}%` }}
-                />
-              </div>
+              {/* No progress bar on an unlimited plan — a bar against infinity has nothing to fill. */}
+              {!unlimited && (
+                <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                  <div
+                    className={cn('h-full rounded-full transition-all', usedPct >= 80 ? 'bg-destructive' : 'bg-primary')}
+                    style={{ width: `${usedPct}%` }}
+                  />
+                </div>
+              )}
             </div>
 
             {/* User info */}
