@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, lazy, Suspense } from 'react';
 import { useSearchParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Sparkles, TrendingUp, TrendingDown, Activity, Layers, Target, RefreshCw, Search, Lock, FileDown, Swords, X, Volume2, Square, Loader2, Presentation, AlertTriangle, Clock, FileText, AlertCircle } from 'lucide-react';
@@ -10,12 +10,19 @@ import { SentimentChart } from '@/components/charts/SentimentChart';
 import { SourceDonutChart } from '@/components/charts/SourceDonutChart';
 import { SourceTable } from '@/components/SourceTable';
 import { ScoreMethodology } from '@/components/ScoreMethodology';
-import { AveEstimate } from '@/components/AveEstimate';
-import { SourceIdentification } from '@/components/SourceIdentification';
-import { VisibilityGapAnalysis } from '@/components/VisibilityGapAnalysis';
-import { HallucinationAlerts } from '@/components/HallucinationAlerts';
-import { AgencyReportCallout } from '@/components/AgencyReportCallout';
 import { ResultsBreakdown } from '@/components/ResultsBreakdown';
+// Below-the-fold supplementary cards on the results screen — lazy-loaded so
+// their ~15 KB of component code (plus AveEstimate) isn't part of the
+// Dashboard chunk everyone downloads just to see the score and action plan
+// above the fold. Each becomes its own small, content-hashed, immutable
+// chunk — same "more small requests over HTTP/2 beats one bigger one"
+// tradeoff already made for the rest of this bundle (see the vite.config.ts
+// comment on manualChunks).
+const AveEstimate = lazy(() => import('@/components/AveEstimate').then(m => ({ default: m.AveEstimate })));
+const SourceIdentification = lazy(() => import('@/components/SourceIdentification').then(m => ({ default: m.SourceIdentification })));
+const VisibilityGapAnalysis = lazy(() => import('@/components/VisibilityGapAnalysis').then(m => ({ default: m.VisibilityGapAnalysis })));
+const HallucinationAlerts = lazy(() => import('@/components/HallucinationAlerts').then(m => ({ default: m.HallucinationAlerts })));
+const AgencyReportCallout = lazy(() => import('@/components/AgencyReportCallout').then(m => ({ default: m.AgencyReportCallout })));
 import BrandKnowledgeForm from '@/components/BrandKnowledgeForm';
 import { useBrewing } from '@/hooks/useBrewing';
 import { useTTS, loadVoicePrefs } from '@/hooks/useTTS';
@@ -931,40 +938,50 @@ const Dashboard = () => {
               <ScoreMethodology sources={result.sources} />
             </div>
 
-            {/* AVE — a metric agencies get asked for, so it lives right next
-                to the methodology card that already explains what counts
-                as "favorable" here. See AveEstimate's own comment for why
-                the $/mention is the reader's input, not an invented
-                industry average presented as fact. */}
-            <div className="mb-5">
-              <AveEstimate sources={result.sources} />
-            </div>
+            {/* AVE, source identification, visibility gap analysis,
+                hallucination alerts, agency reports — five supplementary
+                cards below the fold, lazy-loaded as one group so their code
+                only downloads once the reader actually scrolls this far
+                (nothing here is needed for first paint of the score/action
+                plan above). A blank placeholder for one paint frame while
+                the chunk fetches is preferable to holding up everything
+                above it. */}
+            <Suspense fallback={null}>
+              {/* AVE — a metric agencies get asked for, so it lives right next
+                  to the methodology card that already explains what counts
+                  as "favorable" here. See AveEstimate's own comment for why
+                  the $/mention is the reader's input, not an invented
+                  industry average presented as fact. */}
+              <div className="mb-5">
+                <AveEstimate sources={result.sources} />
+              </div>
 
-            {/* Which models answered, and how confidently — the honest
-                version of "source identification" this product's data can
-                actually support (see the component's own comment). */}
-            <div className="mb-5">
-              <SourceIdentification sources={result.sources} planTier={planTier} />
-            </div>
+              {/* Which models answered, and how confidently — the honest
+                  version of "source identification" this product's data can
+                  actually support (see the component's own comment). */}
+              <div className="mb-5">
+                <SourceIdentification sources={result.sources} planTier={planTier} />
+              </div>
 
-            {/* Same five dimension scores as the breakdown above, read as a
-                quantified distance-to-target instead of a plain-English
-                action plan. */}
-            <div className="mb-5">
-              <VisibilityGapAnalysis result={result} />
-            </div>
+              {/* Same five dimension scores as the breakdown above, read as a
+                  quantified distance-to-target instead of a plain-English
+                  action plan. */}
+              <div className="mb-5">
+                <VisibilityGapAnalysis result={result} />
+              </div>
 
-            {/* Accuracy-band + hedging-language flags — not a fact-check,
-                just the honest signals this scan's own data can support. */}
-            <div className="mb-5">
-              <HallucinationAlerts result={result} />
-            </div>
+              {/* Accuracy-band + hedging-language flags — not a fact-check,
+                  just the honest signals this scan's own data can support. */}
+              <div className="mb-5">
+                <HallucinationAlerts result={result} />
+              </div>
 
-            {/* Points at the existing "Client audit" toolbar action rather
-                than duplicating it. */}
-            <div className="mb-5">
-              <AgencyReportCallout resultId={result.id} canCreateAudit={canCreateAudit} />
-            </div>
+              {/* Points at the existing "Client audit" toolbar action rather
+                  than duplicating it. */}
+              <div className="mb-5">
+                <AgencyReportCallout resultId={result.id} canCreateAudit={canCreateAudit} />
+              </div>
+            </Suspense>
 
             {/* Brand knowledge — collapsed by default, moved here (after the
                 score, the action plan and the raw model answers) instead of
