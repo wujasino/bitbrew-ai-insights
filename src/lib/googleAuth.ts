@@ -1,3 +1,16 @@
+// Google requires the redirect_uri sent when exchanging the code (in
+// GoogleCallback.tsx) to be byte-identical to the one sent here when
+// starting the flow — a mismatch fails the exchange (previously
+// GoogleCallback.tsx computed its own copy from window.location.origin
+// alone, while this function preferred VITE_SITE_URL first; the two only
+// coincidentally agreed before presora.app started redirecting to
+// www.presora.app, which is what exposed the drift as real "Invalid
+// redirect_uri" errors). Both call sites must use this one function.
+export function getGoogleRedirectUri(): string {
+  const origin = (import.meta.env.VITE_SITE_URL as string | undefined) ?? window.location.origin;
+  return `${origin}/auth/google/callback`;
+}
+
 function generateCodeVerifier(): string {
   const array = new Uint8Array(64);
   crypto.getRandomValues(array);
@@ -24,8 +37,7 @@ export async function signInWithGoogle(): Promise<void> {
 
   sessionStorage.setItem('google_pkce_verifier', codeVerifier);
 
-  const origin = (import.meta.env.VITE_SITE_URL as string | undefined) ?? window.location.origin;
-  const redirectUri = `${origin}/auth/google/callback`;
+  const redirectUri = getGoogleRedirectUri();
 
   const params = new URLSearchParams({
     client_id: clientId,
