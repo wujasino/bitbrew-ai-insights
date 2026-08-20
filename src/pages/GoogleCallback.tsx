@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
+import { getGoogleRedirectUri } from '@/lib/googleAuth';
 import { GradientMeshBg } from '@/components/ui/gradient-mesh-bg';
 import { Wordmark } from '@/components/Wordmark';
 
@@ -34,7 +35,7 @@ export default function GoogleCallback() {
     const exchangeCode = async () => {
       try {
         const codeVerifier = sessionStorage.getItem('google_pkce_verifier');
-        const redirectUri = `${window.location.origin}/auth/google/callback`;
+        const redirectUri = getGoogleRedirectUri();
 
         const res = await fetch('/.netlify/functions/google-token-exchange', {
           method: 'POST',
