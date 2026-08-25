@@ -8,6 +8,18 @@ export type AuthUser = {
   name?: string;
 };
 
+// Transient: Supabase Auth is momentarily overloaded/rate-limiting (a real
+// traffic spike, e.g. many people signing up/in at once) or the request
+// never reached it (network blip). Distinct from a real rejection like
+// "Invalid login credentials" / "User already registered", which must never
+// be retried — retrying those just re-shows the same answer after a delay.
+const isTransientAuthError = (error: unknown): boolean => {
+  const status = (error as { status?: number })?.status;
+  if (status === 429 || (typeof status === 'number' && status >= 500)) return true;
+  const message = (error as { message?: string })?.message || '';
+  return /rate limit|failed to fetch|network/i.test(message);
+};
+
 export async function registerUser(email: string, password: string, referralCode?: string) {
   // signUp() below goes straight from the browser to Supabase — no backend
   // function of ours sits in front of it to hook a reCAPTCHA check into, so
@@ -29,13 +41,25 @@ export async function registerUser(email: string, password: string, referralCode
   // to record the referral atomically at account-creation time — see
   // supabase/migrations/20240117_referrals.sql.
   const options = referralCode ? { data: { referral_code: referralCode } } : undefined;
-  const { data, error } = await supabase.auth.signUp({ email, password, options });
+  const attemptSignUp = () => supabase.auth.signUp({ email, password, options });
+  let { data, error } = await attemptSignUp();
+  if (error && isTransientAuthError(error)) {
+    await new Promise(resolve => setTimeout(resolve, 1200));
+    ({ data, error } = await attemptSignUp());
+  }
   if (error) throw error;
   return data;
 }
 
 export async function loginUser(email: string, password: string) {
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  const attempt = () => supabase.auth.signInWithPassword({ email, password });
+  let { data, error } = await attempt();
+  if (error && isTransientAuthError(error)) {
+    // One retry after a short delay is enough to ride out a brief spike
+    // without making a real credential failure feel slow.
+    await new Promise(resolve => setTimeout(resolve, 1200));
+    ({ data, error } = await attempt());
+  }
   if (error) throw error;
   return data;
 }

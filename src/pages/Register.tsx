@@ -213,7 +213,11 @@ const Register = () => {
       await registerUser(email, password, referralCode || undefined);
       setSuccess(true);
     } catch (err: any) {
-      setError(err.message || 'Registration error');
+      if (err.status === 429 || /rate limit|failed to fetch|network/i.test(err.message || '')) {
+        setError('Servers are busy right now — please try again in a few seconds.');
+      } else {
+        setError(err.message || 'Registration error');
+      }
     } finally {
       setLoading(false);
     }
