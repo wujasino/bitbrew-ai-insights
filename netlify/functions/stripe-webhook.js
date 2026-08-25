@@ -130,8 +130,17 @@ export const handler = async (event) => {
         break;
       }
 
+      // 'created' fires the moment Stripe creates the subscription object —
+      // normally redundant with checkout.session.completed's own
+      // stripe.subscriptions.retrieve() call above for anything bought
+      // through our own Checkout flow, but it's the only sync path for a
+      // subscription created some other way (Stripe Dashboard, direct API
+      // call), so it shares the same handling as 'updated' rather than
+      // being left unhandled.
+      //
       // Fires on renewal, plan change, dunning status changes, and when a
       // cancellation is scheduled/undone — the single ongoing sync path.
+      case 'customer.subscription.created':
       case 'customer.subscription.updated': {
         const sub = stripeEvent.data.object;
         const userId = sub.metadata?.userId;
