@@ -24,6 +24,14 @@
 [functions."check-score-alerts"]
   schedule = "@hourly"
 
+# Monthly financial/tax report (netlify/functions/billing-status.js). Netlify
+# cron has no "last day of month" syntax, so this fires daily 28-31 and the
+# function itself skips every invocation except the real last day of the
+# month — running it exactly on the 1st would reset the month-to-date Stripe
+# query and always report ~$0.
+[functions."billing-status"]
+  schedule = "0 8 28-31 * *"
+
 # ── Google OAuth proxy — ukrywa ID projektu Supabase ─────────────────────────
 [[redirects]]
   from   = "/auth/callback"
