@@ -7,11 +7,10 @@
  * owner. Not user-facing — no frontend calls this.
  *
  * Scheduled (see the `[functions."billing-status"]` entry in netlify.toml)
- * to run daily 28-31, but only actually sends on the real last day of the
- * month (checked below) — Netlify cron has no "last day of month" syntax,
- * and running this on the 1st of a new month would reset `firstDayOfMonth`
- * and always report ~$0. A manual call with the admin token bypasses that
- * date check, for on-demand testing.
+ * for the 15th of each month at 09:00 — a month-to-date snapshot (this
+ * month's Stripe charges so far), sent ahead of the 20th/25th tax deadlines
+ * mentioned in the report itself. It reports partial-month revenue by
+ * design; it is not meant to be a final, complete-month total.
  */
 const { createClient } = require('@supabase/supabase-js');
 const ws = require('ws');
@@ -21,12 +20,6 @@ if (!globalThis.WebSocket) globalThis.WebSocket = ws;
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-const isLastDayOfMonth = (date) => {
-  const tomorrow = new Date(date);
-  tomorrow.setDate(date.getDate() + 1);
-  return tomorrow.getMonth() !== date.getMonth();
-};
 
 exports.handler = async (event) => {
   const headers = { 'Content-Type': 'application/json' };
@@ -39,9 +32,6 @@ exports.handler = async (event) => {
   }
 
   const now = new Date();
-  if (isCron && !isLastDayOfMonth(now)) {
-    return { statusCode: 200, headers, body: JSON.stringify({ skipped: 'not_last_day_of_month' }) };
-  }
 
   try {
     if (!process.env.STRIPE_SECRET_KEY) throw new Error('STRIPE_SECRET_KEY is not configured');
