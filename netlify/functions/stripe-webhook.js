@@ -1,6 +1,7 @@
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 import { planForPriceId } from './_lib/stripePlans.js';
+import { captureCriticalError } from './_lib/sentry.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -83,7 +84,7 @@ export const handler = async (event) => {
     if (claimError.code === '23505') {
       return { statusCode: 200, body: JSON.stringify({ received: true, duplicate: true }) };
     }
-    console.error('webhook_events claim error:', claimError.message);
+    captureCriticalError(new Error(claimError.message), { context: 'stripe-webhook: could not claim event', eventType: stripeEvent.type, eventId: stripeEvent.id });
     return { statusCode: 500, body: JSON.stringify({ error: 'Could not record webhook event' }) };
   }
 
@@ -203,7 +204,7 @@ export const handler = async (event) => {
         break;
     }
   } catch (err) {
-    console.error('stripe-webhook handler error:', stripeEvent.type, err.message);
+    captureCriticalError(err, { context: 'stripe-webhook: processing failed', eventType: stripeEvent.type, eventId: stripeEvent.id });
     // Release the claim so Stripe's retry (it retries non-2xx responses on
     // an exponential backoff for several days) can actually reprocess this
     // event instead of hitting the dedupe path and being silently dropped.
