@@ -6,7 +6,7 @@ import {
   User, Bell, Shield, Trash2, Save,
   Upload, Camera, Loader2, KeyRound, Check, Mail, ArrowRight, ArrowLeft,
   Eye, EyeOff, CheckCircle2, Circle, CreditCard, Download, FileText, Volume2, Cpu, Lock,
-  Play, Square as StopIcon, Gift, Copy, Users,
+  Play, Square as StopIcon, Gift, Copy, Users, ExternalLink,
 } from 'lucide-react';
 import { loadVoicePrefs, saveVoicePrefs, VoicePrefs, AVAILABLE_VOICES, fetchAvailableVoices, ElevenLabsVoice } from '@/hooks/useTTS';
 import { MODEL_CATALOG, loadModelPrefs, saveModelPrefs, ModelPrefs } from '@/lib/models';
@@ -31,6 +31,14 @@ const tabs: { id: Tab; label: string; icon: React.FC<{ className?: string }> }[]
 
 // Keep in sync with FREE_PLAN_CREDIT_REWARD in netlify/functions/referral.js
 const FREE_PLAN_CREDIT_REWARD_LABEL = 50;
+
+// Stripe's own hosted customer billing portal — a no-code, shareable login
+// link (the customer enters their email, Stripe verifies and shows only
+// their own subscription). Given as a direct fallback next to the in-app
+// Pause/Cancel actions above, so a user can always self-serve cancel even
+// if manage-subscription.js is down or a webhook lag makes the in-app status
+// look wrong.
+const STRIPE_BILLING_PORTAL_URL = 'https://billing.stripe.com/p/login/3cIaEY72ebHT8hF8iSfnO01';
 
 interface ReferralStatus {
   referralCode: string;
@@ -1216,6 +1224,24 @@ export default function Settings() {
                       )}
                     </div>
                   </div>
+
+                  <a
+                    href={STRIPE_BILLING_PORTAL_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-between gap-3 p-4 rounded-xl border border-[hsl(var(--glass-border))] bg-card/40 hover:bg-card/70 transition-colors group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <CreditCard className="w-4 h-4 text-muted-foreground shrink-0" />
+                      <div>
+                        <p className="text-sm font-medium text-foreground">Manage billing on Stripe</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Update your card, download invoices, or cancel directly with Stripe — no login needed here.
+                        </p>
+                      </div>
+                    </div>
+                    <ExternalLink className="w-4 h-4 text-muted-foreground shrink-0 group-hover:text-foreground transition-colors" />
+                  </a>
 
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>

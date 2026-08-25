@@ -1,0 +1,80 @@
+name: Weekly DB Backup
+
+# Line 1 of the resilience plan: even if Supabase's own automatic backups
+# (Pro plan, daily) were ever unavailable or the project itself had to be
+# recreated from scratch, this is an independent, off-platform copy of the
+# data — including RAG embeddings, which nothing else regenerates on its
+# own. Encrypted before it ever leaves the runner, since a full dump
+# contains real user data (profiles, analyses, contact messages).
+on:
+  workflow_dispatch: {}
+  schedule:
+    - cron: '0 3 * * 0' # Sunday 03:00 UTC
+
+jobs:
+  backup:
+    timeout-minutes: 20
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install postgresql-client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client gnupg
+
+      - name: Dump database
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          set -euo pipefail
+          if [ -z "${SUPABASE_DB_URL:-}" ]; then
+            echo "SUPABASE_DB_URL secret is not set — see workflow comments for what to add." >&2
+            exit 1
+          fi
+          pg_dump "$SUPABASE_DB_URL" --no-owner --no-privileges -F p -f backup.sql
+
+      - name: Encrypt dump
+        env:
+          BACKUP_ENCRYPTION_PASSPHRASE: ${{ secrets.BACKUP_ENCRYPTION_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          if [ -z "${BACKUP_ENCRYPTION_PASSPHRASE:-}" ]; then
+            echo "BACKUP_ENCRYPTION_PASSPHRASE secret is not set." >&2
+            exit 1
+          fi
+          gpg --batch --yes --passphrase "$BACKUP_ENCRYPTION_PASSPHRASE" \
+              --symmetric --cipher-algo AES256 -o "backup-$(date -u +%Y-%m-%d).sql.gpg" backup.sql
+          # The plaintext dump has real user data in it — remove it the
+          # moment the encrypted copy exists, don't wait for the runner to
+          # be torn down.
+          shred -u backup.sql
+
+      - name: Upload to S3
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
+          AWS_S3_BACKUP_BUCKET: ${{ secrets.AWS_S3_BACKUP_BUCKET }}
+        run: |
+          set -euo pipefail
+          if [ -z "${AWS_S3_BACKUP_BUCKET:-}" ]; then
+            echo "AWS_S3_BACKUP_BUCKET secret is not set." >&2
+            exit 1
+          fi
+          aws s3 cp "backup-$(date -u +%Y-%m-%d).sql.gpg" "s3://${AWS_S3_BACKUP_BUCKET}/presora/backup-$(date -u +%Y-%m-%d).sql.gpg"
+          shred -u "backup-$(date -u +%Y-%m-%d).sql.gpg"
+
+# Required repo secrets (Settings -> Secrets and variables -> Actions):
+#   SUPABASE_DB_URL            — Supabase Dashboard -> Project Settings ->
+#                                Database -> Connection string (URI, direct
+#                                connection, not the pooler) — includes the
+#                                DB password.
+#   BACKUP_ENCRYPTION_PASSPHRASE — any strong passphrase you generate and
+#                                store safely (e.g. a password manager) —
+#                                needed again to decrypt a restore, so losing
+#                                it makes every backup unrecoverable.
+#   AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY — an IAM user scoped to
+#                                s3:PutObject on just the backup bucket.
+#   AWS_REGION                 — the bucket's region, e.g. eu-central-1.
+#   AWS_S3_BACKUP_BUCKET       — the bucket name.
+#
+# To restore: download the .gpg object from S3, then
+#   gpg --batch --passphrase "$BACKUP_ENCRYPTION_PASSPHRASE" --decrypt backup-YYYY-MM-DD.sql.gpg > backup.sql
+#   psql "$SUPABASE_DB_URL" -f backup.sql

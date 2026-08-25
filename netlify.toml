@@ -24,6 +24,12 @@
 [functions."check-score-alerts"]
   schedule = "@hourly"
 
+# Monthly financial/tax report (netlify/functions/billing-status.js) — a
+# month-to-date snapshot (this month's Stripe charges so far) sent on the
+# 15th, ahead of the 20th/25th tax deadlines mentioned in the report itself.
+[functions."billing-status"]
+  schedule = "0 9 15 * *" # CRON: Minuta(0) Godzina(9) DzieńMiesiąca(15) Miesiąc(*) DzieńTygodnia(*)
+
 # ── Google OAuth proxy — ukrywa ID projektu Supabase ─────────────────────────
 [[redirects]]
   from   = "/auth/callback"

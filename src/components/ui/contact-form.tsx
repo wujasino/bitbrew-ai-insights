@@ -1,9 +1,11 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, CheckCircle2, Loader2, Mail, Zap, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { getRecaptchaToken } from '@/lib/recaptcha';
 
 type Status = 'idle' | 'sending' | 'success' | 'error';
@@ -18,27 +20,39 @@ interface ContactFormProps {
 
 export function ContactForm({ defaultSubject = '', compact = false }: ContactFormProps) {
   const [name, setName] = useState('');
+  const [company, setCompany] = useState('');
   const [email, setEmail] = useState('');
   const [subject, setSubject] = useState(defaultSubject);
   const [message, setMessage] = useState('');
+  const [agreed, setAgreed] = useState(false);
   const [status, setStatus] = useState<Status>('idle');
   const [errorMsg, setErrorMsg] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!agreed) {
+      setErrorMsg('Please confirm you agree to be contacted about this inquiry.');
+      setStatus('error');
+      return;
+    }
     setStatus('sending');
     setErrorMsg('');
     try {
       const recaptchaToken = await getRecaptchaToken('contact');
+      // contact_messages has no separate company column — folding it into
+      // the message body keeps the sales inbox reading it inline without a
+      // migration, since it's just context around the inquiry, not a field
+      // anything queries on.
+      const fullMessage = company.trim() ? `Company/Agency: ${company.trim()}\n\n${message}` : message;
       const res = await fetch('/.netlify/functions/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, subject, message, recaptchaToken }),
+        body: JSON.stringify({ name, email, subject, message: fullMessage, recaptchaToken }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
       setStatus('success');
-      setName(''); setEmail(''); setSubject(defaultSubject); setMessage('');
+      setName(''); setCompany(''); setEmail(''); setSubject(defaultSubject); setMessage(''); setAgreed(false);
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : 'Failed to send. Please try again.');
       setStatus('error');
@@ -132,7 +146,7 @@ export function ContactForm({ defaultSubject = '', compact = false }: ContactFor
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="contact-email" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Email *
+                    Work email *
                   </Label>
                   <Input
                     id="contact-email"
@@ -144,6 +158,20 @@ export function ContactForm({ defaultSubject = '', compact = false }: ContactFor
                     className="h-10"
                   />
                 </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="contact-company" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  Company / Agency name
+                </Label>
+                <Input
+                  id="contact-company"
+                  value={company}
+                  onChange={e => setCompany(e.target.value)}
+                  placeholder="Acme Agency"
+                  maxLength={120}
+                  className="h-10"
+                />
               </div>
 
               <div className="space-y-1.5">
@@ -178,6 +206,21 @@ export function ContactForm({ defaultSubject = '', compact = false }: ContactFor
                 <p className="text-[10px] text-muted-foreground/50 text-right">{message.length}/4000</p>
               </div>
 
+              <div className="flex items-start gap-2.5">
+                <Checkbox
+                  id="contact-consent"
+                  checked={agreed}
+                  onCheckedChange={(checked) => setAgreed(checked === true)}
+                  className="mt-0.5"
+                />
+                <Label htmlFor="contact-consent" className="text-xs font-normal text-muted-foreground leading-relaxed cursor-pointer">
+                  I agree to be contacted about this inquiry, in line with the{' '}
+                  <Link to="/regulamin" target="_blank" className="text-primary hover:underline">Terms of Service</Link>
+                  {' '}and{' '}
+                  <Link to="/polityka-prywatnosci" target="_blank" className="text-primary hover:underline">Privacy Policy</Link>.
+                </Label>
+              </div>
+
               {status === 'error' && (
                 <motion.p
                   initial={{ opacity: 0, y: -4 }}
@@ -191,7 +234,7 @@ export function ContactForm({ defaultSubject = '', compact = false }: ContactFor
               <Button
                 type="submit"
                 className="w-full gap-2"
-                disabled={status === 'sending'}
+                disabled={status === 'sending' || !agreed}
               >
                 {status === 'sending' ? (
                   <>
