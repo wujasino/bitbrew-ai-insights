@@ -74,7 +74,16 @@ exports.handler = async (event) => {
 
     const taxRate = finSettings.tax_rate_percent / 100;
     const vatRate = finSettings.vat_rate_percent / 100;
-    const monthlyFixedCosts = Number(finSettings.monthly_fixed_costs);
+
+    // api_costs is the itemized per-provider breakdown (OpenRouter,
+    // Anthropic, Voyage AI, ElevenLabs, Resend, Mailchimp — see the
+    // 20240138 migration); monthly_fixed_costs stays as a catch-all for
+    // anything not itemized (Supabase/Netlify plan, Cloudflare, Sentry,
+    // Plausible, etc.). Both feed into the same tax calculation below.
+    const apiCosts = finSettings.api_costs || {};
+    const totalApiCosts = Object.values(apiCosts).reduce((sum, v) => sum + Number(v || 0), 0);
+    const otherFixedCosts = Number(finSettings.monthly_fixed_costs) || 0;
+    const monthlyFixedCosts = totalApiCosts + otherFixedCosts;
 
     // ==========================================
     // Tax calculations
@@ -99,6 +108,23 @@ exports.handler = async (event) => {
     // ==========================================
     const periodString = firstDayOfMonth.toLocaleDateString('pl-PL', { month: 'long', year: 'numeric' });
     const netMarginPercent = totalGrossRevenue > 0 ? (netProfitToKeep / totalGrossRevenue) * 100 : 0;
+
+    const API_COST_LABELS = {
+      openrouter: 'OpenRouter',
+      anthropic: 'Anthropic (fallback)',
+      voyage: 'Voyage AI (RAG embeddings)',
+      elevenlabs: 'ElevenLabs (TTS)',
+      resend: 'Resend (email)',
+      mailchimp: 'Mailchimp',
+    };
+    const apiCostRows = Object.entries(apiCosts)
+      .filter(([, cost]) => Number(cost) > 0)
+      .map(([key, cost]) => `
+            <div class="row">
+              <span class="label">${API_COST_LABELS[key] || key}:</span>
+              <span class="value">-${Number(cost).toFixed(2)} USD</span>
+            </div>`)
+      .join('');
 
     const emailHtml = `
       <!DOCTYPE html>
@@ -139,9 +165,13 @@ exports.handler = async (event) => {
             <div class="row">
               <span class="label">Prowizje Stripe (Szacowane):</span>
               <span class="value">-${estimatedStripeFees.toFixed(2)} USD</span>
-            </div>
+            </div>${apiCostRows}
             <div class="row">
-              <span class="label">Koszty stałe infra:</span>
+              <span class="label">Inne koszty stałe (hosting, itp.):</span>
+              <span class="value">-${otherFixedCosts.toFixed(2)} USD</span>
+            </div>
+            <div class="row" style="margin-top: 4px; padding-top: 8px; border-top: 1px solid #262626;">
+              <span class="label" style="font-weight: 600;">Suma kosztów stałych:</span>
               <span class="value">-${monthlyFixedCosts.toFixed(2)} USD</span>
             </div>
           </div>
