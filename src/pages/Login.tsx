@@ -291,6 +291,8 @@ const Login = () => {
         setError('Incorrect email or password. Please check your details and try again.');
       } else if (err.message?.includes('Email not confirmed')) {
         setError('Your email is not confirmed yet. Please check your inbox for the activation link.');
+      } else if (err.status === 429 || /rate limit|failed to fetch|network/i.test(err.message || '')) {
+        setError('Servers are busy right now — please try again in a few seconds.');
       } else {
         setError(err.message || 'Login error. Please try again.');
       }
