@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { queryClient } from './queryClient';
+import { queryClient, queryPersister } from './queryClient';
 import { getRecaptchaToken } from './recaptcha';
 
 export type AuthUser = {
@@ -89,6 +89,12 @@ export async function logout() {
 export async function logoutAndClearSession() {
   await supabase.auth.signOut();
   queryClient.clear();
+  // queryClient.clear() alone leaves the persisted localStorage snapshot in
+  // place until the next auto-persist cycle fires — removing it immediately
+  // closes the window where a signed-out browser could still show a
+  // previous account's cached dashboard data (read-only cache from the
+  // offline-resilience persister in queryClient.ts).
+  await queryPersister.removeClient();
 }
 
 export default { registerUser, loginUser, getAuthUser, isAuthenticated, logout, logoutAndClearSession };
