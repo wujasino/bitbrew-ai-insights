@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, useScroll, useTransform } from 'framer-motion';
 import { Zap, Eye, BarChart3, Shield, ChevronDown, HelpCircle, Mail, TrendingUp, ArrowRight, Globe, ShieldCheck, Clock, Search, PenLine, Sparkles, MessageSquare, Rocket, LineChart, Building2, Tag } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Navbar } from '@/components/layout/Navbar';
@@ -64,9 +64,42 @@ const TRUST_POINTS = [
   },
 ];
 
+/** Real health check, same endpoint /status reads — a "Live" badge that
+ *  doesn't actually reflect the system's real state would be exactly the
+ *  kind of invented signal this codebase has repeatedly had to strip back
+ *  out (see the "no usage numbers" rule below). Defaults to the neutral
+ *  "checking" look rather than assuming operational while the fetch is in
+ *  flight. */
+type LandingHealthStatus = 'operational' | 'degraded' | 'down' | null;
+
+const useLiveStatus = () => {
+  const [status, setStatus] = useState<LandingHealthStatus>(null);
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/.netlify/functions/health')
+      .then(res => (res.ok ? res.json() : null))
+      .then(data => { if (!cancelled && data?.status) setStatus(data.status); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+  return status;
+};
+
 const Landing = () => {
   const navigate = useNavigate();
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
+  const liveStatus = useLiveStatus();
+  const heroRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress: heroScrollProgress } = useScroll({
+    target: heroRef,
+    offset: ['start start', 'end start'],
+  });
+  // Background drifts slower than the page scrolls (classic parallax), and
+  // fades out before the next section — subtle enough to still respect
+  // prefers-reduced-motion in spirit (pure transform + opacity, no layout
+  // shift either way).
+  const heroBgY = useTransform(heroScrollProgress, [0, 1], ['0%', '25%']);
+  const heroBgOpacity = useTransform(heroScrollProgress, [0, 1], [0.45, 0]);
 
   return (
     <div className="min-h-screen bg-background font-landing">
@@ -89,17 +122,58 @@ const Landing = () => {
 
       {/* ── Hero + Why (shared animated background) ───────────────── */}
       <GradientMeshBg className="relative" variant="mono">
-        <section className="hero pt-24 sm:pt-32 pb-10 px-4">
-          <div className="max-w-2xl mx-auto text-center">
+        <section
+          ref={heroRef}
+          className="hero relative min-h-screen flex items-center pt-24 sm:pt-32 pb-10 px-4 overflow-hidden"
+        >
+          {/* Parallax background layer — drifts slower than scroll, fades
+              out toward the next section. Built from the same indigo/mono
+              orb palette as GradientMeshBg (not a stock photo) so it stays
+              inside this app's established abstract-mesh visual language
+              instead of introducing off-brand imagery. */}
+          <motion.div
+            aria-hidden="true"
+            className="absolute inset-0 pointer-events-none"
+            style={{ y: heroBgY, opacity: heroBgOpacity }}
+          >
+            <div
+              className="absolute inset-0"
+              style={{
+                background: 'radial-gradient(ellipse 80% 60% at 50% 20%, hsl(var(--primary) / 0.16), transparent 70%)',
+              }}
+            />
+            {/* Background-to-transparent overlay for depth/legibility, using
+                the app's own background token rather than a literal black. */}
+            <div className="absolute inset-0 bg-gradient-to-b from-background via-transparent to-background" />
+          </motion.div>
+
+          <div className="relative max-w-2xl mx-auto text-center">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
             >
+              {/* Live status pill — genuinely fetched from /.netlify/functions/health
+                  (same endpoint /status reads), not a hardcoded "Live" claim. */}
+              <Link
+                to="/status"
+                className="inline-flex items-center gap-1.5 px-3 py-1 text-[11px] rounded-full border border-[hsl(var(--glass-border))] bg-card/50 text-muted-foreground hover:text-foreground transition-colors mb-3 font-data uppercase tracking-wider"
+              >
+                <span className="relative flex h-1.5 w-1.5">
+                  <span
+                    className={`absolute inline-flex h-full w-full rounded-full opacity-75 ${liveStatus === 'down' ? 'bg-red-500' : liveStatus === 'degraded' ? 'bg-amber-500' : 'bg-emerald-500'} ${liveStatus ? 'animate-ping' : ''}`}
+                  />
+                  <span
+                    className={`relative inline-flex h-1.5 w-1.5 rounded-full ${liveStatus === 'down' ? 'bg-red-500' : liveStatus === 'degraded' ? 'bg-amber-500' : 'bg-emerald-500'}`}
+                  />
+                </span>
+                {liveStatus === 'down' ? 'System issue' : liveStatus === 'degraded' ? 'Degraded performance' : liveStatus === 'operational' ? 'All systems operational' : 'Checking system status'}
+              </Link>
+
               <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs badge rounded-lg mb-7 font-data uppercase tracking-wider">
                 <Search className="w-3 h-3" /> For brands that want to be found
               </span>
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-display text-zinc-900 dark:text-zinc-50 mb-5 leading-[1.1]">
+              <h1 className="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-display text-zinc-900 dark:text-zinc-50 mb-5 leading-[1.05] tracking-tight">
                 AI recommends one brand.{' '}
                 <span className="ai-presence-accent" data-text="Find out if it's yours.">
                   <span className="ai-presence-accent-text">Find out if it's yours.</span>
