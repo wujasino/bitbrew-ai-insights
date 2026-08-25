@@ -58,33 +58,38 @@ export const PricingCards: React.FC<PricingCardsProps> = ({
       {/* Billing toggle — extra top padding so the savings badge doesn't clip */}
       {showBillingToggle && (
       <div className="flex justify-center pt-6 pb-10">
-        <ToggleGroup
-          type="single"
-          value={billingCycle}
-          onValueChange={(value) => {
-            if (value === 'monthly' || value === 'yearly') onCycleChange(value);
-          }}
-          aria-label="Select billing cycle"
-          className="border rounded-lg p-1 bg-muted/50"
-        >
-          <ToggleGroupItem
-            value="monthly"
-            aria-label="Monthly billing"
-            className="px-6 py-1.5 text-sm font-medium data-[state=on]:bg-background data-[state=on]:shadow-sm data-[state=on]:border data-[state=on]:ring-1 data-[state=on]:ring-ring/20 rounded-md transition-colors"
+        <div className="relative">
+          <ToggleGroup
+            type="single"
+            value={billingCycle}
+            onValueChange={(value) => {
+              if (value === 'monthly' || value === 'yearly') onCycleChange(value);
+            }}
+            aria-label="Select billing cycle"
+            className="border rounded-lg p-1 bg-muted/50"
           >
-            {t('billing_cycle_monthly')}
-          </ToggleGroupItem>
-          <ToggleGroupItem
-            value="yearly"
-            aria-label="Annual billing"
-            className="px-6 py-1.5 text-sm font-medium data-[state=on]:bg-background data-[state=on]:shadow-sm data-[state=on]:border data-[state=on]:ring-1 data-[state=on]:ring-ring/20 rounded-md transition-colors relative"
-          >
-            {t('billing_cycle_yearly')}
-            <span className="absolute -top-3.5 right-0 text-[10px] font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full whitespace-nowrap leading-none">
-              {t('billing_savings')}
-            </span>
-          </ToggleGroupItem>
-        </ToggleGroup>
+            <ToggleGroupItem
+              value="monthly"
+              aria-label="Monthly billing"
+              className="px-6 py-1.5 text-sm font-medium data-[state=on]:bg-background data-[state=on]:shadow-sm data-[state=on]:border data-[state=on]:ring-1 data-[state=on]:ring-ring/20 rounded-md transition-colors"
+            >
+              {t('billing_cycle_monthly')}
+            </ToggleGroupItem>
+            <ToggleGroupItem
+              value="yearly"
+              aria-label="Annual billing"
+              className="px-6 py-1.5 text-sm font-medium data-[state=on]:bg-background data-[state=on]:shadow-sm data-[state=on]:border data-[state=on]:ring-1 data-[state=on]:ring-ring/20 rounded-md transition-colors"
+            >
+              {t('billing_cycle_yearly')}
+            </ToggleGroupItem>
+          </ToggleGroup>
+          {/* Centered over the whole toggle so it overlaps both the monthly
+              and yearly buttons, instead of floating clear above just the
+              yearly one. */}
+          <span className="absolute -top-1.5 left-1/2 -translate-x-1/2 text-[10px] font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full whitespace-nowrap leading-none">
+            {t('billing_savings')}
+          </span>
+        </div>
       </div>
       )}
 
