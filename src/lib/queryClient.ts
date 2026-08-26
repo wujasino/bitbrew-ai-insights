@@ -1,5 +1,4 @@
 import { QueryCache, QueryClient } from '@tanstack/react-query';
-import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
 
 // Tracked outside React (a plain module-level pub-sub) so any component can
 // read "is the backend actually reachable right now" without prop-drilling
@@ -38,22 +37,18 @@ export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 60_000,
-      // Long enough that the persisted cache below still has something to
-      // show, read-only, through a multi-hour outage — not just the default
-      // 5 minutes, which would otherwise evict everything long before a
-      // real incident resolves.
-      gcTime: 24 * 60 * 60 * 1000,
       retry: 1,
     },
   },
 });
 
-// Read-only offline cache (Line 3): survives a full page reload/browser
-// restart during an outage, so a visitor sees their last-known dashboard
-// state instead of a blank loading screen or a crash. Cleared explicitly on
-// logout (see logoutAndClearSession in auth.ts) so a signed-out browser
-// never keeps a previous account's cached data in localStorage.
-export const queryPersister = createSyncStoragePersister({
-  storage: window.localStorage,
-  key: 'presora-query-cache',
-});
+// A localStorage-persisted query cache (read-only offline mode) was tried
+// here and reverted — PersistQueryClientProvider's restore step made
+// ProtectedRoute (components/ProtectedRoute.tsx) treat a stale/absent
+// restored session-user query as "already loaded: signed out" before
+// supabase.auth.onAuthStateChange's real check ran, intermittently bouncing
+// genuinely signed-in users to /login. Confirmed by bisecting the e2e
+// suite: reverting just this provider (keeping the health-tracking above)
+// fixed all 10 failures. Re-attempt only with a restore-side filter that
+// actually prevents ProtectedRoute from ever seeing a restored value for
+// session-user/profile-flags, not just a dehydrate-side one.

@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect } from 'react';
-import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
-import { queryClient, queryPersister } from '@/lib/queryClient';
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from '@/lib/queryClient';
 import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
@@ -9,10 +9,6 @@ import { OfflineBanner } from "@/components/ui/offline-banner";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { applySeo } from "@/hooks/useSeo";
 import { useFaviconTheme } from "@/hooks/useFaviconTheme";
-
-// 24h — matches queryClient's gcTime, so the persisted cache doesn't outlive
-// what react-query itself would still consider a valid entry to restore.
-const PERSIST_MAX_AGE = 24 * 60 * 60 * 1000;
 
 // AppShell (sidebar, app navbar, AI chat) is only used on authenticated app routes —
 // code-split it so it stays out of the initial bundle served on landing/login/register.
@@ -72,7 +68,7 @@ const PageLoader = () => (
 );
 
 const App = () => (
-  <PersistQueryClientProvider client={queryClient} persistOptions={{ persister: queryPersister, maxAge: PERSIST_MAX_AGE }}>
+  <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <Sonner />
@@ -224,7 +220,7 @@ const App = () => (
         </Suspense>
       </BrowserRouter>
     </TooltipProvider>
-  </PersistQueryClientProvider>
+  </QueryClientProvider>
 );
 
 export default App;
