@@ -251,19 +251,17 @@ export const AppNavbar = ({ collapsed = false, onToggle, onMobileToggle, chatOpe
             {/* Sign out */}
             <div className="p-2">
               <button
-                onClick={() => {
+                onClick={async () => {
                   setOpen(false);
-                  // Navigate first, synchronously, so ProtectedRoute (still
-                  // mounted here on an app route) unmounts before signing
-                  // out. Doing it in the other order — sign out, then
-                  // navigate — races ProtectedRoute's own redirect to
-                  // /login (triggered by the cache clearing to an empty
-                  // session) against this navigate('/'); whichever wins is
-                  // an implementation detail of react-query's notification
-                  // batching, not something to depend on, and losing it
-                  // means landing on /login instead of the intended '/'.
+                  // Order here no longer needs to win a timing race —
+                  // ProtectedRoute itself now recognizes (and ignores) a
+                  // stale re-render of the outgoing route once the browser
+                  // has already moved on to a different URL, so it can't
+                  // clobber this navigate() regardless of exactly when the
+                  // session-user cache clears mid-signOut. See its comment
+                  // for the actual mechanism.
+                  await logoutAndClearSession();
                   navigate('/', { replace: true });
-                  logoutAndClearSession();
                 }}
                 className="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-sm text-destructive hover:bg-destructive/10 transition-colors"
               >
