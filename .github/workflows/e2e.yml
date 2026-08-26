@@ -26,7 +26,13 @@ jobs:
           node-version: 20
           cache: 'npm'
 
-      - run: npm ci
+      # --legacy-peer-deps to match how the committed package-lock.json was
+      # generated (see deploy.yml's install step) — plain `npm ci` resolves
+      # netlify-cli's own peer-dependency conflicts (@netlify/otel/@netlify/blobs
+      # vs @opentelemetry/api) differently than --legacy-peer-deps does, so it
+      # rejected the lock file as "out of sync" even though nothing was
+      # actually wrong with it.
+      - run: npm ci --legacy-peer-deps
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
