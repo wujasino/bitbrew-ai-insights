@@ -202,6 +202,24 @@ const AuditReport = () => {
   // when they ask for the audit to be re-run and compared.
   const referenceId = analysis.id.slice(0, 8).toUpperCase();
 
+  // Strongest/weakest dimension for the "at a glance" strip — a busy reader
+  // (an agency's own client, forwarded this PDF cold) gets the gist in three
+  // numbers before reading a word of the narrative. Derived from the same
+  // scores already on the page, not a separate claim that could disagree
+  // with the breakdown below it.
+  const rankedDimensions = DIMENSIONS
+    .map(d => ({ ...d, value: analysis[d.key] as number }))
+    .sort((a, b) => b.value - a.value);
+  const strongestDimension = rankedDimensions[0];
+  const weakestDimension = rankedDimensions[rankedDimensions.length - 1];
+
+  // Real proportional ring (SVG stroke-dasharray), not just a flat colored
+  // border — the single most important number in the report should read as
+  // "72% of the way around a circle," not just "green-ish."
+  const RING_RADIUS = 42;
+  const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
+  const ringOffset = RING_CIRCUMFERENCE * (1 - analysis.trust_score / 100);
+
   return (
     <div className="print-exact min-h-screen print:min-h-0 print:h-auto bg-background print:bg-white">
       {/* Screen-only toolbar — hidden on print */}
@@ -273,10 +291,21 @@ const AuditReport = () => {
         </div>
 
         {/* Headline score */}
-        <div className={`relative overflow-hidden rounded-2xl border border-border bg-card/60 print:bg-transparent print:border-black/15 p-6 mb-8 flex items-center gap-6 ${NO_SPLIT}`}>
+        <div className={`relative overflow-hidden rounded-2xl border border-border bg-card/60 print:bg-transparent print:border-black/15 p-6 mb-4 flex items-center gap-6 ${NO_SPLIT}`}>
           <div className={`print:hidden absolute -top-10 -right-10 w-40 h-40 rounded-full blur-3xl opacity-20 ${scoreColor(analysis.trust_score).replace('text-', 'bg-')}`} />
-          <div className={`relative shrink-0 w-24 h-24 rounded-full border-4 flex items-center justify-center ${bandOf(analysis.trust_score).ring}`}>
-            <span className="text-3xl font-display font-bold tabular-nums">{analysis.trust_score}</span>
+          <div className="relative shrink-0 w-24 h-24">
+            <svg viewBox="0 0 100 100" className="w-24 h-24 -rotate-90">
+              <circle cx="50" cy="50" r={RING_RADIUS} fill="none" strokeWidth="7" className="stroke-muted print:stroke-black/10" />
+              <circle
+                cx="50" cy="50" r={RING_RADIUS} fill="none" strokeWidth="7" strokeLinecap="round"
+                strokeDasharray={RING_CIRCUMFERENCE}
+                strokeDashoffset={ringOffset}
+                className={`${scoreColor(analysis.trust_score).replace('text-', 'stroke-')} print:stroke-black/70 transition-[stroke-dashoffset] duration-700`}
+              />
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-3xl font-display font-bold tabular-nums">{analysis.trust_score}</span>
+            </div>
           </div>
           <div className="relative">
             <div className="flex items-center gap-2 mb-1">
@@ -292,6 +321,26 @@ const AuditReport = () => {
             ) : summary ? (
               <p className="text-base font-medium text-foreground print:text-black mt-1">{summary.headline}</p>
             ) : null}
+          </div>
+        </div>
+
+        {/* At a glance — three numbers a reader who never gets past the top
+            of page one still walks away with. Every figure here already
+            appears elsewhere on the page (models queried in the methodology
+            section, both dimensions in the breakdown below), so nothing
+            here can contradict the detail underneath it. */}
+        <div className={`flex flex-wrap gap-x-8 gap-y-2 text-xs mb-8 pb-6 border-b border-border print:border-black/10 ${NO_SPLIT}`}>
+          <div>
+            <p className="uppercase tracking-wider text-muted-foreground print:text-black/50">Models queried</p>
+            <p className="text-foreground print:text-black mt-0.5 font-medium tabular-nums">{modelsQueried.length || '—'}</p>
+          </div>
+          <div>
+            <p className="uppercase tracking-wider text-muted-foreground print:text-black/50">Strongest dimension</p>
+            <p className="text-foreground print:text-black mt-0.5 font-medium">{strongestDimension.name} · {strongestDimension.value}</p>
+          </div>
+          <div>
+            <p className="uppercase tracking-wider text-muted-foreground print:text-black/50">Needs attention</p>
+            <p className="text-foreground print:text-black mt-0.5 font-medium">{weakestDimension.name} · {weakestDimension.value}</p>
           </div>
         </div>
 
