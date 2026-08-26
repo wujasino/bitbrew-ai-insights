@@ -64,31 +64,9 @@ const TRUST_POINTS = [
   },
 ];
 
-/** Real health check, same endpoint /status reads — a "Live" badge that
- *  doesn't actually reflect the system's real state would be exactly the
- *  kind of invented signal this codebase has repeatedly had to strip back
- *  out (see the "no usage numbers" rule below). Defaults to the neutral
- *  "checking" look rather than assuming operational while the fetch is in
- *  flight. */
-type LandingHealthStatus = 'operational' | 'degraded' | 'down' | null;
-
-const useLiveStatus = () => {
-  const [status, setStatus] = useState<LandingHealthStatus>(null);
-  useEffect(() => {
-    let cancelled = false;
-    fetch('/.netlify/functions/health')
-      .then(res => (res.ok ? res.json() : null))
-      .then(data => { if (!cancelled && data?.status) setStatus(data.status); })
-      .catch(() => {});
-    return () => { cancelled = true; };
-  }, []);
-  return status;
-};
-
 const Landing = () => {
   const navigate = useNavigate();
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
-  const liveStatus = useLiveStatus();
   const heroRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress: heroScrollProgress } = useScroll({
     target: heroRef,
@@ -153,23 +131,6 @@ const Landing = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
             >
-              {/* Live status pill — genuinely fetched from /.netlify/functions/health
-                  (same endpoint /status reads), not a hardcoded "Live" claim. */}
-              <Link
-                to="/status"
-                className="inline-flex items-center gap-1.5 px-3 py-1 text-[11px] rounded-full border border-[hsl(var(--glass-border))] bg-card/50 text-muted-foreground hover:text-foreground transition-colors mb-3 font-data uppercase tracking-wider"
-              >
-                <span className="relative flex h-1.5 w-1.5">
-                  <span
-                    className={`absolute inline-flex h-full w-full rounded-full opacity-75 ${liveStatus === 'down' ? 'bg-red-500' : liveStatus === 'degraded' ? 'bg-amber-500' : 'bg-emerald-500'} ${liveStatus ? 'animate-ping' : ''}`}
-                  />
-                  <span
-                    className={`relative inline-flex h-1.5 w-1.5 rounded-full ${liveStatus === 'down' ? 'bg-red-500' : liveStatus === 'degraded' ? 'bg-amber-500' : 'bg-emerald-500'}`}
-                  />
-                </span>
-                {liveStatus === 'down' ? 'System issue' : liveStatus === 'degraded' ? 'Degraded performance' : liveStatus === 'operational' ? 'All systems operational' : 'Checking system status'}
-              </Link>
-
               <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs badge rounded-lg mb-7 font-data uppercase tracking-wider">
                 <Search className="w-3 h-3" /> For brands that want to be found
               </span>
