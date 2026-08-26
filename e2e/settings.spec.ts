@@ -28,6 +28,19 @@ test.describe('Settings — Billing', () => {
     await expect(settingsPage.cancelsAtPeriodEndText).not.toBeVisible();
     await expect(settingsPage.resumeButton).not.toBeVisible();
   });
+
+  test('offers a direct Stripe billing-portal link as a fallback', async ({ page, settingsPage }) => {
+    await mockAuthenticatedApp(page, {
+      profile: buildProfile({ subscription_status: 'active' }),
+    });
+
+    await settingsPage.goto('billing');
+
+    const portalLink = page.getByRole('link', { name: 'Manage billing on Stripe' });
+    await expect(portalLink).toBeVisible();
+    await expect(portalLink).toHaveAttribute('href', /^https:\/\/billing\.stripe\.com\//);
+    await expect(portalLink).toHaveAttribute('target', '_blank');
+  });
 });
 
 test.describe('Settings — Referral', () => {
