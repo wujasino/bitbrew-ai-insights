@@ -29,8 +29,22 @@ test.describe('Public pages', () => {
   test('contact page renders a working form', async ({ page, consoleIssues }) => {
     await page.goto('/contact');
     await expect(page.getByLabel('Full name *')).toBeVisible();
-    await expect(page.getByLabel('Email *')).toBeVisible();
+    await expect(page.getByLabel('Work email *')).toBeVisible();
+    await expect(page.getByLabel('Company / Agency name')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Send message' })).toBeVisible();
+    expect(consoleIssues, JSON.stringify(consoleIssues)).toEqual([]);
+  });
+
+  test('contact form blocks submission until the consent checkbox is checked', async ({ page, consoleIssues }) => {
+    await page.goto('/contact');
+    const submit = page.getByRole('button', { name: 'Send message' });
+    const consent = page.locator('#contact-consent');
+
+    await expect(submit).toBeDisabled();
+    await consent.click();
+    await expect(submit).toBeEnabled();
+    await consent.click();
+    await expect(submit).toBeDisabled();
     expect(consoleIssues, JSON.stringify(consoleIssues)).toEqual([]);
   });
 

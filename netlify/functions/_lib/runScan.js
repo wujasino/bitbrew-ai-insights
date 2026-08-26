@@ -33,6 +33,16 @@ export const ANTHROPIC_MODELS = [
   { id: 'claude-haiku-4-5-20251001', label: 'Claude Haiku' },
 ];
 
+// Direct-Gemini fallback roster — same purpose as ANTHROPIC_MODELS above,
+// queried via Google's own Generative Language API (GEMINI_API_KEY) rather
+// than through OpenRouter, so a Claude-only fallback isn't the sole second
+// opinion when OpenRouter is down. IDs must match what the deploy's
+// GEMINI_API_KEY account actually serves.
+export const GEMINI_MODELS = [
+  { id: 'gemini-3.5-pro', label: 'Gemini Pro' },
+  { id: 'gemini-3.5-flash', label: 'Gemini Flash' },
+];
+
 // RAG: embedding via Voyage (input_type "query")
 const embedQuery = async (text) => {
   const res = await fetchWithTimeout('https://api.voyageai.com/v1/embeddings', {
@@ -198,6 +208,46 @@ ${brandContext || '(no stored knowledge for this brand)'}
     return { label, result: JSON.parse(cleaned) };
   };
 
+  /**
+   * Direct-to-Gemini path — same role as queryAnthropicModel above, run in
+   * parallel with it once OpenRouter has failed (see the combined fallback
+   * block below). Google's API takes the key as a query param, not a header.
+   */
+  const queryGeminiModel = async ({ id, label }) => {
+    const res = await fetchWithTimeout(
+      `https://generativelanguage.googleapis.com/v1beta/models/${id}:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: systemPrompt }] },
+          contents: [{ parts: [{ text: userPrompt }] }],
+        }),
+      }
+    );
+    let data;
+    try {
+      data = await res.json();
+    } catch {
+      throw new Error(`${label}: HTTP ${res.status} (non-JSON response body)`);
+    }
+    if (!res.ok) {
+      throw new Error(`${label}: HTTP ${res.status} — ${data?.error?.message || res.statusText}`);
+    }
+    // Same defensive scan as the Anthropic path: don't assume the first
+    // candidate/part is the text one, since a blocked or filtered response
+    // still comes back with a 200 and a candidate that has no text part.
+    const parts = data?.candidates?.[0]?.content?.parts ?? [];
+    const text = parts.find((p) => typeof p?.text === 'string' && p.text.length > 0)?.text;
+    if (!text) {
+      throw new Error(
+        `${label}: empty response (finish_reason: ${data?.candidates?.[0]?.finishReason ?? 'unknown'})`
+      );
+    }
+    const cleaned = text.trim().replace(/```json|```/g, '').trim();
+    return { label, result: JSON.parse(cleaned) };
+  };
+
   /** Averages whatever models did answer into a real (non-fallback) result. */
   const buildResult = (successes) => {
     const avg = (key) => Math.round(
@@ -308,38 +358,51 @@ ${brandContext || '(no stored knowledge for this brand)'}
   }
 
   if (!parsed) {
-    if (process.env.ANTHROPIC_API_KEY) {
+    // Both direct providers are queried in parallel with each other (not
+    // sequentially) so a fallback scan reflects two independent AI voices —
+    // Claude and Gemini — instead of the whole fallback depending on
+    // whichever one happens to be configured/healthy first.
+    const runProvider = async (envKey, providerLabel, providerModels, queryFn) => {
+      if (!process.env[envKey]) {
+        // Said out loud rather than skipped in silence. Without this line a
+        // recorded failure looks identical whether the fallback ran and was
+        // rejected, or never ran because no second provider is configured —
+        // and those need different fixes (top up / add a key).
+        failures.push(`No ${providerLabel} fallback: ${envKey} is not set on this deploy`);
+        return [];
+      }
       try {
         // Same allSettled-and-average pattern as the OpenRouter block above:
-        // query every Claude tier in parallel and build a real result out of
-        // whichever ones answer, instead of a single "Claude" call standing
-        // in for the whole scan.
-        const settled = await Promise.allSettled(ANTHROPIC_MODELS.map(queryAnthropicModel));
-        const successes = settled
-          .filter((s) => s.status === 'fulfilled')
-          .map((s) => s.value);
-
-        const anthropicFailures = settled
+        // query every model tier in parallel and build a real result out of
+        // whichever ones answer, instead of a single call standing in for
+        // the whole scan.
+        const settled = await Promise.allSettled(providerModels.map(queryFn));
+        const successes = settled.filter((s) => s.status === 'fulfilled').map((s) => s.value);
+        failures.push(...settled
           .map((s, i) => (s.status === 'rejected'
-            ? (s.reason?.message || `${ANTHROPIC_MODELS[i].label}: unknown error`)
+            ? (s.reason?.message || `${providerModels[i].label}: unknown error`)
             : null))
-          .filter(Boolean);
-        failures.push(...anthropicFailures);
-
-        if (successes.length > 0) {
-          parsed = buildResult(successes);
-          usedFallbackProvider = true;
-          console.warn(`OpenRouter served nothing; scan completed via the direct Anthropic fallback (${successes.length}/${ANTHROPIC_MODELS.length} Claude models answered).`);
-        }
+          .filter(Boolean));
+        return successes;
       } catch (err) {
-        failures.push(`Anthropic direct: ${err.message}`);
+        failures.push(`${providerLabel} direct: ${err.message}`);
+        return [];
       }
-    } else {
-      // Said out loud rather than skipped in silence. Without this line a
-      // recorded failure looks identical whether the fallback ran and was
-      // rejected, or never ran because no second provider is configured —
-      // and those need different fixes (top up / add a key).
-      failures.push('No fallback provider: ANTHROPIC_API_KEY is not set on this deploy');
+    };
+
+    const [anthropicSuccesses, geminiSuccesses] = await Promise.all([
+      runProvider('ANTHROPIC_API_KEY', 'Anthropic', ANTHROPIC_MODELS, queryAnthropicModel),
+      runProvider('GEMINI_API_KEY', 'Gemini', GEMINI_MODELS, queryGeminiModel),
+    ]);
+    const fallbackSuccesses = [...anthropicSuccesses, ...geminiSuccesses];
+
+    if (fallbackSuccesses.length > 0) {
+      parsed = buildResult(fallbackSuccesses);
+      usedFallbackProvider = true;
+      console.warn(
+        `OpenRouter served nothing; scan completed via direct fallback providers ` +
+        `(${anthropicSuccesses.length}/${ANTHROPIC_MODELS.length} Claude + ${geminiSuccesses.length}/${GEMINI_MODELS.length} Gemini answered).`
+      );
     }
   }
 
