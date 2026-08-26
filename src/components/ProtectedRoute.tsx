@@ -1,5 +1,6 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useSessionUser } from '@/hooks/useAccountInfo';
+import { isSigningOut } from '@/lib/auth';
 
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   // Cached by react-query — every protected route wraps its own instance of
@@ -31,6 +32,18 @@ const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   }
 
   if (!isAuthenticated) {
+    // Two guards against a real, observed race with AppNavbar's sign-out
+    // handler (session-user cache clears synchronously mid-signOut, well
+    // before the handler's own navigate('/') call resolves):
+    //  1. isSigningOut() covers the window before any navigate() has
+    //     happened at all.
+    //  2. Once navigate() has happened, the browser's real location can
+    //     diverge from what this component's own useLocation() still
+    //     reports — a stale re-render of the outgoing route, forced by the
+    //     same cache-clear, arriving after the browser already moved on but
+    //     before React has reconciled this subtree away. Firing our own
+    //     redirect on that stale render would clobber the real destination.
+    if (isSigningOut() || location.pathname !== window.location.pathname) return null;
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 

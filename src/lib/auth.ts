@@ -83,12 +83,25 @@ export async function logout() {
   await supabase.auth.signOut();
 }
 
+// Set for the duration of an explicit, in-progress sign-out — belt-and-
+// suspenders alongside ProtectedRoute's own browser-vs-router location check
+// (see its comment): covers the instant right after signOut() clears the
+// session but before any navigate() has happened at all, which the location
+// check alone can't distinguish from a genuine "session died, go to /login".
+let signingOut = false;
+export const isSigningOut = () => signingOut;
+
 // Like logout(), but also drops every cached query (session-user, profile,
 // plan, etc.) so a stale account's data can't leak into the next login on
 // this browser — see Login.tsx's "already signed in" handling.
 export async function logoutAndClearSession() {
-  await supabase.auth.signOut();
-  queryClient.clear();
+  signingOut = true;
+  try {
+    await supabase.auth.signOut();
+    queryClient.clear();
+  } finally {
+    signingOut = false;
+  }
 }
 
 export default { registerUser, loginUser, getAuthUser, isAuthenticated, logout, logoutAndClearSession };
