@@ -134,7 +134,7 @@ const Landing = () => {
               <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs badge rounded-lg mb-7 font-data uppercase tracking-wider">
                 <Search className="w-3 h-3" /> For brands that want to be found
               </span>
-              <h1 className="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-display text-zinc-900 dark:text-zinc-50 mb-5 leading-[1.05] tracking-tight">
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-display text-zinc-900 dark:text-zinc-50 mb-5 leading-[1.05] tracking-tight">
                 AI recommends one brand.{' '}
                 <span className="ai-presence-accent" data-text="Find out if it's yours.">
                   <span className="ai-presence-accent-text">Find out if it's yours.</span>
