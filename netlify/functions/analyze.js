@@ -15,7 +15,11 @@ if (!globalThis.WebSocket) {
 
 // === ENV ===
 const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+// Was SUPABASE_SERVICE_ROLE_KEY only — every scan failed with "Authentication
+// failed. Please try again." (createAdminClient() throwing before any real
+// auth check ran) whenever the deploy's env var was actually named
+// SUPABASE_SERVICE_KEY, the name ~20 other functions in this codebase accept.
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const RATE_LIMIT_WINDOW_MS = Number(process.env.RATE_LIMIT_WINDOW_MS || 60_000);
 const MAX_REQUESTS_PER_WINDOW = Number(process.env.MAX_REQUESTS_PER_WINDOW || 10);

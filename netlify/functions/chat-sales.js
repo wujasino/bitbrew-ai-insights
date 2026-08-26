@@ -4,7 +4,7 @@ import { SALES_SYSTEM_PROMPT } from './_lib/salesKnowledge.js';
 import { logConversation } from './_lib/logConversation.js';
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 // Logging is optional here (this endpoint has no other use for Supabase) —
 // never let a missing/misconfigured service key break the actual chat.
