@@ -16,16 +16,30 @@ const CREDIT_LINKS = {
   [process.env.VITE_STRIPE_CREDITS_120]: 120,
 };
 
-function creditsFromPaymentLink(paymentLink) {
-  if (!paymentLink) return 0;
-  for (const [url, credits] of Object.entries(CREDIT_LINKS)) {
-    if (!url) continue;
-    try {
-      const slug = new URL(url).pathname.replace(/^\//, '');
-      if (paymentLink === slug || paymentLink.includes(slug)) return credits;
-    } catch {
-      if (url.includes(paymentLink)) return credits;
-    }
+// `session.payment_link` on checkout.session.completed is always the
+// Payment Link's *id* (`plink_...`) — never the hosted checkout URL Stripe's
+// dashboard actually shows you to copy. Pricing.tsx/pricing-modal.tsx send
+// the browser straight to that hosted URL (VITE_STRIPE_CREDITS_20 etc., set
+// to the full https://buy.stripe.com/... links), so comparing against a
+// slug parsed out of the configured URL — the previous approach — could
+// never match: every credit-pack purchase silently granted 0 credits.
+// Resolving the id via the Stripe API and comparing the real `.url` it
+// returns works regardless of whether a given env var holds the id or the
+// full URL.
+async function creditsFromPaymentLink(paymentLinkId) {
+  if (!paymentLinkId) return 0;
+  for (const [configured, credits] of Object.entries(CREDIT_LINKS)) {
+    if (configured && configured === paymentLinkId) return credits;
+  }
+  let link;
+  try {
+    link = await stripe.paymentLinks.retrieve(paymentLinkId);
+  } catch (err) {
+    console.error('Could not resolve payment_link', paymentLinkId, err.message);
+    return 0;
+  }
+  for (const [configured, credits] of Object.entries(CREDIT_LINKS)) {
+    if (configured && configured === link.url) return credits;
   }
   return 0;
 }
@@ -93,7 +107,7 @@ export const handler = async (event) => {
       case 'checkout.session.completed': {
         const session = stripeEvent.data.object;
         const userId = session.client_reference_id || session.metadata?.userId;
-        const creditsToAdd = creditsFromPaymentLink(session.payment_link);
+        const creditsToAdd = await creditsFromPaymentLink(session.payment_link);
 
         if (creditsToAdd > 0 && userId) {
           const { error } = await supabase.rpc('increment_credits', {
