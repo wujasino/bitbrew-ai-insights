@@ -47,7 +47,18 @@ export const handler = async (event) => {
   }
 
   if (ALLOWED_PRICE_IDS.size > 0 && !ALLOWED_PRICE_IDS.has(priceId)) {
-    return { statusCode: 400, body: JSON.stringify({ error: 'Invalid priceId' }) };
+    // Price ids aren't secret — they're already embedded in the client
+    // bundle (Pricing.tsx reads them via import.meta.env) and visible in
+    // this very request. Echoing the rejected value + how many the
+    // function actually has configured is what makes a Netlify env-var
+    // scope mismatch (set for Builds but not Functions, or a stale value
+    // in one scope) diagnosable from the browser console alone.
+    return {
+      statusCode: 400,
+      body: JSON.stringify({
+        error: `Invalid priceId: '${priceId}' is not one of the ${ALLOWED_PRICE_IDS.size} price id(s) this function has configured.`,
+      }),
+    };
   }
 
   const allowedOrigins = ['https://presora.app', 'https://www.presora.app'];
