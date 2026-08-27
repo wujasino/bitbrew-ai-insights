@@ -89,8 +89,8 @@ const Pricing = () => {
           yearly: import.meta.env.VITE_STRIPE_SOLO_YEARLY_PRICE_ID,
         },
         growth: {
-          monthly: import.meta.env.VITE_STRIPE_GROWTH_PRICE_ID,
-          yearly: import.meta.env.VITE_STRIPE_GROWTH_YEARLY_PRICE_ID,
+          monthly: import.meta.env.VITE_STRIPE_BUSINESS_PRICE_ID,
+          yearly: import.meta.env.VITE_STRIPE_BUSINESS_YEARLY_PRICE_ID,
         },
       };
       const priceId = priceMap[planId]?.[billingCycle];
