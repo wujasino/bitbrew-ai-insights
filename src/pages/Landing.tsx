@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, useScroll, useTransform } from 'framer-motion';
-import { Zap, Eye, BarChart3, Shield, ChevronDown, HelpCircle, Mail, TrendingUp, ArrowRight, Globe, ShieldCheck, Clock, Search, PenLine, Sparkles, MessageSquare, Rocket, LineChart, Building2, Tag } from 'lucide-react';
+import { Zap, Eye, BarChart3, Shield, ChevronDown, HelpCircle, Mail, TrendingUp, ArrowRight, Globe, ShieldCheck, Clock, PenLine, Sparkles, MessageSquare, Rocket, LineChart, Building2, Tag } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { GuestScanWidget } from '@/components/GuestScanWidget';
+import { GUEST_LIMIT } from '@/hooks/useBrewing';
 import { ScanResultPreview } from '@/components/ScanResultPreview';
 import { CookiePanel } from '@/components/ui/cookie-banner-1';
 import { SalesChatWidget } from '@/components/ui/sales-chat-widget';
@@ -131,19 +132,26 @@ const Landing = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
             >
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs badge rounded-lg mb-7 font-data uppercase tracking-wider">
-                <Search className="w-3 h-3" /> For brands that want to be found
+              {/* One-off indigo accent on this eyebrow only — not the shared
+                  .badge class other tags on this page use, which is
+                  deliberately neutral (see CLAUDE.md's Brand palette note on
+                  not casually re-adding indigo to background/wash chrome).
+                  This is the "new category, pay attention" moment, same
+                  spirit as .ai-presence-accent below. */}
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs rounded-full mb-7 font-data uppercase tracking-wider border border-primary/30 bg-primary/10 text-primary">
+                <Sparkles className="w-3 h-3" /> New in SEO: Generative Engine Optimization (GEO)
               </span>
               <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-display text-zinc-900 dark:text-zinc-50 mb-5 leading-[1.05] tracking-tight">
-                AI recommends one brand.{' '}
-                <span className="ai-presence-accent" data-text="Find out if it's yours.">
-                  <span className="ai-presence-accent-text">Find out if it's yours.</span>
-                </span>
+                Check if{' '}
+                <span className="ai-presence-accent" data-text="ChatGPT recommends">
+                  <span className="ai-presence-accent-text">ChatGPT recommends</span>
+                </span>{' '}
+                your company.
               </h1>
               <p className="text-lg text-muted-foreground max-w-xl mx-auto mb-4">
-                Get your brand's AI visibility audit — what ChatGPT, Claude and Gemini
-                actually say about you, how you compare to rivals, and a clear plan to
-                become the answer they give.
+                More and more customers ask AI assistants for recommendations instead of
+                searching Google. Monitor and improve your brand's visibility across 6
+                leading AI models at once.
               </p>
               <p className="text-sm text-foreground/70 max-w-xl mx-auto mb-10">
                 The only AI visibility tool that shows you{' '}
@@ -164,6 +172,24 @@ const Landing = () => {
                   until an email unlocks them. Real result, gated display —
                   not a fabricated teaser number. */}
               <GuestScanWidget />
+              <p className="mt-3 text-xs text-center text-muted-foreground">
+                Result in ~15 seconds &middot; {GUEST_LIMIT} free scans to start &middot; No credit card required
+              </p>
+              {/* Reuses the same AI_MODELS array as the full "AI models we
+                  query" section further down — one source of the model
+                  list, shown in two places, so this can't silently drift
+                  out of sync with what runScan.js actually queries (see
+                  CLAUDE.md's note on model tiering needing to agree
+                  everywhere it's stated). */}
+              <div className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-[11px] text-muted-foreground/70">
+                <span className="uppercase tracking-widest">Live analysis across</span>
+                {AI_MODELS.map((m) => (
+                  <span key={m.name} className="inline-flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: m.color }} />
+                    {m.name.split(' ')[0]}
+                  </span>
+                ))}
+              </div>
             </motion.div>
 
             <motion.div

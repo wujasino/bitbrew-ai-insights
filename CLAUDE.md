@@ -17,10 +17,18 @@ Decorative/repeating chrome (`.hero`, `.badge`, `.cta-box` gradients in
 down from indigo/violet to neutral graphite — indigo stayed reserved for
 actionable elements: `--primary` (buttons, links, focus rings, the 1/2/3
 step-number circles on Landing) and `.ai-presence-accent` (the chromatic
-hero accent, the one signature moment — now on "Find out if it's yours."
-after the hero headline was rewritten to lead with the stake). Don't
-casually re-add indigo tints to background/wash classes; that's undoing an
-intentional "vivid identity in some places, neutral everywhere else" split.
+hero accent, the one signature moment — on "ChatGPT recommends" since the
+headline was rewritten again to lead with the product name, having
+previously been on "Find out if it's yours."). Don't casually re-add
+indigo tints to background/wash classes; that's undoing an intentional
+"vivid identity in some places, neutral everywhere else" split.
+
+One deliberate second exception, added alongside that headline rewrite:
+the hero's eyebrow tag ("New in SEO: Generative Engine Optimization
+(GEO)") uses a one-off indigo border/tint (inline Tailwind classes, not
+the shared `.badge` class every other tag on the page still uses) — it's
+the "new category, pay attention" moment introducing GEO before the rest
+of the page assumes the reader already knows the term.
 
 ## Logo mark
 
@@ -73,6 +81,23 @@ the page force-applied `.dark` regardless of the resolved theme.
 `useForceDarkTheme()` was removed when the toggle was added; don't
 re-add hardcoded dark-only colors on Landing without a light pairing.
 
+The hero input was replaced with `GuestScanWidget` (`src/components/
+GuestScanWidget.tsx`) — it used to navigate away to `/brand-visibility`
+and show a guest the full result immediately (up to the per-IP guest
+limit); it now runs the same real scan inline on the Landing page itself,
+blurs 4 of 5 dimensions plus the aggregate score, and gates the full
+result behind an email (reusing `newsletter.js`/`newsletter_subscribers`,
+no new backend). `/brand-visibility`'s own guest flow is untouched and
+still shows a full result directly — About/Agencies/Onboarding/the app's
+own nav all still link there, so the two entry points currently behave
+differently on purpose pending a decision on whether to unify them.
+
+The live-analysis strip right under the widget (small colored dots +
+model names) reuses the same `AI_MODELS` array as the "AI models we
+query" section further down the page — deliberately not a second,
+separately-typed list, so it can't drift out of sync the way the
+four-places-must-agree plan values did (see below).
+
 ## Landing-page copy rules
 
 Two claims were deliberately left out of the marketing copy and must not be
@@ -87,6 +112,13 @@ reintroduced casually:
   to list Slack, HubSpot, Zapier, Google Analytics, Semrush and Notion.
   Nothing in `netlify/functions` talks to any of them. It now lists the six
   models `runScan.js` actually queries.
+- **No unsourced market stats.** A hero-subtitle rewrite asked for "even 40%
+  of customers already search in AI instead of Google" — dropped for the
+  same reason as the usage-number rule above: it's not a number this
+  codebase has any source for, and inventing one is the exact kind of claim
+  the rest of this section exists to keep out. The subtitle states the
+  trend qualitatively ("more and more customers...") instead. Re-add a real
+  figure only with an actual citation, not because it makes the copy punchier.
 
 Model tiering is stated in four places and they must agree: `src/lib/plans.ts`
 (authoritative), `AI_MODELS` in `Landing.tsx`, `src/lib/faq.ts`, and the

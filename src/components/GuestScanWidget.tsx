@@ -85,8 +85,9 @@ export const GuestScanWidget = ({ className }: { className?: string }) => {
     return (
       <div className={className}>
         <BrandScanInput
-          placeholder="yourbrand.com"
+          placeholder="Your company or a competitor (e.g. Apple)"
           suggestions={['Tesla', 'Apple', 'Nike']}
+          submitLabel="Generate my free AI audit"
           onSubmit={handleScan}
         />
         {guestLimitReached && (
@@ -108,10 +109,18 @@ export const GuestScanWidget = ({ className }: { className?: string }) => {
   }
 
   if (status === 'brewing' || status === 'loading') {
+    // Real progress from useBrewing's simulated ramp, just relabeled at each
+    // threshold so the wait reads as concrete steps instead of one static
+    // sentence — not a separate fake timer, still driven by the same
+    // progress value the actual fetch resolves against.
+    const stepLabel =
+      progress < 40 ? 'Connecting to GPT-4o, Claude, Perplexity…'
+      : progress < 80 ? 'Analyzing sentiment and mention count…'
+      : 'Finalizing your audit…';
     return (
       <div className={cn('rounded-2xl border border-[hsl(var(--glass-border))] bg-card/70 backdrop-blur-xl p-6 text-center', className)}>
         <Loader2 className="w-6 h-6 mx-auto text-primary animate-spin mb-3" />
-        <p className="text-sm text-foreground font-medium">Scanning what AI knows about your brand…</p>
+        <p className="text-sm text-foreground font-medium">{stepLabel}</p>
         <div className="mt-3 h-1.5 max-w-xs mx-auto rounded-full bg-muted overflow-hidden">
           <motion.div
             className="h-full rounded-full bg-primary"
@@ -192,9 +201,9 @@ export const GuestScanWidget = ({ className }: { className?: string }) => {
                 exit={{ opacity: 0, height: 0 }}
                 className="mt-5 pt-5 border-t border-[hsl(var(--glass-border))]"
               >
-                <p className="text-sm font-semibold text-foreground mb-1">Your {result.brandName} result is ready.</p>
+                <p className="text-sm font-semibold text-foreground mb-1">Your {result.brandName} audit is ready!</p>
                 <p className="text-xs text-muted-foreground mb-3">
-                  Enter your email to unlock the full 5-dimension audit — we'll also send you occasional AI-visibility updates (unsubscribe anytime).
+                  Enter your email to unlock the complete 5-dimension audit instantly — we'll also send you occasional AI-visibility updates (unsubscribe anytime).
                 </p>
                 <form onSubmit={handleUnlock} className="flex flex-col sm:flex-row gap-2">
                   <div className="relative flex-1">
