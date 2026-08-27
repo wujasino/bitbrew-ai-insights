@@ -114,10 +114,18 @@ export const handler = async (event) => {
     };
   } catch (error) {
     console.error('Stripe checkout error:', error.message);
+    // Stripe's own SDK error messages are written to be shown to an end
+    // user (e.g. "No such price: 'price_xxx'", "No such customer: 'cus_xxx'")
+    // and don't leak secrets — surfacing the real one here instead of a
+    // single generic string is the same fix already applied to the scan
+    // pipeline's provider errors (analyze.js/runScan.js), for the same
+    // reason: a collapsed error message makes a real, specific failure
+    // (wrong price id, stale/deleted customer, expired key) indistinguishable
+    // from every other one, both for the user and for anyone debugging it.
     return {
       statusCode: 500,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ error: 'Checkout creation failed. Please try again.' }),
+      body: JSON.stringify({ error: error.message || 'Checkout creation failed. Please try again.' }),
     };
   }
 };
