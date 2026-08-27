@@ -13,6 +13,18 @@ export const FAQ_EN: FaqItem[] = [
     a: 'We ask the AI assistants your customers use — ChatGPT, Claude, Gemini and others — about your brand, then show you exactly what they said. You get one score out of 100, each assistant\'s answer, and a short list of things to fix, most important first.',
   },
   {
+    q: 'What is Generative Engine Optimization (GEO)?',
+    a: 'GEO is the AI-era equivalent of SEO: instead of optimizing to rank on a search results page, you\'re optimizing to be the brand an AI assistant actually recommends when someone asks about your category. ChatGPT, Claude and Gemini answer from their own knowledge, not from a list of links — so being "findable" now also means being the answer, not just a result.',
+  },
+  {
+    q: 'My SEO is already strong — why should I care about Perplexity or Claude?',
+    a: 'A good Google ranking doesn\'t automatically carry over. AI assistants answer from their training data (and, for some, live web browsing), not from your search position — so a brand that\'s invisible to an AI model can rank #1 on Google, and the reverse happens too. More people are asking AI assistants directly instead of searching, so this is a separate, growing channel worth checking on its own.',
+  },
+  {
+    q: 'How often is AI models\' knowledge updated?',
+    a: 'It depends on the provider and isn\'t something Presora controls — each AI company retrains its own model on its own schedule, and some also browse the live web for current information. That\'s exactly why we recommend re-scanning periodically: your score reflects what each assistant knows right now, and that can shift whenever a model updates.',
+  },
+  {
     q: 'Which AI assistants do you check?',
     a: 'The free plan checks ChatGPT. Starter and Solo add Claude and Gemini. Business checks all six, including Perplexity. Larger companies can ask us to add their own.',
   },
