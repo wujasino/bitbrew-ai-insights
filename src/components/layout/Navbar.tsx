@@ -225,14 +225,6 @@ export const Navbar = ({ showThemeToggle = false, landingCta = false }: NavbarPr
                     <ul className="w-40 p-2 space-y-1">
                       <li>
                         <a
-                          href="/#pricing"
-                          className="block px-3 py-1.5 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-                        >
-                          Pricing
-                        </a>
-                      </li>
-                      <li>
-                        <a
                           href="/#faq"
                           className="block px-3 py-1.5 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
                         >
