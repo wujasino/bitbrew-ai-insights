@@ -182,7 +182,10 @@ const Register = () => {
   const [searchParams] = useSearchParams();
   const referralCode = searchParams.get('ref');
 
-  const [email, setEmail]       = useState('');
+  // Prefilled by the Landing hero's guest-scan email gate (GuestScanWidget)
+  // so someone who already typed their email to unlock a scan result isn't
+  // asked to type it again a moment later.
+  const [email, setEmail]       = useState(searchParams.get('email') || '');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm]   = useState('');
   const [showPwd, setShowPwd]   = useState(false);

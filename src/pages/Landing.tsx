@@ -5,7 +5,7 @@ import { Zap, Eye, BarChart3, Shield, ChevronDown, HelpCircle, Mail, TrendingUp,
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
-import { BrandScanInput } from '@/components/BrandScanInput';
+import { GuestScanWidget } from '@/components/GuestScanWidget';
 import { ScanResultPreview } from '@/components/ScanResultPreview';
 import { CookiePanel } from '@/components/ui/cookie-banner-1';
 import { SalesChatWidget } from '@/components/ui/sales-chat-widget';
@@ -158,11 +158,12 @@ const Landing = () => {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="max-w-xl mx-auto"
             >
-              <BrandScanInput
-                placeholder="yourbrand.com"
-                suggestions={['Tesla', 'Apple', 'Nike']}
-                onSubmit={(brand) => navigate(`/brand-visibility?brand=${encodeURIComponent(brand)}`)}
-              />
+              {/* Runs a real scan inline instead of navigating to
+                  /brand-visibility — full data is fetched immediately, but
+                  4 of 5 dimensions (and the aggregate score) stay blurred
+                  until an email unlocks them. Real result, gated display —
+                  not a fabricated teaser number. */}
+              <GuestScanWidget />
             </motion.div>
 
             <motion.div
