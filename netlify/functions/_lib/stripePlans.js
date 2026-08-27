@@ -9,8 +9,14 @@ export const PLAN_BY_PRICE_ID = {
   ...(process.env.VITE_STRIPE_STARTER_YEARLY_PRICE_ID ? { [process.env.VITE_STRIPE_STARTER_YEARLY_PRICE_ID]: 'starter' } : {}),
   ...(process.env.VITE_STRIPE_SOLO_PRICE_ID           ? { [process.env.VITE_STRIPE_SOLO_PRICE_ID]:           'solo'    } : {}),
   ...(process.env.VITE_STRIPE_SOLO_YEARLY_PRICE_ID    ? { [process.env.VITE_STRIPE_SOLO_YEARLY_PRICE_ID]:    'solo'    } : {}),
-  ...(process.env.VITE_STRIPE_GROWTH_PRICE_ID         ? { [process.env.VITE_STRIPE_GROWTH_PRICE_ID]:         'growth'  } : {}),
-  ...(process.env.VITE_STRIPE_GROWTH_YEARLY_PRICE_ID  ? { [process.env.VITE_STRIPE_GROWTH_YEARLY_PRICE_ID]:  'growth'  } : {}),
+  // Env var is named BUSINESS (the plan's actual display name — see
+  // src/lib/plans.ts, id 'growth' / name 'Business') to match what's set in
+  // Netlify and GitHub Actions secrets; the internal plan id stays 'growth'
+  // since that's also load-bearing in enforce_analysis_limit()'s CASE and
+  // VALID_PLANS (admin-update-user.js) — renaming the id itself would touch
+  // a live DB trigger for no reason.
+  ...(process.env.VITE_STRIPE_BUSINESS_PRICE_ID         ? { [process.env.VITE_STRIPE_BUSINESS_PRICE_ID]:         'growth'  } : {}),
+  ...(process.env.VITE_STRIPE_BUSINESS_YEARLY_PRICE_ID  ? { [process.env.VITE_STRIPE_BUSINESS_YEARLY_PRICE_ID]:  'growth'  } : {}),
 };
 
 export const planForPriceId = (priceId) => PLAN_BY_PRICE_ID[priceId] || null;
