@@ -1,6 +1,14 @@
 [build]
   command = "npm install --legacy-peer-deps && npm run build"
   publish = "dist"
+  # Netlify's own build credits ran out — `ignore` makes Netlify skip every
+  # build it would otherwise trigger itself (deploy previews on PRs, branch
+  # deploys), regardless of what changed. Production still deploys via
+  # .github/workflows/deploy.yml, which builds on GitHub Actions and uploads
+  # with `netlify deploy --no-build` (see that workflow's own comment) — this
+  # `ignore` only stops Netlify's *own* git-triggered builds, not that path.
+  # Remove this line once Netlify's build quota/credits are available again.
+  ignore = "exit 0"
 
 [build.environment]
   NPM_FLAGS = "--legacy-peer-deps"
