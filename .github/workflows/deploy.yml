@@ -11,8 +11,11 @@ name: Deploy to Netlify
 # netlify.toml redirects/headers) without asking Netlify to run a build of
 # its own, which is what actually consumes build minutes/count.
 on:
-  push:
-    branches: [main]
+  # push trigger disabled — Netlify credits ran out. Re-add
+  #   push:
+  #     branches: [main]
+  # once credits/quota are available again; until then, deploys only happen
+  # via manual workflow_dispatch (Actions tab -> "Run workflow").
   workflow_dispatch: {}
 
 concurrency:
