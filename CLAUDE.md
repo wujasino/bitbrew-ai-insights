@@ -98,6 +98,43 @@ query" section further down the page — deliberately not a second,
 separately-typed list, so it can't drift out of sync the way the
 four-places-must-agree plan values did (see below).
 
+## Hidden GEO keyword block — removed, don't re-add
+
+`index.html` used to end with an off-screen div (`position:absolute;
+width:1px;height:1px;clip:rect(0,0,0,0)`) marked `aria-hidden="true"`,
+holding its own `<h1>` plus paragraphs listing the models, the five
+dimensions, every pricing tier and a keyword list. It was labelled "GEO
+content: visible to AI crawlers, hidden visually".
+
+Removed, and it should stay removed:
+
+- It's precisely what Google's spam policies list under **"Hidden text
+  and links"** — text positioned off-screen so crawlers read it and
+  people don't. `aria-hidden="true"` meant screen readers couldn't reach
+  it either, so it wasn't serving accessibility; it existed only for
+  bots. That's a demotion/manual-action risk, not a ranking boost.
+- Its `<h1>` was a **second h1 on every page**, competing with the real
+  one each React page renders (`Landing.tsx`, `About.tsx`, `Pricing.tsx`
+  each have their own).
+
+Nothing was lost: the same facts (description, the six models, the five
+dimensions, the ~15s timing, all pricing tiers, the contact address,
+GEO/AIO context) are already stated legitimately in the JSON-LD
+`Organization` / `SoftwareApplication` / `FAQPage` blocks in the same
+file — the format Google actually asks for. Put new crawler-facing facts
+there, not in hidden markup.
+
+## Per-page `lang` attribute
+
+`seo-config.json` entries take an optional `lang` (BCP-47). The three
+Polish legal pages (`/regulamin`, `/polityka-prywatnosci`,
+`/regulamin-newslettera`) set `"lang": "pl"`; everything else inherits
+`index.html`'s `en`. Applied in both places that matter:
+`scripts/prerender-seo.mjs` rewrites `<html lang>` at build time (for
+non-JS crawlers), and `useSeo.ts` sets `document.documentElement.lang`
+on SPA navigation — falling back to `'en'` explicitly, so leaving a
+Polish page doesn't strand `lang="pl"` on the next English one.
+
 ## Landing-page copy rules
 
 Two claims were deliberately left out of the marketing copy and must not be

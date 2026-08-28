@@ -7,6 +7,10 @@ interface SeoConfig {
   description: string;
   /** Set true for pages that must not be indexed (auth-gated app views, transactional flows). */
   noindex?: boolean;
+  /** BCP-47 code when the page's content isn't in index.html's default `en`
+   *  (the Polish legal pages). Also applied at build time by
+   *  scripts/prerender-seo.mjs for the non-JS-crawler case. */
+  lang?: string;
 }
 
 // Single source of truth, also read at build time by scripts/prerender-seo.mjs
@@ -28,6 +32,9 @@ export const applySeo = (pathname: string) => {
   const url = `${SITE_URL}${pathname === '/' ? '' : pathname}`;
 
   document.title = config.title;
+  // Falls back to 'en' rather than being left alone, so navigating from a
+  // Polish legal page to an English one doesn't leave lang="pl" behind.
+  document.documentElement.lang = config.lang ?? 'en';
   setMeta('meta[name="description"]', 'content', config.description);
   setMeta('meta[property="og:title"]', 'content', config.title);
   setMeta('meta[property="og:description"]', 'content', config.description);
