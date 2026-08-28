@@ -29,15 +29,18 @@
   },
   "/polityka-prywatnosci": {
     "title": "Polityka Prywatności | Presora",
-    "description": "Polityka prywatności Presora — dowiedz się, jakie dane zbieramy, jak je przetwarzamy i jakie masz prawa jako użytkownik."
+    "description": "Polityka prywatności Presora — dowiedz się, jakie dane zbieramy, jak je przetwarzamy i jakie masz prawa jako użytkownik.",
+    "lang": "pl"
   },
   "/regulamin": {
     "title": "Regulamin | Presora",
-    "description": "Regulamin świadczenia usług Presora — zasady korzystania z platformy do monitorowania widoczności marki w AI."
+    "description": "Regulamin świadczenia usług Presora — zasady korzystania z platformy do monitorowania widoczności marki w AI.",
+    "lang": "pl"
   },
   "/regulamin-newslettera": {
     "title": "Regulamin Newslettera | Presora",
-    "description": "Regulamin newslettera Presora — zasady zapisu, wysyłki i rezygnacji z subskrypcji."
+    "description": "Regulamin newslettera Presora — zasady zapisu, wysyłki i rezygnacji z subskrypcji.",
+    "lang": "pl"
   },
   "/login": {
     "title": "Sign In | Presora",

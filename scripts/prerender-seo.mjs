@@ -60,6 +60,14 @@ for (const [route, config] of Object.entries(seoConfig)) {
   html = setTagAttr(html, 'meta[name="twitter:title"]', 'content', config.title);
   html = setTagAttr(html, 'meta[name="twitter:description"]', 'content', config.description);
   html = setTagAttr(html, 'link[rel="canonical"]', 'href', url);
+  // Three pages (regulamin, polityka-prywatnosci, regulamin-newslettera) are
+  // written in Polish but were served inside index.html's `<html lang="en">`.
+  // Google reads that attribute for language targeting, so a Polish page
+  // declaring itself English is a real mismatch — useSeo.ts applies the same
+  // value client-side for the SPA navigation case.
+  if (config.lang) {
+    html = html.replace(/(<html\b[^>]*\blang=")[^"]*(")/i, `$1${config.lang}$2`);
+  }
 
   const outDir = path.join(DIST, route.replace(/^\//, ''));
   await mkdir(outDir, { recursive: true });
