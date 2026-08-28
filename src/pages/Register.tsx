@@ -85,6 +85,7 @@ const rules = [
 
 const SuccessScreen = ({ email }: { email: string }) => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [code, setCode] = useState('');
   const [verifying, setVerifying] = useState(false);
   const [error, setError] = useState('');
@@ -101,7 +102,11 @@ const SuccessScreen = ({ email }: { email: string }) => {
       // Confirms the account AND signs the user in (session is set)
       const { error: vErr } = await supabase.auth.verifyOtp({ email, token, type: 'signup' });
       if (vErr) throw vErr;
-      navigate('/onboarding', { replace: true });
+      // Carries the brand name through from GuestScanWidget's "Create free
+      // account" CTA (?brand=...) so Onboarding's own brand-name step
+      // doesn't ask the visitor to retype what they already typed once.
+      const brand = searchParams.get('brand');
+      navigate(brand ? `/onboarding?brand=${encodeURIComponent(brand)}` : '/onboarding', { replace: true });
     } catch (err: any) {
       setError(err.message?.includes('expired') || err.message?.includes('invalid')
         ? 'Invalid or expired code. Please resend.'

@@ -1,6 +1,5 @@
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, Lock, ShieldCheck, Smile, Target, AtSign, Clock, Mail, ArrowRight, Sparkles } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Loader2, Lock, ShieldCheck, Smile, Target, AtSign, Clock, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { BrandScanInput } from '@/components/BrandScanInput';
 import { useBrewing } from '@/hooks/useBrewing';
@@ -20,19 +19,18 @@ const DIMENSIONS = [
 
 // Which single dimension stays visible in the teaser (matches the
 // requested "1 of 5 indicators" — the other four plus the aggregate trust
-// score are blurred until an email unlocks them). Authority is a stable,
-// generally-flattering-looking metric to lead with.
+// score stay blurred; unlocking the rest means creating an account, not
+// giving an email). Authority is a stable, generally-flattering-looking
+// metric to lead with.
 const TEASER_VISIBLE_KEY = 'authority';
-
-const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,253}\.[a-zA-Z]{2,}$/;
 
 /**
  * Inline "instant free scan" widget for the Landing hero — runs a real scan
- * without navigating away, then gates the full 5-dimension result behind an
- * email (a lead-magnet pattern: real data is fetched immediately, only the
- * *display* of most of it is gated, which is the standard trade-off this
- * pattern makes everywhere it's used — see the component-level comment in
- * Landing.tsx for why full server-side redaction wasn't built instead).
+ * without navigating away, then teases the full 5-dimension result and
+ * routes straight to account creation (not an email-gate form) to unlock
+ * it. Real result, gated display — not a fabricated teaser number; the
+ * brand name is carried through to /register so Onboarding doesn't ask the
+ * visitor to retype it.
  *
  * This intentionally does NOT touch /brand-visibility's own guest flow
  * (Dashboard.tsx), which still shows a full result up to the per-IP guest
@@ -43,43 +41,6 @@ const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,253}\.[a-zA-Z]{2,}$/;
 export const GuestScanWidget = ({ className }: { className?: string }) => {
   const navigate = useNavigate();
   const { status, progress, result, error, guestLimitReached, scansDisabled, providerUnavailable, startBrewing, reset } = useBrewing();
-  const [email, setEmail] = useState('');
-  const [emailUnlocked, setEmailUnlocked] = useState(false);
-  const [emailSubmitting, setEmailSubmitting] = useState(false);
-  const [emailError, setEmailError] = useState<string | null>(null);
-
-  const handleScan = (brand: string) => {
-    setEmailUnlocked(false);
-    setEmailError(null);
-    startBrewing(brand);
-  };
-
-  const handleUnlock = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmed = email.trim();
-    if (!EMAIL_RE.test(trimmed)) {
-      setEmailError('Enter a valid email address.');
-      return;
-    }
-    setEmailSubmitting(true);
-    setEmailError(null);
-    try {
-      const res = await fetch('/.netlify/functions/newsletter', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: trimmed }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data?.error || 'Could not save your email. Please try again.');
-      }
-      setEmailUnlocked(true);
-    } catch (err) {
-      setEmailError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
-    } finally {
-      setEmailSubmitting(false);
-    }
-  };
 
   if (status === 'idle' || status === 'error') {
     return (
@@ -88,7 +49,7 @@ export const GuestScanWidget = ({ className }: { className?: string }) => {
           placeholder="Your company or a competitor (e.g. Apple)"
           suggestions={['Tesla', 'Apple', 'Nike']}
           submitLabel="Generate my free AI audit"
-          onSubmit={handleScan}
+          onSubmit={startBrewing}
         />
         {guestLimitReached && (
           <p className="mt-3 text-sm text-center text-muted-foreground">
@@ -134,10 +95,6 @@ export const GuestScanWidget = ({ className }: { className?: string }) => {
   }
 
   if (status === 'completed' && result) {
-    const visibleDim = DIMENSIONS.find((d) => d.key === TEASER_VISIBLE_KEY)!;
-    const visibleValue = result.dimensions[visibleDim.key];
-    const visibleBand = bandOf(visibleValue);
-
     return (
       <motion.div
         initial={{ opacity: 0, y: 12 }}
@@ -148,19 +105,14 @@ export const GuestScanWidget = ({ className }: { className?: string }) => {
           <span className="text-sm text-muted-foreground truncate">
             <span className="text-foreground font-medium">{result.brandName}</span> / AI visibility scan
           </span>
-          {emailUnlocked && (
-            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] uppercase tracking-wider font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-              Unlocked
-            </span>
-          )}
         </div>
 
         <div className="p-5 sm:p-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
-            {/* Trust score — blurred until unlocked */}
+            {/* Trust score — blurred; unlocked by creating an account, not by an email form */}
             <div className="flex flex-col items-center sm:items-start justify-center sm:col-span-2 sm:flex-row sm:items-baseline sm:gap-6 pb-3 border-b border-[hsl(var(--glass-border))]">
               <div className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground shrink-0">AI Trust Score</div>
-              <div className={cn('flex items-baseline gap-1 font-display transition-[filter]', !emailUnlocked && 'blur-md select-none')}>
+              <div className="flex items-baseline gap-1 font-display blur-md select-none">
                 <span className="text-4xl font-light text-primary tabular-nums">{result.trustScore}</span>
                 <span className="text-lg text-primary/60">%</span>
               </div>
@@ -168,7 +120,7 @@ export const GuestScanWidget = ({ className }: { className?: string }) => {
 
             {DIMENSIONS.map(({ key, label, Icon }) => {
               const value = result.dimensions[key];
-              const isVisible = emailUnlocked || key === TEASER_VISIBLE_KEY;
+              const isVisible = key === TEASER_VISIBLE_KEY;
               const band = bandOf(value);
               return (
                 <div key={key} className="flex items-center gap-3">
@@ -192,61 +144,17 @@ export const GuestScanWidget = ({ className }: { className?: string }) => {
             })}
           </div>
 
-          <AnimatePresence mode="wait">
-            {!emailUnlocked ? (
-              <motion.div
-                key="gate"
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="mt-5 pt-5 border-t border-[hsl(var(--glass-border))]"
-              >
-                <p className="text-sm font-semibold text-foreground mb-1">Your {result.brandName} audit is ready!</p>
-                <p className="text-xs text-muted-foreground mb-3">
-                  Enter your email to unlock the complete 5-dimension audit instantly — we'll also send you occasional AI-visibility updates (unsubscribe anytime).
-                </p>
-                <form onSubmit={handleUnlock} className="flex flex-col sm:flex-row gap-2">
-                  <div className="relative flex-1">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <input
-                      type="email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="you@company.com"
-                      className="w-full bg-background border border-[hsl(var(--glass-border))] rounded-xl py-2.5 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50"
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={emailSubmitting}
-                    className="inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-xl text-sm font-semibold shadow-md shadow-primary/30 hover:shadow-lg hover:shadow-primary/40 transition-all disabled:opacity-60 whitespace-nowrap"
-                  >
-                    {emailSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                    Unlock full audit
-                  </button>
-                </form>
-                {emailError && <p className="mt-2 text-xs text-destructive">{emailError}</p>}
-              </motion.div>
-            ) : (
-              <motion.div
-                key="cta"
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                className="mt-5 pt-5 border-t border-[hsl(var(--glass-border))] flex flex-col sm:flex-row items-center justify-between gap-3"
-              >
-                <p className="text-xs text-muted-foreground">
-                  Create a free account to save this report and track {result.brandName}'s AI visibility over time.
-                </p>
-                <button
-                  onClick={() => navigate(`/register?email=${encodeURIComponent(email)}`)}
-                  className="inline-flex items-center gap-1.5 bg-primary text-primary-foreground px-4 py-2 rounded-xl text-sm font-semibold shadow-md shadow-primary/30 hover:shadow-lg transition-all whitespace-nowrap shrink-0"
-                >
-                  Save my report <ArrowRight className="w-3.5 h-3.5" />
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <div className="mt-5 pt-5 border-t border-[hsl(var(--glass-border))] flex flex-col sm:flex-row items-center justify-between gap-3">
+            <p className="text-xs text-muted-foreground">
+              Your {result.brandName} audit is ready! Create a free account to unlock the complete 5-dimension audit and save this report.
+            </p>
+            <button
+              onClick={() => navigate(`/register?brand=${encodeURIComponent(result.brandName)}`)}
+              className="inline-flex items-center gap-1.5 bg-primary text-primary-foreground px-4 py-2 rounded-xl text-sm font-semibold shadow-md shadow-primary/30 hover:shadow-lg transition-all whitespace-nowrap shrink-0"
+            >
+              Create free account <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
       </motion.div>
     );
