@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, BarChart3, Zap, Shield, Users, TrendingUp, CheckCircle2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -22,8 +22,12 @@ const STEPS = ['Welcome', 'Your brand', 'Your goal', 'Done'];
 
 export default function Onboarding() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [step, setStep] = useState(0);
-  const [brand, setBrand] = useState('');
+  // Prefilled by GuestScanWidget's "Create free account" CTA (via
+  // Register.tsx's own ?brand= passthrough) so a visitor who already typed
+  // their brand name on the Landing hero isn't asked to retype it here.
+  const [brand, setBrand] = useState(searchParams.get('brand') || '');
   const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [dir, setDir] = useState(1);
