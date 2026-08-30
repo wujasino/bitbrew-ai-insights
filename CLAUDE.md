@@ -500,6 +500,18 @@ it has to stand on its own without the reader ever seeing Presora.
   professional reader's first question is where the number comes from, and
   stating what the method *can't* do is what makes the rest credible.
 
+## Verifying a change — don't run the e2e suite unprompted
+
+**Owner's instruction: run the Playwright e2e suite only when explicitly
+asked.** It takes ~7 minutes, which is too slow to spend on every edit.
+
+Default verification instead: `npx tsc -p tsconfig.app.json --noEmit`,
+`npm run build`, and a targeted check of the thing actually changed
+(a Playwright screenshot against a dev server, or grepping the built
+`dist/` output). When a change touches what the suite really covers —
+login, register, settings, dashboard, the command palette — say so and let
+the owner decide whether it's worth a run.
+
 ## Typechecking gotcha
 
 `npx tsc --noEmit` **silently checks nothing** — the root `tsconfig.json`
