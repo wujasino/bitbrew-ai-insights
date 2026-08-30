@@ -1,7 +1,7 @@
 {
   "/": {
     "title": "Presora — AI Visibility Audit",
-    "description": "Presora checks whether ChatGPT, Claude and Gemini recommend your brand — or your competitors. Get your AI visibility score in 30 seconds. Built for agencies, brands and freelancers."
+    "description": "Presora checks whether ChatGPT, Claude and Gemini recommend your brand — or your competitors. Get your AI visibility score in about 15 seconds. Built for agencies, brands and freelancers."
   },
   "/about": {
     "title": "About Presora | AI Brand Visibility Scanner",
@@ -48,7 +48,7 @@
   },
   "/register": {
     "title": "Sign Up | Presora",
-    "description": "Create a free Presora account and get your first AI brand visibility score in 30 seconds."
+    "description": "Create a free Presora account and get your first AI brand visibility score in about 15 seconds."
   },
   "/dashboard": {
     "title": "Dashboard | Presora",

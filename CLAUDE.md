@@ -157,6 +157,19 @@ reintroduced casually:
   trend qualitatively ("more and more customers...") instead. Re-add a real
   figure only with an actual citation, not because it makes the copy punchier.
 
+**The audit takes ~15 seconds**, and that figure is repeated in a lot of
+copy: `seo-config.json` (`/` and `/register`), `index.html` (meta
+description, twitter:description, and two JSON-LD blocks), `src/lib/faq.ts`,
+`locales/en.ts` + `pl.ts` (`profile_empty_desc`), `Landing.tsx` (hero
+microcopy, trust bar, feature list), `Pricing.tsx`, `About.tsx`,
+`Agencies.tsx`, `Register.tsx`, `GuestScanWidget.tsx` and
+`ScrollAuditDemo.tsx`. It had drifted into three different claims (10s in
+the FAQ, 15s in the app, 30s in the meta descriptions) before being
+reconciled — if the real duration changes, grep for the number rather than
+fixing the one place you noticed. Note two unrelated "30 seconds" that are
+**not** the audit and shouldn't be swept up: account creation
+(`Register.tsx`) and generating an API key (`ApiDocs.tsx`).
+
 Model tiering is stated in four places and they must agree: `src/lib/plans.ts`
 (authoritative), `AI_MODELS` in `Landing.tsx`, `src/lib/faq.ts`, and the
 JSON-LD in `index.html`. Free = ChatGPT; Starter and Solo add Claude and
