@@ -6,6 +6,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { GuestScanWidget } from '@/components/GuestScanWidget';
+import { ScrollAuditDemo } from '@/components/ScrollAuditDemo';
 import { GUEST_LIMIT } from '@/hooks/useBrewing';
 import { ScanResultPreview } from '@/components/ScanResultPreview';
 import { CookiePanel } from '@/components/ui/cookie-banner-1';
@@ -242,21 +243,13 @@ const Landing = () => {
         <section className="pb-20 px-4">
           <div className="max-w-4xl mx-auto">
             <h2 className="text-center text-sm text-muted-foreground mb-5 sm:mb-6">How it works</h2>
-            <div className="grid grid-cols-3 gap-2 sm:gap-4">
-              {[
-                { title: 'Enter your brand', desc: 'Type a brand name or URL — any niche, any language.' },
-                { title: 'We ask the AI', desc: 'ChatGPT, Claude, Gemini and others all get asked about you at the same time.' },
-                { title: 'Get your score', desc: 'See your score out of 100, what each assistant said, and what to fix first.' },
-              ].map((step, idx) => (
-                <div key={idx} className="flex flex-col items-center text-center p-2 sm:p-4">
-                  <div className="w-9 h-9 sm:w-14 sm:h-14 rounded-full bg-primary text-primary-foreground flex items-center justify-center mb-2 sm:mb-3 text-sm sm:text-2xl font-display shadow-lg shadow-primary/20">
-                    {idx + 1}
-                  </div>
-                  <div className="text-xs sm:text-base font-medium text-foreground">{step.title}</div>
-                  <div className="hidden sm:block text-xs text-muted-foreground mt-1">{step.desc}</div>
-                </div>
-              ))}
-            </div>
+            {/* Scroll-scrubbed: the three steps light up and the scan bar
+                fills from the reader's own scroll position, so the ~15s
+                audit is shown running rather than just described, and the
+                three explanations arrive one at a time instead of as one
+                block. Falls back to a fully-revealed static state under
+                prefers-reduced-motion. */}
+            <ScrollAuditDemo />
 
             {/* ── Trust bar — real product facts, not invented usage stats ── */}
             <div className="mt-10 sm:mt-14 flex flex-col sm:flex-row items-center justify-center gap-x-8 gap-y-4">
