@@ -157,6 +157,19 @@ reintroduced casually:
   trend qualitatively ("more and more customers...") instead. Re-add a real
   figure only with an actual citation, not because it makes the copy punchier.
 
+**The audit takes ~15 seconds**, and that figure is repeated in a lot of
+copy: `seo-config.json` (`/` and `/register`), `index.html` (meta
+description, twitter:description, and two JSON-LD blocks), `src/lib/faq.ts`,
+`locales/en.ts` + `pl.ts` (`profile_empty_desc`), `Landing.tsx` (hero
+microcopy, trust bar, feature list), `Pricing.tsx`, `About.tsx`,
+`Agencies.tsx`, `Register.tsx`, `GuestScanWidget.tsx` and
+`ScrollAuditDemo.tsx`. It had drifted into three different claims (10s in
+the FAQ, 15s in the app, 30s in the meta descriptions) before being
+reconciled — if the real duration changes, grep for the number rather than
+fixing the one place you noticed. Note two unrelated "30 seconds" that are
+**not** the audit and shouldn't be swept up: account creation
+(`Register.tsx`) and generating an API key (`ApiDocs.tsx`).
+
 Model tiering is stated in four places and they must agree: `src/lib/plans.ts`
 (authoritative), `AI_MODELS` in `Landing.tsx`, `src/lib/faq.ts`, and the
 JSON-LD in `index.html`. Free = ChatGPT; Starter and Solo add Claude and
@@ -233,20 +246,17 @@ touch it.
   the flag off, zero OpenRouter calls and the guest counter untouched.
 - **`openrouter_enabled`** (checkbox in `/admin/settings`, independent of the
   main switch) — skips OpenRouter entirely and goes straight to the direct
-  Anthropic fallback in `runScan.js`. Added while OpenRouter's balance was
-  empty: without it, every scan still paid OpenRouter's ~20s timeout across
-  6 models before falling through anyway, and recorded six 402s per scan in
-  `provider_failures.lastError`, burying the signal. Flip back on the moment
-  OpenRouter is topped up — no redeploy, it's a stored flag like the others.
-  **Only helps if `ANTHROPIC_API_KEY` is actually valid on this deploy** —
-  it does not create a working provider, it just stops wasting time on a
-  known-broken one.
+  provider fallbacks in `runScan.js`. Use it when OpenRouter is known-broken
+  (e.g. empty balance): otherwise every scan still pays its ~20s timeout
+  across 6 models before falling through anyway, and buries the real signal
+  under six 402s per scan in `provider_failures.lastError`. It does **not**
+  create a working provider — it only helps if `ANTHROPIC_API_KEY` or
+  `GEMINI_API_KEY` is actually valid on the deploy.
 - **Auto-pause is OFF by default** (`auto_disable_enabled`, checkbox in
-  `/admin/settings`). Changed on the owner's explicit instruction: with an
-  outage that lasts — an unpaid balance rather than a blip — auto-pausing
-  turned every scan into "temporarily paused" and only an admin could undo
-  it. Failures are still counted and recorded; the flag only controls whether
-  the switch flips by itself. Turning it back on is one checkbox.
+  `/admin/settings`), on the owner's explicit instruction: for an outage that
+  lasts rather than a blip, auto-pausing turned every scan into "temporarily
+  paused" and only an admin could undo it. Failures are still counted and
+  recorded; the flag only controls whether the switch flips by itself.
 - **Watchdog**: `recordScanOutcome()` counts consecutive all-models-failed
   scans in `provider_failures` and flips `scanning_enabled` off at
   `AUTO_DISABLE_THRESHOLD` (3), recording why in `scanning_disabled_reason`
@@ -257,40 +267,30 @@ touch it.
 - `getScanSettings()` reads all three keys in one query and hands the count
   to `recordScanOutcome()`, so the happy path adds no extra round-trip.
 
-## `enforce_analysis_limit()` vs `protect_plan_changes()` — a self-inflicted outage
+## `SECURITY DEFINER` does not change what `auth.role()` returns
 
-Migration `20240134` (closing the credit/usage self-grant hole, see below)
-blocked `analyses_this_month`/`analyses_reset_at` changes on `profiles`
-unless `auth.role() = 'service_role'`. It broke the app's own internal
-counter bump: `enforce_analysis_limit()` (trigger on `analyses`, runs on
-every scan save) increments that exact counter, and despite being
-`SECURITY DEFINER`, `auth.role()` still read `'authenticated'` — `SECURITY
-DEFINER` changes which Postgres role executes the function body, not what
-`auth.role()` reports, which reads the request's JWT claim regardless.
+The gotcha behind a past outage, worth keeping because it's easy to
+reintroduce: `SECURITY DEFINER` changes which Postgres role executes a
+function body, **not** what `auth.role()` reports — that reads the
+request's JWT claim regardless. So a trigger guarding on
+`auth.role() = 'service_role'` will also block the app's own internal
+writes, even from a `SECURITY DEFINER` function.
 
-Net effect for ~30 minutes: **every scan appeared to work** (`analyze.js`
-returned a real, non-fallback result) **but the client-side insert into
-`analyses` always failed with a generic 400**, so nothing was ever saved —
-no new rows in Reports, no id to open a report by, `/audit/:id` unreachable.
-This was the actual cause behind "audit nie działa": there was nothing new
-to audit, not a problem in the audit page itself.
+Live mechanism: `protect_plan_changes()` guards `plan`/`credits`/
+`is_admin`/`custom_plan_price_*`/`analyses_this_month`/
+`analyses_reset_at` on `profiles`. `enforce_analysis_limit()` needs to
+bump the two usage counters itself, so it sets a transaction-local GUC
+(`presora.internal_usage_write`, migration `20240136`) that
+`protect_plan_changes()` accepts *in addition to* the `service_role`
+check — scoped to those two columns only. `set_config(..., true)` is
+transaction-local and no exposed RPC calls it, so the client can't spoof
+it.
 
-Found via `edge_logs`: `POST | 400 | .../rest/v1/analyses` from a browser
-User-Agent (the client-side insert), then reproduced exactly with
-`enforce_analysis_limit()`'s own UPDATE in a rolled-back transaction —
-`P0001: Cannot change usage counter directly`.
-
-Fixed in migration `20240136` with a transaction-local GUC flag
-(`presora.internal_usage_write`), set by `enforce_analysis_limit()` right
-before its own trusted UPDATEs and checked by `protect_plan_changes()` in
-addition to the `service_role` check — scoped to only the two usage columns;
-`plan`/`credits`/`is_admin`/`custom_plan_price_*` are untouched and still
-require `service_role`. `set_config(..., true)` is transaction-local and not
-reachable from the client (no exposed RPC calls it), so it can't be spoofed
-from outside. Verified: the scan-save insert succeeds and the counter
-increments correctly, while a direct client attempt to write
-`analyses_this_month` or `credits` is still rejected with the same
-`P0001` as before.
+When it broke, the symptom was misleading: scans appeared to work
+(`analyze.js` returned real results) but every client-side insert into
+`analyses` failed with a generic 400, so nothing saved and `/audit/:id`
+was unreachable — the bug was in the trigger, not the audit page. Check
+`edge_logs` for non-2xx on `/rest/v1/*` when a write silently no-ops.
 
 ## Plan values must agree in three places
 
@@ -318,12 +318,11 @@ the error from them, `recordScanOutcome()` stores it in
 `/admin/settings` renders it under the failure count — while a streak is
 building, not only after the watchdog has already paused scanning.
 
-Before this, every cause collapsed into "All model providers failed or
-OPENROUTER_API_KEY is not configured", which cannot tell apart a missing key
+The point is that a single collapsed message can't tell apart a missing key
 (401), an empty balance (402), a retired model id (400) and a rate limit
-(429) — four problems with four different fixes. Verified all five paths,
-plus that one succeeding model still yields a real scan rather than a
-fallback.
+(429) — four problems with four different fixes. Keep provider errors
+specific; the same reasoning applies to any other vendor call
+(`create-checkout.js` surfaces Stripe's real message for this reason too).
 
 Note the sandbox proxy blocks `openrouter.ai`, and `OPENROUTER_API_KEY` only
 exists in Netlify's environment, so the provider cannot be tested from here —
@@ -354,37 +353,35 @@ correctly still produces a fallback rather than a fabricated result.
 
 OpenRouter was a single point of failure with a single balance: when its
 credits ran out every model returned 402 and brand scanning — the product —
-stopped, with nothing in the code able to help.
+stopped.
 
-`runBrandScan()` now falls back to **Anthropic directly**
-(`api.anthropic.com/v1/messages`, `ANTHROPIC_API_KEY`, already used by
-`generate-audit-summary.js`, `assistant.js` and `chat.js`) whenever
-OpenRouter produced no result at all — including when `OPENROUTER_API_KEY`
-is absent entirely, which is why the fallback sits *outside* that key's
-branch. Same prompt, same JSON contract, so it's a genuine scan from one
-model rather than a degraded one. `usedFallbackProvider: true` marks it.
+`runBrandScan()` now falls back to **two direct providers in parallel**
+when OpenRouter produced no result at all: Anthropic
+(`api.anthropic.com/v1/messages`, `ANTHROPIC_API_KEY`, `ANTHROPIC_MODELS`)
+and Gemini (`generativelanguage.googleapis.com`, `GEMINI_API_KEY`,
+`GEMINI_MODELS`), both dispatched through the shared `runProvider()` helper
+so adding a third is one more call, not another branch. Successes from
+either are merged before `buildResult()`. Same prompt, same JSON contract —
+a genuine scan, not a degraded one; `usedFallbackProvider: true` marks it.
 
-It only runs when OpenRouter returned nothing, so a healthy scan never pays
-for a second provider, and a partial OpenRouter result is left alone.
+The fallback sits *outside* the `OPENROUTER_API_KEY` branch on purpose, so
+it also covers that key being absent entirely. It only runs when OpenRouter
+returned nothing, so a healthy scan never pays for a second provider, and a
+partial OpenRouter result is left alone.
 
-Verified across the matrix: OpenRouter OK / OpenRouter 402 + Anthropic OK /
-OpenRouter 402 with no Anthropic key / both 402 / no OpenRouter key at all.
-Only the cases where *every* provider fails still produce `isFallback`.
-
-The watchdog stays — but it can now only trip when every provider is down,
-which is a real outage rather than one vendor's billing.
+Only the case where *every* provider fails still produces `isFallback`, so
+the watchdog can only trip on a real outage rather than one vendor's
+billing.
 
 ## A missing report must say so
 
-`loadStoredAnalysis()` used to answer a failed lookup with a silent
-`setStatus('idle')`. With `?id=` in the URL the page then rendered 24
-characters — "Back / AI Audit / Analyze" — no message, no way back. Opening a
-report that had been deleted (or belonged to another account; RLS makes those
-indistinguishable, deliberately) looked exactly like the app being broken.
-
-It now sets `notFound` plus an explanatory error, and `Dashboard` renders it
-with the same neutral treatment as the paused state — clock icon, no "Try
-again" (retrying cannot help), and links to Reports and Home.
+A failed `loadStoredAnalysis()` lookup sets `notFound` plus an explanatory
+error, and `Dashboard` renders it with the same neutral treatment as the
+paused state — clock icon, no "Try again" (retrying cannot help), links to
+Reports and Home. It used to fail silently to `idle`, which rendered a
+near-empty page indistinguishable from the app being broken. A deleted
+report and one belonging to another account look the same here on purpose
+(RLS).
 
 Worth remembering after any cleanup of `analyses`: deleting rows invalidates
 every bookmark and history entry pointing at them.
@@ -396,12 +393,10 @@ stored `audit_summary` headlines. `generate-audit-summary.js` only falls back
 to `deterministicSummary()` when `ANTHROPIC_API_KEY` is unset, and that
 template always reads `"<brand>'s AI visibility is <tier> — trust score
 <n>/100"`. Every stored summary matching that shape means the key is missing,
-not that Claude wrote a dull headline.
-
-Confirmed that way on 2026-08-16: **ANTHROPIC_API_KEY is not set on the
-deploy**, which is also why the direct-Anthropic scan fallback never ran —
-`runBrandScan` now records "No fallback provider: ANTHROPIC_API_KEY is not
-set on this deploy" instead of skipping it in silence.
+not that Claude wrote a dull headline. (It read as missing on 2026-08-16;
+re-check rather than assuming that still holds.) `runBrandScan` also records
+"No fallback provider: ANTHROPIC_API_KEY is not set on this deploy" rather
+than skipping the fallback in silence.
 
 ## Read-only mode when scanning is paused
 
@@ -476,17 +471,15 @@ column to `profiles` without adding it to that trigger too.
 The Agency-plan deliverable agencies mail to their own clients as a PDF, so
 it has to stand on its own without the reader ever seeing Presora.
 
-- **White-label** (migration `20240135`, applied to the live DB): verified
-  under an `authenticated` JWT that an owner can write their own branding,
-  that another user's row returns 0 rows (RLS), that `credits` in the *same*
-  UPDATE still raises `Cannot change credits directly`, and that the 60-char
-  `agency_name_length` CHECK fires. `profiles.agency_{name,logo_url,
-  contact_email,website}` drive the letterhead, the "Prepared by" line and
-  the closing CTA. Edited at **`/audit-branding`** (`AuditBranding.tsx`, its
-  own page under the sidebar's *Tools* section, next to Reports — it
-  configures a deliverable, not an account preference, so it deliberately
-  isn't a Settings tab), read by `useAuditBranding.ts`. Without it a forwarded PDF sent the
-  agency's client to `contact.presora@gmail.com` — i.e. to us, not to them.
+- **White-label** (migration `20240135`, applied to the live DB):
+  `profiles.agency_{name,logo_url,contact_email,website}` drive the
+  letterhead, the "Prepared by" line and the closing CTA — without them a
+  forwarded PDF sends the agency's client to `contact.presora@gmail.com`,
+  i.e. to us, not to them. Edited at **`/audit-branding`**
+  (`AuditBranding.tsx`, its own page under the sidebar's *Tools* section,
+  next to Reports — it configures a deliverable, not an account preference,
+  so it deliberately isn't a Settings tab), read by `useAuditBranding.ts`.
+  RLS and the 60-char `agency_name_length` CHECK are in place and verified.
 - `useAuditBranding` is deliberately **not** folded into the shared
   `['profile-flags']` select: selecting a column that doesn't exist is a hard
   Postgres error (42703), and a missing migration must only downgrade the
@@ -507,6 +500,18 @@ it has to stand on its own without the reader ever seeing Presora.
   professional reader's first question is where the number comes from, and
   stating what the method *can't* do is what makes the rest credible.
 
+## Verifying a change — don't run the e2e suite unprompted
+
+**Owner's instruction: run the Playwright e2e suite only when explicitly
+asked.** It takes ~7 minutes, which is too slow to spend on every edit.
+
+Default verification instead: `npx tsc -p tsconfig.app.json --noEmit`,
+`npm run build`, and a targeted check of the thing actually changed
+(a Playwright screenshot against a dev server, or grepping the built
+`dist/` output). When a change touches what the suite really covers —
+login, register, settings, dashboard, the command palette — say so and let
+the owner decide whether it's worth a run.
+
 ## Typechecking gotcha
 
 `npx tsc --noEmit` **silently checks nothing** — the root `tsconfig.json`
@@ -517,10 +522,10 @@ errors in `ai-prompt-box.tsx` and `cookie-banner-1.tsx` are expected noise.
 
 ## Scan integrity (`useBrewing.ts`)
 
-Nine of the first fourteen rows in `analyses` were duplicates — the same
-brand and score written two or three times 0.4-1.8s apart. `startBrewing`
-had no in-flight guard, and three call sites could reach it (the
-`brandFromUrl` effect, the re-scan button, a `setTimeout` retry).
+Duplicate rows once got written because `startBrewing` had no in-flight
+guard and three call sites could reach it (the `brandFromUrl` effect, the
+re-scan button, a `setTimeout` retry). The historical duplicates were
+cleaned up; these rules are what keep new ones from appearing.
 
 - `inFlight` is a **ref**, not state: two calls in the same tick must not
   both read a stale `false`. Released in a `finally` (so a failed scan
@@ -544,21 +549,21 @@ before trusting the name.
   previous row. Comparing `analyses[0]` to `analyses[1]` regardless of brand
   is why one score showed two different deltas on two different days. The
   sparkline is filtered the same way.
-- The historical duplicates **have been deleted** (5 rows, keeping the
-  earliest of each group; 14 -> 9). Checked first that nothing has a foreign
-  key onto `analyses` and that none of the deleted copies carried an
-  `audit_summary` or `sources`. `dedupeAnalyses()` stays regardless — it is
-  the read-side safety net, and the guard is what prevents new ones.
+- `dedupeAnalyses()` is the read-side safety net and stays regardless of
+  the in-flight guard; the guard prevents new duplicates, dedupe hides any
+  that slip through.
 - Deleting scans does **not** decrement `profiles.analyses_this_month` — the
-  trigger only ever increments it. After the duplicate cleanup the counters
-  were realigned to the real per-month row count (16 -> 9 and 61 -> 0);
-  every account involved was on an unlimited tier, so no quota was granted
-  or taken away.
+  trigger only ever increments it. After any cleanup of `analyses`, realign
+  the counters by hand or the account keeps being metered for rows that no
+  longer exist.
 
-Score bands are 75/60 across `HomeHub.tsx` (`barColor`, `bandOf`,
-`scoreColor`) and `AuditReport.tsx`. They were 70/50 on Home, which painted
-a 70 and a 73 the same green as a 95 on the screen whose job is saying what
-to fix first.
+Score bands live in **one** place: `src/lib/dimensionBands.ts` (`bandOf`,
+`BAND_LABEL`, `BAND_STYLE`, `BAND_HEX`) — four bands at 90/75/60, imported
+by `HomeHub.tsx`, `ResultsBreakdown.tsx`, `AuditReport.tsx`,
+`ScrollAuditDemo.tsx` and `GuestScanWidget.tsx`. Every screen used to invent
+its own thresholds and words, so the same score could read "Strong" on one
+and something implying trouble on another. Don't reintroduce a local
+threshold — import from there.
 
 ## Locale dictionaries (`src/lib/locales/*.ts`)
 

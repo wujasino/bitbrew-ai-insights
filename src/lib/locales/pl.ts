@@ -237,7 +237,7 @@ const dict: Record<string, string> = {
     profile_no_results: 'Brak wyników dla podanej frazy.',
     profile_no_analyses: 'Brak analiz — wpisz nazwę marki na stronie głównej.',
     profile_empty_title: 'Uruchom pierwszą analizę',
-    profile_empty_desc: 'Zobacz dokładnie jak GPT-4, Claude i Gemini opisują Twoją markę — wynik widoczności, sentyment i źródła w 30 sekund.',
+    profile_empty_desc: 'Zobacz dokładnie jak GPT-4, Claude i Gemini opisują Twoją markę — wynik widoczności, sentyment i źródła w około 15 sekund.',
     profile_empty_cta: 'Analizuj markę',
     profile_empty_hint: 'Wpisz „Tesla" lub „Nike", żeby zobaczyć demo.',
     profile_export_csv: 'Eksportuj do CSV',

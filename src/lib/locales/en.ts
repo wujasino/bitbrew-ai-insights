@@ -230,7 +230,7 @@ const dict: Record<string, string> = {
     profile_no_results: 'No results for that query.',
     profile_no_analyses: 'No analyses yet — enter a brand name on the home page.',
     profile_empty_title: 'Run your first analysis',
-    profile_empty_desc: 'See exactly how GPT-4, Claude and Gemini describe your brand — visibility score, sentiment and sources in 30 seconds.',
+    profile_empty_desc: 'See exactly how GPT-4, Claude and Gemini describe your brand — visibility score, sentiment and sources in about 15 seconds.',
     profile_empty_cta: 'Analyze a brand',
     profile_empty_hint: 'Try "Tesla" or "Nike" for a demo run.',
     profile_export_csv: 'Export as CSV',

@@ -30,7 +30,7 @@ export const FAQ_EN: FaqItem[] = [
   },
   {
     q: 'How long does it take?',
-    a: 'About 10 seconds. We ask every assistant at the same time, and you can watch their answers come in.',
+    a: 'About 15 seconds. We ask every assistant at the same time, and you can watch their answers come in.',
   },
   {
     q: 'How reliable is the score?',
