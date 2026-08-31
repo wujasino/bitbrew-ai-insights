@@ -39,6 +39,11 @@ interface PricingCardsProps extends React.HTMLAttributes<HTMLDivElement> {
   showBillingToggle?: boolean;
 }
 
+/* Features listed on a card before the rest is deferred to the comparison
+   table. Five keeps every column a similar, scannable height — Agency
+   otherwise ran to eight bullets while Starter had three. */
+const MAX_VISIBLE_FEATURES = 5;
+
 export const PricingCards: React.FC<PricingCardsProps> = ({
   plans,
   billingCycle,
@@ -106,8 +111,21 @@ export const PricingCards: React.FC<PricingCardsProps> = ({
           const currentPrice = billingCycle === 'monthly' ? plan.priceMonthly : plan.priceYearly;
           const currentPeriod = billingCycle === 'monthly' ? plan.periodMonthly : plan.periodYearly;
           const isLoading = loadingPlan === plan.id;
-          const included = plan.features.filter((f) => f.isIncluded);
           const prevName = index > 0 ? plans[index - 1].name : null;
+          // Only what this tier *adds*. The card already promises "Everything
+          // in <previous plan>" below, so re-listing inherited features made
+          // every card longer while saying the same thing twice — Solo, for
+          // one, repeated the LLM sources and sentiment trend it inherits
+          // from Starter.
+          const inheritedNames = new Set(
+            plans.slice(0, index).flatMap((p) => p.features.filter((f) => f.isIncluded).map((f) => f.name))
+          );
+          const newInTier = plan.features.filter((f) => f.isIncluded && !inheritedNames.has(f.name));
+          // Cards still have to stay a scannable height, so anything past the
+          // cap is left to the full comparison table below rather than
+          // stretching the column.
+          const included = newInTier.slice(0, MAX_VISIBLE_FEATURES);
+          const hiddenCount = newInTier.length - included.length;
 
           return (
             <Card
@@ -167,6 +185,15 @@ export const PricingCards: React.FC<PricingCardsProps> = ({
                     </li>
                   ))}
                 </ul>
+                {hiddenCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowComparison(true)}
+                    className="mt-3 text-sm text-primary hover:underline text-left"
+                  >
+                    +{hiddenCount} more
+                  </button>
+                )}
                 {prevName && (
                   <p className="mt-5 flex items-center gap-2 text-sm text-muted-foreground">
                     <Plus className="h-4 w-4 shrink-0" aria-hidden="true" />
