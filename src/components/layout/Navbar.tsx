@@ -147,6 +147,17 @@ export const Navbar = ({ showThemeToggle = false, landingCta = false }: NavbarPr
                     Agencies
                   </Link>
                   <Link
+                    to="/features"
+                    onClick={() => setMobileOpen(false)}
+                    className={`px-3 py-2 rounded-md text-sm transition-colors ${
+                      location.pathname === '/features'
+                        ? 'text-primary bg-primary/10 font-medium'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                    }`}
+                  >
+                    Features
+                  </Link>
+                  <Link
                     to="/pricing"
                     onClick={() => setMobileOpen(false)}
                     className={`px-3 py-2 rounded-md text-sm transition-colors ${
@@ -262,6 +273,22 @@ export const Navbar = ({ showThemeToggle = false, landingCta = false }: NavbarPr
                     }`}
                   >
                     Agencies
+                  </Link>
+                </NavigationMenuItem>
+
+                {/* Features — chat-based setup + comparison table, moved off
+                    the landing page so the long-scroll story stays focused
+                    on the core scan → score → fix loop. */}
+                <NavigationMenuItem>
+                  <Link
+                    to="/features"
+                    className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                      location.pathname === '/features'
+                        ? 'text-primary bg-primary/10 font-medium'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                    }`}
+                  >
+                    Features
                   </Link>
                 </NavigationMenuItem>
 

@@ -23,6 +23,10 @@
     "title": "AI Visibility Audits for Agencies | Presora",
     "description": "Run a Presora scan on a prospect's brand and export a client-ready AI visibility audit — executive summary, dimension breakdown and prioritized recommendations, ready to send."
   },
+  "/features": {
+    "title": "Features | Presora",
+    "description": "Set up brand monitoring by describing it in plain language, and see how Presora compares to typical AI visibility trackers."
+  },
   "/docs/api": {
     "title": "API & Webhooks Documentation | Presora",
     "description": "Integrate Presora into your stack with a REST API and webhooks. Run brand visibility scans, pull scores and automate AI monitoring programmatically."
