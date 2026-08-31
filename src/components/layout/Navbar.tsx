@@ -122,7 +122,7 @@ export const Navbar = ({ showThemeToggle = false, landingCta = false }: NavbarPr
                     FAQ
                   </a>
                   <a
-                    href="/#contact"
+                    href="/contact"
                     onClick={() => setMobileOpen(false)}
                     className="px-3 py-2 pl-6 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
                   >
@@ -233,7 +233,7 @@ export const Navbar = ({ showThemeToggle = false, landingCta = false }: NavbarPr
                       </li>
                       <li>
                         <a
-                          href="/#contact"
+                          href="/contact"
                           className="block px-3 py-1.5 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
                         >
                           Contact

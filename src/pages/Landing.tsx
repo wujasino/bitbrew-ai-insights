@@ -7,6 +7,7 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { GuestScanWidget } from '@/components/GuestScanWidget';
 import { ScrollAuditDemo } from '@/components/ScrollAuditDemo';
+import { SectionNav } from '@/components/SectionNav';
 import { GUEST_LIMIT } from '@/hooks/useBrewing';
 import { ScanResultPreview } from '@/components/ScanResultPreview';
 import { CookiePanel } from '@/components/ui/cookie-banner-1';
@@ -36,11 +37,7 @@ const AI_MODELS = [
   { name: 'Llama 3', vendor: 'Meta', color: '#0866ff', tier: 'Business' },
 ];
 
-/* ── Before / After data ──────────────────────────────────────────── */
-const BEFORE = { mentions: '1 / 10', sentiment: '34', recommend: '8%' };
-const AFTER  = { mentions: '7 / 10', sentiment: '81', recommend: '63%' };
-
-/* ── Testimonials ─────────────────────────────────────────────────── */
+/* ── Trust points ─────────────────────────────────────────────────── */
 /* Verifiable facts about how the product actually works — not customer
    quotes. Presora doesn't have public case studies yet, and inventing
    testimonials to fill the space would be dishonest, so this trades a
@@ -64,6 +61,18 @@ const TRUST_POINTS = [
     desc: 'Download everything, or delete your account for good, whenever you like — straight from Settings. No emailing support to ask.',
     iconBg: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500',
   },
+];
+
+/* Sections offered in the sticky in-page nav, in page order. Keep in sync
+   with the matching `id` on each <section>; SectionNav skips any id that
+   isn't on the page, so a stale entry degrades quietly rather than breaking. */
+const NAV_SECTIONS = [
+  { id: 'how-it-works', label: 'How it works' },
+  { id: 'manifest', label: 'Why it matters' },
+  { id: 'sample-report', label: 'Sample report' },
+  { id: 'why-section', label: 'Features' },
+  { id: 'pricing', label: 'Pricing' },
+  { id: 'faq', label: 'FAQ' },
 ];
 
 const Landing = () => {
@@ -90,6 +99,7 @@ const Landing = () => {
         Skip to content
       </a>
       <Navbar showThemeToggle landingCta />
+      <SectionNav sections={NAV_SECTIONS} />
 
       <main id="main-content">
       {/* ── Urgency strip ─────────────────────────────────────────── */}
@@ -240,7 +250,7 @@ const Landing = () => {
         </section>
 
         {/* ── How it works ─────────────────────────────────────────── */}
-        <section className="pb-20 px-4">
+        <section id="how-it-works" className="pb-20 px-4 scroll-mt-28">
           <div className="max-w-4xl mx-auto">
             <h2 className="text-center text-sm text-muted-foreground mb-5 sm:mb-6">How it works</h2>
             {/* Scroll-scrubbed: the three steps light up and the scan bar
@@ -301,7 +311,7 @@ const Landing = () => {
         </section>
 
         {/* ── Why: short, punchy — not a manifesto ──────────────────── */}
-        <section id="manifest" className="py-20 px-4 scroll-mt-24">
+        <section id="manifest" className="py-20 px-4 scroll-mt-28">
           <div className="max-w-3xl mx-auto text-center">
             <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
               <span className="inline-block px-3 py-1 text-xs badge rounded-lg mb-5 font-data uppercase tracking-wider">
@@ -327,7 +337,7 @@ const Landing = () => {
 
 
         {/* ── Sample report: what you get after a scan ──────────────── */}
-        <section id="sample-report" className="py-20 px-4 scroll-mt-24">
+        <section id="sample-report" className="py-20 px-4 scroll-mt-28">
           <div className="max-w-5xl mx-auto">
             <motion.div
               initial={{ opacity: 0, y: 16 }}
@@ -351,7 +361,7 @@ const Landing = () => {
         </section>
 
         {/* ── Features bento ──────────────────────────────────────── */}
-        <section id="why-section" className="py-24 px-4 relative">
+        <section id="why-section" className="scroll-mt-28 py-24 px-4 relative">
           <div className="max-w-6xl mx-auto">
             <motion.div
               initial={{ opacity: 0, y: 16 }}
@@ -473,107 +483,6 @@ const Landing = () => {
           </div>
         </section>
       </GradientMeshBg>
-
-      {/* ── Before / After case study ─────────────────────────────── */}
-      <section className="py-20 px-4 bg-card/30">
-        <div className="max-w-4xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-12"
-          >
-            <span className="inline-block px-3 py-1 text-xs badge rounded-lg mb-4 font-data uppercase tracking-wider">
-              Illustrative example
-            </span>
-            <h2 className="text-3xl sm:text-4xl font-display text-foreground mb-3">
-              What improving AI visibility looks like
-            </h2>
-            <p className="text-sm text-muted-foreground max-w-lg mx-auto">
-              A worked example of the numbers this report tracks, and how they move
-              once a brand acts on its recommendations.
-            </p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.1 }}
-            className="grid grid-cols-1 md:grid-cols-2 gap-4"
-          >
-            {/* Before */}
-            <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-8">
-              <div className="flex items-center gap-2 mb-6">
-                <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-red-500/15 text-red-400 border border-red-500/20">
-                  Before
-                </span>
-                <span className="text-xs text-muted-foreground">— baseline Presora scan</span>
-              </div>
-              <div className="space-y-5">
-                <div>
-                  <div className="text-xs text-muted-foreground mb-1">AI mentions</div>
-                  <div className="text-3xl font-display text-red-400">{BEFORE.mentions}</div>
-                  <div className="mt-2 h-1.5 rounded-full bg-muted overflow-hidden">
-                    <div className="h-full w-[10%] rounded-full bg-red-400/60" />
-                  </div>
-                </div>
-                <div>
-                  <div className="text-xs text-muted-foreground mb-1">Positive tone</div>
-                  <div className="text-3xl font-display text-red-400">{BEFORE.sentiment}<span className="text-base text-muted-foreground">/100</span></div>
-                  <div className="mt-2 h-1.5 rounded-full bg-muted overflow-hidden">
-                    <div className="h-full w-[34%] rounded-full bg-red-400/60" />
-                  </div>
-                </div>
-                <div>
-                  <div className="text-xs text-muted-foreground mb-1">Recommendations</div>
-                  <div className="text-3xl font-display text-red-400">{BEFORE.recommend}</div>
-                </div>
-              </div>
-            </div>
-
-            {/* After */}
-            <div className="rounded-2xl border border-primary/20 bg-primary/5 p-8 relative overflow-hidden">
-              <div className="flex items-center gap-2 mb-6">
-                <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-primary/15 text-primary border border-primary/20">
-                  After
-                </span>
-                <span className="text-xs text-muted-foreground">— after 14 days of fixes</span>
-              </div>
-              <div className="space-y-5">
-                <div>
-                  <div className="text-xs text-muted-foreground mb-1">AI mentions</div>
-                  <div className="text-3xl font-display text-primary">{AFTER.mentions}</div>
-                  <div className="mt-2 h-1.5 rounded-full bg-muted overflow-hidden">
-                    <div className="h-full w-[70%] rounded-full bg-primary/70" />
-                  </div>
-                </div>
-                <div>
-                  <div className="text-xs text-muted-foreground mb-1">Positive tone</div>
-                  <div className="text-3xl font-display text-primary">{AFTER.sentiment}<span className="text-base text-muted-foreground">/100</span></div>
-                  <div className="mt-2 h-1.5 rounded-full bg-muted overflow-hidden">
-                    <div className="h-full w-[81%] rounded-full bg-primary/70" />
-                  </div>
-                </div>
-                <div>
-                  <div className="text-xs text-muted-foreground mb-1">Recommendations</div>
-                  <div className="text-3xl font-display text-primary">{AFTER.recommend}</div>
-                </div>
-              </div>
-              {/* glow */}
-              <div className="absolute -bottom-6 -right-6 w-32 h-32 rounded-full bg-primary/10 blur-2xl pointer-events-none" />
-            </div>
-          </motion.div>
-
-          {/* Said plainly next to the numbers, not just in the badge above:
-              unattributed before/after figures read as invented and cost more
-              credibility than they buy. */}
-          <p className="text-center text-xs text-muted-foreground mt-6 max-w-xl mx-auto">
-            Illustrative figures showing how these metrics relate, not results from a
-            named customer. Your own numbers come from a real scan — run one above.
-          </p>
-        </div>
-      </section>
 
       {/* ── Action, not just a report ─────────────────────────────── */}
       <section className="py-24 px-4 border-t border-[hsl(var(--glass-border))]">
@@ -1031,51 +940,6 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* ── Contact ───────────────────────────────────────────────── */}
-      <section id="contact" className="py-24 px-4 border-t border-[hsl(var(--glass-border))]">
-        <div className="max-w-5xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-12"
-          >
-            <span className="inline-block px-3 py-1 text-xs badge rounded-lg mb-4 font-data uppercase tracking-wider">
-              Contact
-            </span>
-            <h2 className="text-3xl sm:text-4xl font-display text-foreground">
-              Get in touch
-            </h2>
-            <p className="text-sm text-muted-foreground mt-3 max-w-md mx-auto">
-              Questions about plans, agencies or the API? We reply to everything.
-            </p>
-          </motion.div>
-          {/* A 4000-character message box mid-landing interrupted the flow for
-              the 99% who came to scan, not to write. The form itself lives on
-              /contact — this is just the doorway. */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.1 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-3"
-          >
-            <Link
-              to="/contact"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
-            >
-              Send us a message <ArrowRight className="w-4 h-4" />
-            </Link>
-            <a
-              href="mailto:contact.presora@gmail.com"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-border text-foreground text-sm font-medium hover:bg-accent transition-colors"
-            >
-              <Mail className="w-4 h-4" /> contact.presora@gmail.com
-            </a>
-          </motion.div>
-        </div>
-      </section>
-
 
       {/* ── Pricing ──────────────────────────────────────────────────
           The landing page had no pricing at all — a visitor had to guess
@@ -1083,7 +947,7 @@ const Landing = () => {
           these prices can't drift from /pricing or from Stripe checkout.
           Every CTA goes to /register: nobody is signed in here, and the
           checkout on /pricing requires a session anyway. */}
-      <section id="pricing" className="py-24 px-4 border-t border-[hsl(var(--glass-border))] scroll-mt-24">
+      <section id="pricing" className="py-24 px-4 border-t border-[hsl(var(--glass-border))] scroll-mt-28">
         <div className="max-w-6xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
@@ -1127,7 +991,7 @@ const Landing = () => {
       </section>
 
       {/* ── FAQ ───────────────────────────────────────────────────── */}
-      <section id="faq" className="pt-20 pb-12 px-4">
+      <section id="faq" className="scroll-mt-28 pt-20 pb-12 px-4">
         <div className="max-w-3xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
