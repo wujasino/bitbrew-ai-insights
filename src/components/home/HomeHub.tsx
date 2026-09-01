@@ -15,6 +15,7 @@ import { BrandScanInput } from '@/components/BrandScanInput';
 import { brandKey, dedupeAnalyses } from '@/lib/analyses';
 import { useScanStatus } from '@/hooks/useScanStatus';
 import { bandOf, BAND_LABEL, BAND_HEX, BAND_STYLE, type Band } from '@/lib/dimensionBands';
+import { countActionPlanProgress } from '@/lib/actionPlanProgress';
 
 interface Analysis {
   id: string;
@@ -89,6 +90,27 @@ const HealthRing = ({ analysis }: { analysis: Analysis }) => {
               {counts[b]} {BAND_LABEL[b].toLowerCase()}
             </span>
           ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/**
+ * "Tasks Status" — sits next to the dimension-health pie chart. Completed
+ * count comes from the SAME localStorage progress AiActionPlan's checkboxes
+ * write to (lib/actionPlanProgress) — nothing here is invented; if nothing
+ * has an action plan yet, the caller just doesn't render this tile.
+ */
+const TasksStatusTile = ({ done, total }: { done: number; total: number }) => {
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+  return (
+    <div className="flex items-center gap-3 rounded-xl border border-[hsl(var(--glass-border))] bg-card/60 px-3 py-2.5">
+      <div className="text-xs leading-tight">
+        <p className="text-muted-foreground mb-1">Tasks status</p>
+        <p className="text-foreground font-medium mb-1.5">{done}/{total} completed</p>
+        <div className="h-1 w-24 rounded-full bg-muted overflow-hidden">
+          <div className="h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />
         </div>
       </div>
     </div>
@@ -300,6 +322,18 @@ const HomeHub = () => {
     return null;
   }, [latest, previousForLatest, analyses]);
 
+  // Real completed/total count from AiActionPlan's persisted checkboxes,
+  // summed across every scan that actually has a generated plan — reads
+  // localStorage, so it's 0/0 (tile hidden) until at least one plan exists.
+  const taskProgress = useMemo(
+    () => countActionPlanProgress(
+      analyses
+        .filter(a => (a.action_plan?.steps?.length ?? 0) > 0)
+        .map(a => ({ id: a.id, totalSteps: a.action_plan!.steps!.length }))
+    ),
+    [analyses]
+  );
+
   const runScan = (raw: string) => {
     const v = raw.trim();
     if (!v) return;
@@ -353,6 +387,7 @@ const HomeHub = () => {
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-start gap-3">
             {latest && <HealthRing analysis={latest} />}
+            {taskProgress.total > 0 && <TasksStatusTile done={taskProgress.done} total={taskProgress.total} />}
             <CreditsUsageWidget />
           </div>
         </div>
