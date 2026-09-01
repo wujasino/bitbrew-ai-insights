@@ -317,6 +317,53 @@ const Pricing = () => {
           showBillingToggle={false}
         />
 
+        {/* How we think about pricing — the philosophy behind the tiers,
+            not just the tiers themselves. Framed around what it means for
+            the visitor (pay for real usage, not a guess at "value"; start
+            free; agencies scale without per-brand pricing) rather than as
+            an internal strategy note. */}
+        <motion.div
+          className="mt-16 max-w-4xl mx-auto"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+        >
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-display text-foreground">How we think about pricing</h2>
+            <p className="text-sm text-muted-foreground max-w-xl mx-auto mt-2">
+              No tier is priced on a guess at what your brand is "worth" — every plan scales with
+              something you can see and control yourself.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="rounded-2xl border border-[hsl(var(--glass-border))] bg-card/40 p-5">
+              <ShieldCheck className="w-4 h-4 text-primary mb-2" />
+              <p className="text-sm font-semibold text-foreground">Try it before you commit</p>
+              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                The Free plan runs real scans against real AI models — not a locked demo — so you
+                can see exactly what you'd be paying for before entering a card.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-[hsl(var(--glass-border))] bg-card/40 p-5">
+              <Zap className="w-4 h-4 text-primary mb-2" />
+              <p className="text-sm font-semibold text-foreground">Pay for usage, not a guess</p>
+              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                Tiers scale with things you actually control — how many AI models you monitor, how
+                often, and how many competitors you track — never a markup based on your brand's
+                size or revenue.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-[hsl(var(--glass-border))] bg-card/40 p-5">
+              <Sparkles className="w-4 h-4 text-primary mb-2" />
+              <p className="text-sm font-semibold text-foreground">Built to grow with you</p>
+              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                Start on Solo and upgrade only when you add models or competitors. Agencies get one
+                plan that covers every client brand with white-labeled reports — not a per-brand fee.
+              </p>
+            </div>
+          </div>
+        </motion.div>
+
         {/* Why the price is what it is — trivialized to a daily cost, put
             next to a spending category people already have a feel for, and
             one honest limitation named up front rather than left for
