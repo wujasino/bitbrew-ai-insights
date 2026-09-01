@@ -692,13 +692,13 @@ const Landing = () => {
               </div>
               <p className="text-sm text-foreground font-medium">Still have questions?</p>
             </div>
-            <a
-              href="mailto:contact.presora@gmail.com"
+            <Link
+              to="/contact"
               className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity whitespace-nowrap"
             >
               Contact us
               <Mail className="w-3.5 h-3.5" />
-            </a>
+            </Link>
           </motion.div>
         </div>
       </section>
