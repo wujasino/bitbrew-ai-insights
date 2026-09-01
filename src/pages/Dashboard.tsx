@@ -11,6 +11,7 @@ import { SourceDonutChart } from '@/components/charts/SourceDonutChart';
 import { SourceTable } from '@/components/SourceTable';
 import { ScoreMethodology } from '@/components/ScoreMethodology';
 import { ResultsBreakdown } from '@/components/ResultsBreakdown';
+import { AiActionPlan } from '@/components/AiActionPlan';
 // Below-the-fold supplementary cards on the results screen — lazy-loaded so
 // their ~15 KB of component code (plus AveEstimate) isn't part of the
 // Dashboard chunk everyone downloads just to see the score and action plan
@@ -88,13 +89,14 @@ const getVerdictKey = (s: number) => {
 
 // ── Hero score band ─────────────────────────────────────────────
 const ScoreHero = ({
-  result, t, previousScan, onImproveAccuracy,
+  result, t, previousScan, onImproveAccuracy, plan,
 }: {
   result: AnalysisResult;
   t: (k: string) => string;
   /** Real previous scan of THIS brand, or null (first scan / not signed in / still loading). */
   previousScan: { trust_score: number; created_at: string } | null;
   onImproveAccuracy: () => void;
+  plan: string;
 }) => {
   const score = useMemo(() => {
     if (typeof result.trustScore === 'number' && !isNaN(result.trustScore)) return Math.round(result.trustScore);
@@ -355,6 +357,7 @@ const ScoreHero = ({
 
         {/* "o k***wa moment" — competitor urgency banner for low-scoring brands */}
         {score < 60 && (
+          <>
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -391,6 +394,8 @@ const ScoreHero = ({
               </div>
             </div>
           </motion.div>
+          <AiActionPlan analysisId={result.id} plan={plan} />
+          </>
         )}
       </div>
     </div>
@@ -905,6 +910,7 @@ const Dashboard = () => {
               t={t}
               previousScan={previousScan}
               onImproveAccuracy={() => setKbExpandSignal(v => v + 1)}
+              plan={plan}
             />
 
             {/* Results by dimension + recommended actions — the concrete takeaway */}

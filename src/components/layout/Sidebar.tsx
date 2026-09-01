@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Code2, Zap, FileText, Bot, Search, Megaphone, Palette, SlidersHorizontal, Tag, Globe2 } from 'lucide-react';
+import { Home, Code2, Zap, FileText, Bot, Search, Megaphone, Palette, SlidersHorizontal, Tag, Globe2, ClipboardList, Trophy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { usePlan, PLAN_LABELS, useIsAdmin, isAgencyPlan } from '@/hooks/useAccountInfo';
@@ -127,8 +127,10 @@ export const Sidebar = ({ collapsed = false, mobileOpen = false, onMobileClose }
           <NavItem to="/automations" icon={Bot} label="Automations" active={pathname === '/automations'} collapsed={effectiveCollapsed} onNavigate={handleNavigate} />
           <NavItem to="/google-visibility" icon={Globe2} label="Google Visibility" active={pathname === '/google-visibility'} collapsed={effectiveCollapsed} onNavigate={handleNavigate} />
           <NavItem to="/reports" icon={FileText} label="Reports" active={pathname === '/reports'} collapsed={effectiveCollapsed} onNavigate={handleNavigate} />
+          <NavItem to="/action-plan" icon={ClipboardList} label="Action Plan" active={pathname === '/action-plan'} collapsed={effectiveCollapsed} onNavigate={handleNavigate} />
+          <NavItem to="/competitor-tracker" icon={Trophy} label="Competitor Tracker" active={pathname === '/competitor-tracker'} collapsed={effectiveCollapsed} onNavigate={handleNavigate} />
           {canBrandAudits && (
-            <NavItem to="/audit-branding" icon={Palette} label="Audit Branding" active={pathname === '/audit-branding'} collapsed={effectiveCollapsed} onNavigate={handleNavigate} />
+            <NavItem to="/audit-branding" icon={Palette} label="Client Branding" active={pathname === '/audit-branding'} collapsed={effectiveCollapsed} onNavigate={handleNavigate} />
           )}
 
           {isAdmin && (

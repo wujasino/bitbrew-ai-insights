@@ -37,6 +37,8 @@ const NewsletterTerms = lazy(() => import("./pages/NewsletterTerms"));
 const Settings       = lazy(() => import("./pages/Settings"));
 const Reports        = lazy(() => import("./pages/Reports"));
 const AuditBranding  = lazy(() => import("./pages/AuditBranding"));
+const ActionPlanHub  = lazy(() => import("./pages/ActionPlanHub"));
+const CompetitorTracker = lazy(() => import("./pages/CompetitorTracker"));
 const AdminAnnouncements = lazy(() => import("./pages/AdminAnnouncements"));
 const AdminPricing   = lazy(() => import("./pages/AdminPricing"));
 const AdminSettings  = lazy(() => import("./pages/AdminSettings"));
@@ -152,6 +154,24 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <AppShell><Reports /></AppShell>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/action-plan"
+              element={
+                <ProtectedRoute>
+                  <AppShell><ActionPlanHub /></AppShell>
+                </ProtectedRoute>
+              }
+            />
+            {/* Plan gate lives inside the page (an upsell, not a redirect) —
+                same convention as /audit-branding. */}
+            <Route
+              path="/competitor-tracker"
+              element={
+                <ProtectedRoute>
+                  <AppShell><CompetitorTracker /></AppShell>
                 </ProtectedRoute>
               }
             />
