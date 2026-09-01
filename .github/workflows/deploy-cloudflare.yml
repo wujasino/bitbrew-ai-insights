@@ -5,9 +5,9 @@ name: Deploy to Cloudflare Workers
 # "Hosting split" section). netlify/functions/*.js stays on Netlify — this
 # workflow only ships the frontend build. Runs on Cloudflare Workers'
 # Static Assets feature (a plain Worker, not a Pages project — wrangler.toml
-# has no `main` script, just an [assets] block). public/_redirects proxies
-# /.netlify/functions/* and /api/v1/* through to the Netlify site so no
-# fetch call in the app needs to change.
+# points `main` at worker/index.js, which proxies /.netlify/functions/* and
+# /api/v1/* through to the Netlify site itself, since Workers Static Assets'
+# _redirects doesn't support proxying to external origins).
 on:
   push:
     branches: [main]
@@ -16,6 +16,9 @@ on:
 concurrency:
   group: cloudflare-pages-deploy
   cancel-in-progress: false
+
+permissions:
+  contents: read
 
 jobs:
   deploy:

@@ -11,6 +11,11 @@ on:
   schedule:
     - cron: '0 3 * * 0' # Sunday 03:00 UTC
 
+# No checkout step and no GitHub API calls here — pg_dump/gpg/aws all run
+# against external services via secrets, not this repo — so this denies
+# every GITHUB_TOKEN permission rather than granting one unused by default.
+permissions: {}
+
 jobs:
   backup:
     timeout-minutes: 20
