@@ -89,13 +89,14 @@ const getVerdictKey = (s: number) => {
 
 // ── Hero score band ─────────────────────────────────────────────
 const ScoreHero = ({
-  result, t, previousScan, onImproveAccuracy,
+  result, t, previousScan, onImproveAccuracy, plan,
 }: {
   result: AnalysisResult;
   t: (k: string) => string;
   /** Real previous scan of THIS brand, or null (first scan / not signed in / still loading). */
   previousScan: { trust_score: number; created_at: string } | null;
   onImproveAccuracy: () => void;
+  plan: string;
 }) => {
   const score = useMemo(() => {
     if (typeof result.trustScore === 'number' && !isNaN(result.trustScore)) return Math.round(result.trustScore);
@@ -393,7 +394,7 @@ const ScoreHero = ({
               </div>
             </div>
           </motion.div>
-          <AiActionPlan analysisId={result.id} />
+          <AiActionPlan analysisId={result.id} plan={plan} />
           </>
         )}
       </div>
@@ -909,6 +910,7 @@ const Dashboard = () => {
               t={t}
               previousScan={previousScan}
               onImproveAccuracy={() => setKbExpandSignal(v => v + 1)}
+              plan={plan}
             />
 
             {/* Results by dimension + recommended actions — the concrete takeaway */}
