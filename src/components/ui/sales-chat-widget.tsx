@@ -55,6 +55,7 @@ export function SalesChatWidget() {
       suggestions={SUGGESTIONS}
       open={open}
       onOpenChange={setOpen}
+      hideUntilScrolled
     />
   );
 }

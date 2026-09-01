@@ -105,7 +105,12 @@ const Landing = () => {
       <Navbar showThemeToggle landingCta />
       <SectionNav sections={NAV_SECTIONS} />
 
-      <main id="main-content">
+      {/* pt-16 clears the fixed h-16 navbar (mobile, where SectionNav is
+          hidden); md:pt-28 clears navbar + SectionNav stacked underneath it
+          (65px + 45px ≈ 109px). Without this the urgency strip below render
+          entirely behind that fixed chrome — not just visually dimmed by
+          its 80%-opacity blur, actually 0% on-screen on every breakpoint. */}
+      <main id="main-content" className="pt-16 md:pt-28">
       {/* ── Urgency strip ─────────────────────────────────────────── */}
       <div className="w-full bg-card border-b border-border px-4 py-2.5 flex items-center justify-center gap-2 text-center">
         <TrendingUp className="w-3.5 h-3.5 text-primary shrink-0" />

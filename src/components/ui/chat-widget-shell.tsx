@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { MessageCircle, X, ArrowUp, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -21,6 +21,15 @@ interface ChatWidgetShellProps {
   onOpenChange: (open: boolean) => void;
   /** Positioning classes for the fixed wrapper — lets callers avoid colliding with other floating UI (e.g. the cookie banner). */
   positionClassName?: string;
+  /**
+   * Keeps the launcher hidden until the page is scrolled roughly past the
+   * first viewport. Landing's hero has above-the-fold CTAs/example chips
+   * that sit in the same bottom-right corner the launcher occupies on
+   * short mobile viewports — the fixed launcher would otherwise land right
+   * on top of them from the very first paint. Default off (unchanged
+   * behavior for result-chat-widget, which never renders over a hero).
+   */
+  hideUntilScrolled?: boolean;
 }
 
 // Shared visual chrome (launcher button, panel, message list, input) for
@@ -39,8 +48,23 @@ export function ChatWidgetShell({
   open,
   onOpenChange,
   positionClassName = 'bottom-24 right-6',
+  hideUntilScrolled = false,
 }: ChatWidgetShellProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [pastFold, setPastFold] = useState(!hideUntilScrolled);
+
+  useEffect(() => {
+    if (!hideUntilScrolled) return;
+    const check = () => setPastFold(window.scrollY > window.innerHeight * 0.6);
+    check();
+    window.addEventListener('scroll', check, { passive: true });
+    window.addEventListener('resize', check);
+    return () => {
+      window.removeEventListener('scroll', check);
+      window.removeEventListener('resize', check);
+    };
+  }, [hideUntilScrolled]);
+  const launcherVisible = pastFold || open;
 
   useEffect(() => {
     if (open) scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
@@ -52,7 +76,13 @@ export function ChatWidgetShell({
   };
 
   return (
-    <div className={cn('fixed z-40 flex flex-col items-end gap-3', positionClassName)}>
+    <div
+      className={cn(
+        'fixed z-40 flex flex-col items-end gap-3 transition-opacity duration-300',
+        positionClassName,
+        launcherVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
+      )}
+    >
       <AnimatePresence>
         {open && (
           <motion.div
