@@ -512,13 +512,21 @@ Default verification instead: `npx tsc -p tsconfig.app.json --noEmit`,
 login, register, settings, dashboard, the command palette — say so and let
 the owner decide whether it's worth a run.
 
-## Hosting split: static site on Cloudflare Pages, backend stays on Netlify
+## Hosting split: static site on Cloudflare Workers, backend stays on Netlify
 
 Netlify's account-level build/deploy credits ran out (see `.github/workflows/
 deploy.yml`'s comment and `netlify.toml`'s `ignore = "exit 0"`), and don't
 reset until the 23rd of the month, which is too long a blackout for the
-static site to sit on. The frontend build (`dist/`) moved to **Cloudflare
-Pages**; `netlify/functions/*.js` stays on Netlify unchanged.
+static site to sit on. The frontend build (`dist/`) moved to a **Cloudflare
+Worker using Static Assets** (deployed via `wrangler deploy` in
+`.github/workflows/deploy-cloudflare.yml`, config in `wrangler.toml`) — a
+plain Worker, not a Cloudflare Pages project (Pages projects get a
+`*.pages.dev` domain; this one's dashboard-created preview domain was
+`*.workers.dev`, which is how the distinction surfaced). `wrangler.toml` has
+no `main` script, just an `[assets]` block pointing at `dist/` — Workers
+Static Assets reads `public/_redirects`/`public/_headers` the same way Pages
+does, so nothing else about the setup below changes between the two.
+`netlify/functions/*.js` stays on Netlify unchanged.
 
 This was deliberately **not** a full migration off Netlify. A survey of
 every function's dependencies found a real, non-cosmetic blocker:
@@ -532,16 +540,20 @@ function means redesigning the SSRF check, not adapting it — a security-
 critical piece not worth touching under time pressure just to change
 hosts. `jsdom` (`seo-audit.js`), `@sentry/node`, and the two scheduled
 functions (`check-score-alerts` hourly, `billing-status` monthly — Cron
-Triggers aren't a Pages Functions feature) would have needed similar
-real rework, not just an adapter layer.
+Triggers are a separate Worker concern, not something a Pages/Static-Assets
+project gets for free) would have needed similar real rework, not just an
+adapter layer.
 
-Mechanism: `public/_redirects` and `public/_headers` (Cloudflare Pages'
+Mechanism: `public/_redirects` and `public/_headers` (Cloudflare's
 equivalent of `netlify.toml`'s `[[redirects]]`/`[[headers]]`, both copied
 into `dist/` by Vite's default `public/` handling — verified via
 `npm run build`) reverse-proxy `/.netlify/functions/*` and the `/api/v1/*`
-aliases through to the Netlify site, so the browser still sees same-origin
-paths and no fetch call anywhere in the app needed to change. `/auth/callback`
-goes straight to Supabase either way, same as before.
+aliases through to the Netlify site (`https://presora-app.netlify.app`, the
+Netlify-owned subdomain — deliberately not the `presora.app` custom domain,
+which points at Cloudflare instead and would loop back on itself as a proxy
+target), so the browser still sees same-origin paths and no fetch call
+anywhere in the app needed to change. `/auth/callback` goes straight to
+Supabase either way, same as before.
 
 If a real full migration off Netlify Functions is wanted later, Vercel is
 the lower-risk target — its serverless functions are actual Node.js

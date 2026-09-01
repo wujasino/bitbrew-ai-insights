@@ -1,10 +1,20 @@
-# Cloudflare Pages project config — used by `wrangler pages deploy` in
+# Cloudflare Worker (Static Assets) config — used by `wrangler deploy` in
 # .github/workflows/deploy-cloudflare.yml. See CLAUDE.md's "Hosting split"
 # section for why the frontend moved here while netlify/functions/*.js
 # stays on Netlify.
 #
-# `name` must match the Cloudflare Pages project name created in the
-# dashboard (Pages → Create project) — update both if it's renamed.
+# This is a static-assets-only Worker (no `main` script) — the dist/ build
+# is served directly, with public/_redirects and public/_headers (copied
+# into dist/ by Vite) handling the SPA fallback override, the Netlify
+# Functions proxy, and the security headers, same as they would under Pages.
+#
+# `name` must match the Worker created in the dashboard (Workers & Pages →
+# Create → Workers) — update both if it's renamed.
 name = "presora"
-pages_build_output_dir = "dist"
 compatibility_date = "2026-08-31"
+
+[assets]
+directory = "dist"
+# _redirects already declares the SPA fallback (/* -> /index.html), so this
+# only matters if that file is ever missing or misses a route.
+not_found_handling = "single-page-application"
