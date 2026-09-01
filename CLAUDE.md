@@ -512,6 +512,43 @@ Default verification instead: `npx tsc -p tsconfig.app.json --noEmit`,
 login, register, settings, dashboard, the command palette — say so and let
 the owner decide whether it's worth a run.
 
+## Hosting split: static site on Cloudflare Pages, backend stays on Netlify
+
+Netlify's account-level build/deploy credits ran out (see `.github/workflows/
+deploy.yml`'s comment and `netlify.toml`'s `ignore = "exit 0"`), and don't
+reset until the 23rd of the month, which is too long a blackout for the
+static site to sit on. The frontend build (`dist/`) moved to **Cloudflare
+Pages**; `netlify/functions/*.js` stays on Netlify unchanged.
+
+This was deliberately **not** a full migration off Netlify. A survey of
+every function's dependencies found a real, non-cosmetic blocker:
+`netlify/functions/_lib/ssrfGuard.js` calls `dns.promises.lookup()` (Node's
+built-in DNS resolver) to check a user-supplied URL's real IP isn't
+internal/private before the app ever fetches it (used for
+`agency_logo_url`/`agency_website` on the client-ready audit, among others).
+Cloudflare Workers have no DNS resolution API at all — no `dns` module, no
+polyfill, because Workers isolates don't get raw socket access. Porting that
+function means redesigning the SSRF check, not adapting it — a security-
+critical piece not worth touching under time pressure just to change
+hosts. `jsdom` (`seo-audit.js`), `@sentry/node`, and the two scheduled
+functions (`check-score-alerts` hourly, `billing-status` monthly — Cron
+Triggers aren't a Pages Functions feature) would have needed similar
+real rework, not just an adapter layer.
+
+Mechanism: `public/_redirects` and `public/_headers` (Cloudflare Pages'
+equivalent of `netlify.toml`'s `[[redirects]]`/`[[headers]]`, both copied
+into `dist/` by Vite's default `public/` handling — verified via
+`npm run build`) reverse-proxy `/.netlify/functions/*` and the `/api/v1/*`
+aliases through to the Netlify site, so the browser still sees same-origin
+paths and no fetch call anywhere in the app needed to change. `/auth/callback`
+goes straight to Supabase either way, same as before.
+
+If a real full migration off Netlify Functions is wanted later, Vercel is
+the lower-risk target — its serverless functions are actual Node.js
+runtimes, so `dns`/`net`/`jsdom` all run unchanged and `ssrfGuard.js`
+ports as-is; only the handler signature (`event/context` → `req/res`)
+needs adapting, not the internals.
+
 ## Typechecking gotcha
 
 `npx tsc --noEmit` **silently checks nothing** — the root `tsconfig.json`

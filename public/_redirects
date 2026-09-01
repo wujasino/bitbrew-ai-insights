@@ -1,0 +1,24 @@
+# Cloudflare Pages redirects/proxy rules — mirrors netlify.toml's [[redirects]]
+# now that the static site is hosted on Cloudflare Pages while the
+# netlify/functions/*.js backend stays on Netlify (see CLAUDE.md, "Hosting
+# split" section). First-match-wins, same as Netlify.
+#
+# REPLACE __NETLIFY_SITE_URL__ below with the real Netlify site URL
+# (e.g. https://presora.netlify.app) before this file goes live.
+
+# ── Google OAuth proxy — hides the Supabase project ID ──────────────────────
+/auth/callback  https://wxwdymchrmhxeiccnzg.supabase.co/auth/v1/callback  200
+
+# ── Netlify Functions — reverse-proxied so the browser still sees a
+#    same-origin /.netlify/functions/* path (no CORS changes needed anywhere
+#    in the app's fetch calls). ────────────────────────────────────────────
+/.netlify/functions/*  __NETLIFY_SITE_URL__/.netlify/functions/:splat  200
+
+# ── Public API (ApiDocs.tsx) — same proxy target as above, kept as its own
+#    clean path per the comment in netlify.toml. Must come before the SPA
+#    fallback below. ─────────────────────────────────────────────────────
+/api/v1/analyze    __NETLIFY_SITE_URL__/.netlify/functions/api-analyze    200
+/api/v1/analyses   __NETLIFY_SITE_URL__/.netlify/functions/api-analyses   200
+
+# ── SPA fallback — every other route is handled by React Router ─────────────
+/*  /index.html  200
