@@ -5,6 +5,7 @@
 const { createClient } = require('@supabase/supabase-js');
 const crypto = require('crypto');
 const ws = require('ws');
+const { appendRow } = require('./_lib/googleSheets');
 
 // Node < 22 has no native WebSocket — supabase-js inits Realtime eagerly.
 if (!globalThis.WebSocket) {
@@ -142,6 +143,14 @@ exports.handler = async (event) => {
   if (dbError) {
     console.error('Newsletter DB error');
     return { statusCode: 500, headers, body: JSON.stringify({ error: 'Database error' }) };
+  }
+
+  // Optional: mirror to a Google Sheet (see _lib/googleSheets.js for setup).
+  // Best-effort — Supabase above is the real subscriber record either way.
+  try {
+    await appendRow('Newsletter', [new Date().toISOString(), normalizedEmail]);
+  } catch (err) {
+    console.error('Newsletter Google Sheets log failed:', err.message);
   }
 
   // Optional: Mailchimp integration
