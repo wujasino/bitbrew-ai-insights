@@ -522,11 +522,8 @@ Worker using Static Assets** (deployed via `wrangler deploy` in
 `.github/workflows/deploy-cloudflare.yml`, config in `wrangler.toml`) — a
 plain Worker, not a Cloudflare Pages project (Pages projects get a
 `*.pages.dev` domain; this one's dashboard-created preview domain was
-`*.workers.dev`, which is how the distinction surfaced). `wrangler.toml` has
-no `main` script, just an `[assets]` block pointing at `dist/` — Workers
-Static Assets reads `public/_redirects`/`public/_headers` the same way Pages
-does, so nothing else about the setup below changes between the two.
-`netlify/functions/*.js` stays on Netlify unchanged.
+`*.workers.dev`, which is how the distinction surfaced). `netlify/functions/
+*.js` stays on Netlify unchanged.
 
 This was deliberately **not** a full migration off Netlify. A survey of
 every function's dependencies found a real, non-cosmetic blocker:
@@ -544,16 +541,22 @@ Triggers are a separate Worker concern, not something a Pages/Static-Assets
 project gets for free) would have needed similar real rework, not just an
 adapter layer.
 
-Mechanism: `public/_redirects` and `public/_headers` (Cloudflare's
-equivalent of `netlify.toml`'s `[[redirects]]`/`[[headers]]`, both copied
-into `dist/` by Vite's default `public/` handling — verified via
-`npm run build`) reverse-proxy `/.netlify/functions/*` and the `/api/v1/*`
-aliases through to the Netlify site (`https://presora-app.netlify.app`, the
-Netlify-owned subdomain — deliberately not the `presora.app` custom domain,
-which points at Cloudflare instead and would loop back on itself as a proxy
-target), so the browser still sees same-origin paths and no fetch call
-anywhere in the app needed to change. `/auth/callback` goes straight to
-Supabase either way, same as before.
+Mechanism: `worker/index.js` is a real fetch handler (`main` in
+`wrangler.toml`), not a declarative `_redirects` file — Workers Static
+Assets' `_redirects` only supports proxy (200) rules to *relative* paths,
+confirmed by a failed deploy ("Proxy (200) redirects can only point to
+relative paths"), unlike classic Cloudflare Pages which allows external
+targets. So `worker/index.js` proxies `/.netlify/functions/*` and the
+`/api/v1/*` aliases itself, via `fetch()`, to the Netlify site
+(`https://presora-app.netlify.app`, the Netlify-owned subdomain —
+deliberately not the `presora.app` custom domain, which points at
+Cloudflare instead and would loop back on itself as a proxy target) and to
+Supabase for `/auth/callback`; everything else falls through to
+`env.ASSETS.fetch(request)`, which serves `dist/` (SPA fallback via
+`wrangler.toml`'s `not_found_handling = "single-page-application"`). No
+fetch call anywhere in the rest of the app needed to change — same-origin
+paths, same as before. `public/_headers` (security headers) is unaffected
+and still works the declarative way.
 
 If a real full migration off Netlify Functions is wanted later, Vercel is
 the lower-risk target — its serverless functions are actual Node.js

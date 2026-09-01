@@ -1,20 +1,27 @@
-# Cloudflare Worker (Static Assets) config — used by `wrangler deploy` in
-# .github/workflows/deploy-cloudflare.yml. See CLAUDE.md's "Hosting split"
-# section for why the frontend moved here while netlify/functions/*.js
-# stays on Netlify.
+# Cloudflare Worker (Static Assets + a real fetch handler) config — used by
+# `wrangler deploy` in .github/workflows/deploy-cloudflare.yml. See
+# CLAUDE.md's "Hosting split" section for why the frontend moved here while
+# netlify/functions/*.js stays on Netlify.
 #
-# This is a static-assets-only Worker (no `main` script) — the dist/ build
-# is served directly, with public/_redirects and public/_headers (copied
-# into dist/ by Vite) handling the SPA fallback override, the Netlify
-# Functions proxy, and the security headers, same as they would under Pages.
+# `main` points at worker/index.js — a real fetch handler is required
+# because Workers Static Assets' `_redirects` file only supports proxy (200)
+# rules to *relative* paths, not external origins (confirmed via a failed
+# deploy: "Proxy (200) redirects can only point to relative paths"). The
+# Netlify Functions/API proxy therefore lives in worker/index.js's fetch
+# handler instead of a declarative _redirects file; `env.ASSETS.fetch()` in
+# that script serves everything else from dist/.
 #
 # `name` must match the Worker created in the dashboard (Workers & Pages →
 # Create → Workers) — update both if it's renamed.
 name = "presora"
+main = "worker/index.js"
 compatibility_date = "2026-08-31"
 
 [assets]
 directory = "dist"
-# _redirects already declares the SPA fallback (/* -> /index.html), so this
-# only matters if that file is ever missing or misses a route.
+binding = "ASSETS"
+# Falls back to index.html for any path not found in dist/ — the SPA
+# fallback, now that _redirects no longer carries that rule either (see
+# worker/index.js's comment; that file's declarative SPA rule also tripped
+# an "infinite loop" lint error once external proxy rules were removed).
 not_found_handling = "single-page-application"
