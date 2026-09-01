@@ -27,6 +27,16 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
+    // www → apex redirect. Netlify's own "primary domain" setting used to
+    // do this; that config lived on Netlify's side, not in this repo, and
+    // stopped applying once the DNS records moved to Cloudflare Custom
+    // Domains, so it has to be replicated here now that both hostnames
+    // point at this Worker independently.
+    if (url.hostname === 'www.presora.app') {
+      url.hostname = 'presora.app';
+      return Response.redirect(url.toString(), 301);
+    }
+
     // Google OAuth proxy — hides the Supabase project ID.
     if (url.pathname === '/auth/callback') {
       const target = new URL(SUPABASE_AUTH_CALLBACK);
