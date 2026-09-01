@@ -1,0 +1,63 @@
+name: Deploy to Cloudflare Pages
+
+# Static site (dist/) deploy target while Netlify's account-level build
+# credits are blocked (see netlify.toml's `ignore = "exit 0"` and CLAUDE.md's
+# "Hosting split" section). netlify/functions/*.js stays on Netlify — this
+# workflow only ships the frontend build. public/_redirects proxies
+# /.netlify/functions/* and /api/v1/* through to the Netlify site so no
+# fetch call in the app needs to change.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+concurrency:
+  group: cloudflare-pages-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Build
+        env:
+          # Same reasoning as .github/workflows/deploy.yml: Vite bakes
+          # VITE_* vars in at build time, so they have to be repeated here
+          # as repo secrets rather than relying on the host's own env vars.
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_STRIPE_STARTER_PRICE_ID: ${{ secrets.VITE_STRIPE_STARTER_PRICE_ID }}
+          VITE_STRIPE_STARTER_YEARLY_PRICE_ID: ${{ secrets.VITE_STRIPE_STARTER_YEARLY_PRICE_ID }}
+          VITE_STRIPE_SOLO_PRICE_ID: ${{ secrets.VITE_STRIPE_SOLO_PRICE_ID }}
+          VITE_STRIPE_SOLO_YEARLY_PRICE_ID: ${{ secrets.VITE_STRIPE_SOLO_YEARLY_PRICE_ID }}
+          VITE_STRIPE_BUSINESS_PRICE_ID: ${{ secrets.VITE_STRIPE_BUSINESS_PRICE_ID }}
+          VITE_STRIPE_BUSINESS_YEARLY_PRICE_ID: ${{ secrets.VITE_STRIPE_BUSINESS_YEARLY_PRICE_ID }}
+          VITE_STRIPE_CREDITS_20: ${{ secrets.VITE_STRIPE_CREDITS_20 }}
+          VITE_STRIPE_CREDITS_50: ${{ secrets.VITE_STRIPE_CREDITS_50 }}
+          VITE_STRIPE_CREDITS_120: ${{ secrets.VITE_STRIPE_CREDITS_120 }}
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+          VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
+          VITE_PLAUSIBLE_DOMAIN: ${{ secrets.VITE_PLAUSIBLE_DOMAIN }}
+          VITE_SITE_URL: ${{ secrets.VITE_SITE_URL }}
+          VITE_RECAPTCHA_SITE_KEY: ${{ secrets.VITE_RECAPTCHA_SITE_KEY }}
+        run: npm run build
+
+      - name: Deploy to Cloudflare Pages
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        # Project name must match the Cloudflare Pages project created in
+        # the dashboard (Pages → Create project). Update it here if the
+        # project was named something other than "presora".
+        run: npx wrangler pages deploy dist --project-name=presora --branch=main

@@ -1,0 +1,10 @@
+# Cloudflare Pages project config — used by `wrangler pages deploy` in
+# .github/workflows/deploy-cloudflare.yml. See CLAUDE.md's "Hosting split"
+# section for why the frontend moved here while netlify/functions/*.js
+# stays on Netlify.
+#
+# `name` must match the Cloudflare Pages project name created in the
+# dashboard (Pages → Create project) — update both if it's renamed.
+name = "presora"
+pages_build_output_dir = "dist"
+compatibility_date = "2026-08-31"
