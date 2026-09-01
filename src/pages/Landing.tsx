@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, useScroll, useTransform } from 'framer-motion';
-import { Zap, Eye, BarChart3, Shield, ChevronDown, HelpCircle, Mail, TrendingUp, ArrowRight, Globe, ShieldCheck, Clock, PenLine, Sparkles, MessageSquare, LineChart, Tag } from 'lucide-react';
+import { Zap, Eye, Shield, ChevronDown, HelpCircle, Mail, TrendingUp, ArrowRight, Globe, ShieldCheck, Clock, PenLine, Sparkles, MessageSquare, Tag } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
@@ -70,7 +70,6 @@ const NAV_SECTIONS = [
   { id: 'how-it-works', label: 'How it works' },
   { id: 'manifest', label: 'Why it matters' },
   { id: 'sample-report', label: 'Sample report' },
-  { id: 'why-section', label: 'Features' },
   { id: 'pricing', label: 'Pricing' },
   { id: 'faq', label: 'FAQ' },
 ];
@@ -238,7 +237,7 @@ const Landing = () => {
               initial={{ opacity: 0, y: -4 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.8 }}
-              onClick={() => document.getElementById('why-section')?.scrollIntoView({ behavior: 'smooth' })}
+              onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
               className="mt-8 mx-auto flex flex-col items-center gap-1.5 text-muted-foreground/50 hover:text-muted-foreground transition-colors"
             >
               <span className="text-[10px] uppercase tracking-[0.25em]">Learn more</span>
@@ -360,128 +359,6 @@ const Landing = () => {
           </div>
         </section>
 
-        {/* ── Features bento ──────────────────────────────────────── */}
-        <section id="why-section" className="scroll-mt-28 py-24 px-4 relative">
-          <div className="max-w-6xl mx-auto">
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="text-center mb-14"
-            >
-              <span className="inline-block px-3 py-1 text-xs badge rounded-lg mb-4 font-data uppercase tracking-wider">
-                What's inside
-              </span>
-              <h2 className="text-3xl sm:text-4xl font-display text-foreground">
-                What Presora actually does
-              </h2>
-            </motion.div>
-
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 auto-rows-[minmax(160px,auto)]">
-              {/* Large card — feature 1 */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                whileHover={{ y: -6, scale: 1.015, transition: { type: 'spring', stiffness: 300, damping: 20 } }}
-                whileTap={{ scale: 0.985 }}
-                className="md:col-span-7 glass-card-hover rounded-2xl border border-[hsl(var(--glass-border))] p-8 flex flex-col justify-between bg-card/60 backdrop-blur-sm shadow-lg shadow-primary/5"
-              >
-                <div>
-                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10 mb-5">
-                    <Eye className="w-6 h-6 text-primary" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-foreground mb-3">Real-time AI analysis</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed max-w-sm">We ask several AI assistants at once, and show you how each one describes your brand.</p>
-                </div>
-                <div className="mt-6 flex gap-2">
-                  {['ChatGPT', 'Claude', 'Gemini'].map((m) => (
-                    <span key={m} className="px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">{m}</span>
-                  ))}
-                </div>
-              </motion.div>
-
-              {/* Small card — feature 2 */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.1 }}
-                whileHover={{ y: -6, scale: 1.015, transition: { type: 'spring', stiffness: 300, damping: 20 } }}
-                whileTap={{ scale: 0.985 }}
-                className="md:col-span-5 glass-card-hover rounded-2xl border border-[hsl(var(--glass-border))] p-8 flex flex-col justify-between bg-card/60 backdrop-blur-sm shadow-lg shadow-primary/5"
-              >
-                <div>
-                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10 mb-5">
-                    <BarChart3 className="w-6 h-6 text-primary" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-foreground mb-3">Sentiment tracking</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">Track how positive, negative or neutral AI models are about your brand over time.</p>
-                </div>
-                <div className="mt-6 flex items-end gap-1 h-10 opacity-60">
-                  {[3, 5, 4, 7, 6, 8, 7, 9, 8, 10].map((v, i) => (
-                    <div key={i} className="flex-1 rounded-sm bg-primary/50" style={{ height: `${v * 10}%` }} />
-                  ))}
-                </div>
-              </motion.div>
-
-              {/* Small card — feature 3 */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.2 }}
-                whileHover={{ y: -6, scale: 1.015, transition: { type: 'spring', stiffness: 300, damping: 20 } }}
-                whileTap={{ scale: 0.985 }}
-                className="md:col-span-5 glass-card-hover rounded-2xl border border-[hsl(var(--glass-border))] p-8 flex flex-col justify-between bg-card/60 backdrop-blur-sm shadow-lg shadow-primary/5"
-              >
-                <div>
-                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10 mb-5">
-                    <Shield className="w-6 h-6 text-primary" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-foreground mb-3">Competitor comparison</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">See how your brand stacks up against competitors in AI model responses.</p>
-                </div>
-                <div className="mt-6 flex items-center gap-3">
-                  <div className="text-3xl font-display text-primary">94<span className="text-base text-muted-foreground">/100</span></div>
-                  <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
-                    <div className="h-full w-[94%] rounded-full bg-gradient-to-r from-primary/60 to-primary" />
-                  </div>
-                </div>
-              </motion.div>
-
-              {/* Large card — feature 4 */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.3 }}
-                whileHover={{ y: -6, scale: 1.015, transition: { type: 'spring', stiffness: 300, damping: 20 } }}
-                whileTap={{ scale: 0.985 }}
-                className="md:col-span-7 glass-card-hover rounded-2xl border border-[hsl(var(--glass-border))] p-8 flex flex-col justify-between bg-card/60 backdrop-blur-sm shadow-lg shadow-primary/5"
-              >
-                <div>
-                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10 mb-5">
-                    <Zap className="w-6 h-6 text-primary" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-foreground mb-3">Brand knowledge base</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed max-w-sm">Feed AI models accurate information about your brand to improve their responses.</p>
-                </div>
-                <div className="mt-6 space-y-2">
-                  {[['Your brand', 78], ['Competitor A', 52], ['Competitor B', 61]].map(([label, val]) => (
-                    <div key={label as string} className="flex items-center gap-3 text-xs">
-                      <span className="w-24 text-muted-foreground shrink-0">{label}</span>
-                      <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
-                        <div className="h-full rounded-full bg-primary/70" style={{ width: `${val}%` }} />
-                      </div>
-                      <span className="text-muted-foreground w-6 text-right">{val}</span>
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
-            </div>
-          </div>
-        </section>
       </GradientMeshBg>
 
       {/* ── Action, not just a report ─────────────────────────────── */}
@@ -559,49 +436,6 @@ const Landing = () => {
                 </div>
               ))}
               <div className="absolute -bottom-8 -right-8 w-32 h-32 rounded-full bg-primary/10 blur-2xl pointer-events-none" />
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Who is it for ─────────────────────────────────────────── */}
-      <section className="py-24 px-4 border-t border-[hsl(var(--glass-border))]">
-        <div className="max-w-5xl mx-auto">
-          <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-12">
-            <span className="inline-block px-3 py-1 text-xs badge rounded-lg mb-4 font-data uppercase tracking-wider">
-              Who is it for?
-            </span>
-            <h2 className="text-3xl sm:text-4xl font-display text-foreground mb-3">
-              Who uses Presora?
-            </h2>
-            <p className="text-sm text-muted-foreground max-w-lg mx-auto">
-              Built for the people who own the brand story — not just SEO specialists. If you care how AI describes your reputation and recommends your products, this is for you.
-            </p>
-          </motion.div>
-
-          <div className="max-w-md mx-auto">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              whileHover={{ y: -6, scale: 1.02, transition: { type: 'spring', stiffness: 300, damping: 20 } }}
-              whileTap={{ scale: 0.985 }}
-              className="rounded-2xl p-7 flex flex-col gap-4 bg-card/60 backdrop-blur-sm border border-primary/30 hover:border-primary/50 shadow-lg shadow-primary/5"
-            >
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl border bg-primary/10 border-primary/20 text-primary">
-                <LineChart className="w-6 h-6" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-foreground mb-2">Brand Managers</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">Already tracking brand in traditional media? Time to add the AI channel. Show your leadership how the brand is doing in AI answers.</p>
-              </div>
-              <div className="flex flex-wrap gap-2 mt-auto">
-                {['Sentiment tracking', 'Weekly digest', 'CSV export'].map(tag => (
-                  <span key={tag} className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-muted/60 text-muted-foreground border border-[hsl(var(--glass-border))]">
-                    {tag}
-                  </span>
-                ))}
-              </div>
             </motion.div>
           </div>
         </div>
