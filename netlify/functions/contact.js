@@ -5,6 +5,7 @@
  */
 const { createClient } = require('@supabase/supabase-js');
 const ws = require('ws');
+const { appendRow } = require('./_lib/googleSheets');
 
 if (!globalThis.WebSocket) globalThis.WebSocket = ws;
 
@@ -111,6 +112,14 @@ exports.handler = async (event) => {
   if (dbError) {
     console.error('Contact DB error:', dbError.message);
     // Don't fail — still try email notification
+  }
+
+  // Optional: mirror to a Google Sheet (see _lib/googleSheets.js for setup).
+  // Best-effort — Supabase above is the real record either way.
+  try {
+    await appendRow('Contact', [payload.created_at, payload.name, payload.email, payload.subject, payload.message]);
+  } catch (err) {
+    console.error('Contact Google Sheets log failed:', err.message);
   }
 
   // Optional: Resend email notification

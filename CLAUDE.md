@@ -783,6 +783,29 @@ above). No functional change.
   ("Who is it for", "Features bento") that had drifted redundant with
   content elsewhere on the page (891→726 lines at the time).
 
+## Google Sheets mirror for form submissions (`_lib/googleSheets.js`)
+
+`contact.js` and `newsletter.js` both mirror their submission to a Google
+Sheet as an extra, human-browsable copy — Supabase (`contact_messages`,
+`newsletter_subscribers`) stays the real record either way; the Sheets
+write is wrapped in try/catch and never fails the user-facing request.
+
+No `googleapis` SDK dependency — a service-account JWT (signed with
+Node's built-in `crypto`, RS256) is exchanged for an OAuth token via a
+plain `fetch()` to `oauth2.googleapis.com`, then the row is appended via
+the Sheets v4 REST API directly. Matches this codebase's existing style
+of calling third-party APIs (Mailchimp, Resend, Stripe) without their SDKs.
+
+Needs three Netlify env vars, all optional — a missing `GOOGLE_SHEETS_ID`
+makes `appendRow()` no-op silently, same as the Mailchimp/Resend gating
+elsewhere: `GOOGLE_SHEETS_ID`, `GOOGLE_SERVICE_ACCOUNT_EMAIL`,
+`GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY`. The spreadsheet must be shared
+(Editor) with the service account's email — a service account has no
+Drive access of its own — and needs two tabs created ahead of time, named
+exactly `Contact` and `Newsletter` (Sheets creates neither the
+spreadsheet nor a missing tab on append). Not verifiable from this
+sandbox — no real GCP service account credentials are configured here.
+
 ## Notes vault
 
 `notes/` is also set up as an Obsidian vault (paired with the Obsidian Git
