@@ -658,6 +658,131 @@ even though no string literal in the codebase matches it.
   always check `git log origin/main` before pushing; if merged, restart
   from `origin/main` and cherry-pick any unmerged commits back on top.
 
+## AI Action Plan (`generate-action-plan.js` / `AiActionPlan.tsx`)
+
+A Claude-generated remediation checklist, separate from `ResultsBreakdown`'s
+older deterministic Action Plan (`rec_${dim}` locale-key driven — that one
+stays, this is additive). Renders directly under Dashboard's red "AI
+recommends your competitors — not you" alert (`score < 60` only).
+
+- Two-column layout: left (~70%) "🛑 Dlaczego AI Cię pomija?" + a 3-step
+  checklist (each step has a priority badge — High/Medium/Low — a category
+  tag, an interactive checkbox, and click-to-expand for the description);
+  right (~30%) a pinned "⚡ Quick Win" card.
+- Grounded only in real per-scan data (the 5 dimension scores and each
+  model's `association` text) — the prompt explicitly forbids inventing a
+  specific competitor, publication, or page not actually named in that
+  data, since no citation/URL data exists anywhere in this codebase (see
+  Provider redundancy section above on `sources[].association`).
+- Cached on `analyses.action_plan` (jsonb, migration `20240139`), same
+  cache-once pattern as `audit_summary`. Available to **all signed-in
+  users** (not gated to Agency/Enterprise, unlike `generate-audit-summary.js`
+  — this is framed as a free "(Beta)" feature).
+- **Free/Starter accounts get a blur-gate**: a fixed, non-brand-specific
+  placeholder rendered blurred, with an "Unlock Premium" overlay → `/pricing`.
+  No API call happens for a gated account at all — a CSS blur only hides
+  content *visually*, the text is still in the DOM, so the real plan is
+  never fetched or rendered for someone who shouldn't see it yet.
+- Per-step checkboxes are persisted to **localStorage**
+  (`src/lib/actionPlanProgress.ts`, keyed by `analysisId:stepIndex`) —
+  originally spec'd as purely decorative, but Home's "Tasks status" tile
+  (next to the dimension-health pie chart in `HomeHub.tsx`) needed a real
+  completed count, so this exists to back that. Same per-browser-only
+  trade-off as `loadVoicePrefs`/`loadModelPrefs` — no migration, no
+  cross-device sync. The tile only renders once `total > 0` (never a
+  misleading `0/0`).
+- **`/action-plan`** (`ActionPlanHub.tsx`, new sidebar entry) is an index
+  over every scan below the low-visibility threshold — each row links to
+  its report where the real checklist renders; the hub itself never
+  generates or duplicates that content.
+- **Home's "Recent Alerts" bar** (above "Recent reports" in `HomeHub.tsx`)
+  surfaces the single most urgent thing on the page: first a real
+  week-over-week confidence drop for one model (same brand, vs. the
+  previous scan), else the highest-priority step of the most recent
+  already-cached plan. Never a filler alert when nothing's actually wrong.
+
+## Competitor Tracker (`/competitor-tracker`, `tracked_competitors` table)
+
+Growth/Agency-gated (`tierOf(plan) >= 2`, matching "Competitor comparison"
+in `plans.ts`). Two distinct, real signals — never a fabricated "AI
+recommends X over Y" statistic:
+
+1. **Mention rate**: a user names competitors per tracked brand
+   (`tracked_competitors`, migration `20240140`, RLS-owned, max 10 per
+   brand). The percentage shown is a literal, case-insensitive substring
+   count of the competitor's name inside that brand's own
+   `analyses.sources[].association` text — real stored model output, not
+   a synthetic comparison (this app has no infrastructure anywhere that
+   asks a model to directly compare two brands).
+2. **Head-to-head score**: `netlify/functions/scan-competitor.js` runs the
+   **same scan pipeline** `analyze.js` uses (`runBrandScan`) against the
+   competitor's name — a real, freshly-measured score, stored on
+   `tracked_competitors.last_score`/`last_scanned_at`/`last_scan_error`
+   (migration `20240141`). Rate-limited (5/10min — a manual "Scan now"
+   click, never automatic; a real scan is expensive, up to 6 model calls).
+   Deliberately does **not**: touch `analyses_this_month` or the
+   `analyses` table (this is a benchmark measurement, not "your brand was
+   scanned"); call `recordScanOutcome()`/trip the auto-disable watchdog (a
+   competitor's own visibility failing to resolve isn't a signal that
+   Presora's own scanning is broken); pass the caller's `userId` into
+   `runBrandScan` (never pulls the account's own brand-knowledge RAG
+   context under the competitor's name). A fallback (all-providers-failed)
+   result is never stored as a real score — the caller gets a real error
+   instead.
+   Home's "Recent reports" shows the same head-to-head (e.g. "60 vs 78")
+   next to any brand with at least one already-scanned rival; falls back
+   to the plain score otherwise.
+
+## Client Branding (formerly "Audit Branding")
+
+`/audit-branding`'s sidebar label and page heading were renamed to
+"Client Branding" — same Agency-only gate (`isAgencyPlan`), same route,
+just a clearer name for what it actually configures (the white-label
+identity on the client-ready audit — see the "Client-ready audit" section
+above). No functional change.
+
+## Landing page engagement/retention pieces
+
+- **`MouseSpotlight`** (`src/components/ui/mouse-spotlight.tsx`): a soft
+  neutral-graphite radial glow that follows the cursor, fixed + `z-0`
+  behind all real content. CSS-custom-property + `requestAnimationFrame`
+  lerp, no React re-renders; skips the animation loop under
+  `prefers-reduced-motion`; fades in only after the first real pointer
+  move so it never flashes at a stale position on touch devices.
+- **`ScrollProgressBar`** (`src/components/ui/scroll-progress-bar.tsx`): a
+  3px bar at the very top tracking scroll depth (`framer-motion`'s
+  `useScroll`/`useSpring`) — purely an orientation cue, no data, nothing
+  that can go stale.
+- **`StickyCtaPill`** (`src/components/ui/sticky-cta-pill.tsx`): a
+  "Check my brand" pill that appears once scrolled past the hero and
+  hides again near the footer. Clicking it scrolls **back up** to
+  `#hero-input` (same target the mid-page CTAs already use) rather than
+  navigating away — the point is to bring a scrolling-but-undecided reader
+  back to the one action that matters without ever leaving the page.
+  Positioned `bottom-24 left-4`, mirroring `SalesChatWidget`'s
+  `bottom-24 right-6` (both clear the cookie consent bar the same way;
+  opposite corners so the two floating elements never compete).
+- **`SalesChatWidget`'s `hideUntilScrolled` prop** (on `ChatWidgetShell`,
+  default off): the floating chat launcher used to sit at a fixed
+  `bottom-24 right-6` from first paint, which lands directly on top of the
+  hero's "TRY: Tesla/Apple/Nike" example chips on common mobile viewport
+  heights (~375×812) — "Nike" was almost entirely hidden underneath it
+  before any scroll. Now fades in only once scrolled past ~60% of the
+  viewport height. `result-chat-widget` (used on report pages, never over
+  a hero) is unaffected — the prop defaults to off.
+- **`<main id="main-content">` needs `pt-16 md:pt-28`.** Every other page
+  using `<Navbar />` sets `pt-28` on its `<main>` to clear the fixed `h-16`
+  navbar — Landing's didn't. The "AI models are already shaping brand
+  reputations" urgency strip was the first flow element in `<main>` and
+  rendered **entirely behind** the fixed navbar (measured with Playwright:
+  0–65px, fully covered; 0–109px on desktop once `SectionNav` — fixed
+  `top-16`, desktop-only — stacks underneath it too). Not merely dimmed by
+  the navbar's 80%-opacity blur — 0% on-screen on every breakpoint until
+  fixed.
+- A one-off `MouseSpotlight`-driven trim also removed two sections
+  ("Who is it for", "Features bento") that had drifted redundant with
+  content elsewhere on the page (891→726 lines at the time).
+
 ## Notes vault
 
 `notes/` is also set up as an Obsidian vault (paired with the Obsidian Git

@@ -15,6 +15,8 @@ import { SalesChatWidget } from '@/components/ui/sales-chat-widget';
 import { NewsletterSignup } from '@/components/ui/newsletter-signup';
 import { GradientMeshBg } from '@/components/ui/gradient-mesh-bg';
 import { MouseSpotlight } from '@/components/ui/mouse-spotlight';
+import { ScrollProgressBar } from '@/components/ui/scroll-progress-bar';
+import { StickyCtaPill } from '@/components/ui/sticky-cta-pill';
 import { FAQ_EN } from '@/lib/faq';
 import { PricingCards } from '@/components/ui/pricing-cards';
 import { PLANS } from '@/lib/plans';
@@ -95,6 +97,14 @@ const Landing = () => {
       {/* Cursor-follow glow — fixed + z-0, so it always paints behind the
           z-10 content wrapper below regardless of DOM order. */}
       <MouseSpotlight />
+      {/* Engagement hooks: a top progress bar (orientation — how much is
+          left) and a floating "Check my brand" pill that appears once
+          scrolled past the hero and scrolls back UP to the scan input
+          rather than navigating away, so a reader who scrolled past the
+          first CTA without acting always has the same one back within
+          reach. */}
+      <ScrollProgressBar />
+      <StickyCtaPill />
       <div className="relative z-10">
       <a
         href="#main-content"
