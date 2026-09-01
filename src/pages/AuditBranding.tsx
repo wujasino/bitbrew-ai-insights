@@ -134,7 +134,7 @@ const AuditBranding = () => {
           <Palette className="w-5 h-5 text-primary" />
         </div>
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">Audit branding</h1>
+          <h1 className="text-2xl font-semibold text-foreground">Client branding</h1>
           <p className="text-sm text-muted-foreground mt-1 max-w-xl">
             Put your own identity on the client-ready audit. The report letterhead and its
             closing “get in touch” block use these details, so a PDF you forward to a client
