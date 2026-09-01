@@ -211,6 +211,7 @@ const HomeHub = () => {
   const navigate = useNavigate();
   const [analysesLoading, setAnalysesLoading] = useState(true);
   const [analyses, setAnalyses] = useState<Analysis[]>([]);
+  const [competitors, setCompetitors] = useState<{ brand_key: string; competitor_name: string; last_score: number | null }[]>([]);
   const { data: plan = 'Free' } = usePlan();
   const planTier = tierOf(plan);
   const { enabled: scanningEnabled } = useScanStatus();
@@ -239,8 +240,33 @@ const HomeHub = () => {
       .then(({ data }) => {
         if (active) { setAnalyses(dedupeAnalyses((data as Analysis[]) ?? [])); setAnalysesLoading(false); }
       });
+    // Best-known competitor score per brand, for the head-to-head shown in
+    // "Recent reports" — a real, previously-scanned number (scan-competitor.js
+    // via /competitor-tracker), never invented here. Silently empty for an
+    // account with none tracked, or if the table isn't migrated yet.
+    supabase
+      .from('tracked_competitors')
+      .select('brand_key, competitor_name, last_score')
+      .eq('user_id', userId)
+      .then(({ data }) => {
+        if (active) setCompetitors((data as typeof competitors) ?? []);
+      });
     return () => { active = false; };
   }, [userId, userLoading]);
+
+  // Toughest tracked rival per brand (highest real last_score) — one line,
+  // not a table, so only the most relevant comparison is shown inline.
+  const bestCompetitorByBrand = useMemo(() => {
+    const map = new Map<string, { competitor_name: string; last_score: number }>();
+    for (const c of competitors) {
+      if (c.last_score === null) continue;
+      const existing = map.get(c.brand_key);
+      if (!existing || c.last_score > existing.last_score) {
+        map.set(c.brand_key, { competitor_name: c.competitor_name, last_score: c.last_score });
+      }
+    }
+    return map;
+  }, [competitors]);
 
   const loading = userLoading || analysesLoading;
 
@@ -566,13 +592,24 @@ const HomeHub = () => {
               {analyses.slice(0, 5).map((a, i) => {
                 const prev = analyses.slice(i + 1).find(p => brandKey(p.brand_name) === brandKey(a.brand_name));
                 const d = prev ? a.trust_score - prev.trust_score : null;
+                const rival = bestCompetitorByBrand.get(brandKey(a.brand_name));
                 return (
                   <Link
                     key={a.id}
                     to={`/brand-visibility?id=${a.id}`}
                     className="flex items-center gap-4 px-4 py-3 hover:bg-accent/50 transition-colors group"
                   >
-                    <span className={cn('text-lg font-display font-semibold tabular-nums w-10', scoreColor(a.trust_score))}>{a.trust_score}</span>
+                    {rival ? (
+                      <span className="flex items-baseline gap-1 w-24 shrink-0" title={`${a.brand_name} vs ${rival.competitor_name}`}>
+                        <span className={cn('text-lg font-display font-semibold tabular-nums', scoreColor(a.trust_score))}>{a.trust_score}</span>
+                        <span className="text-xs text-muted-foreground">vs</span>
+                        <span className={cn('text-sm font-data font-semibold tabular-nums', rival.last_score > a.trust_score ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400')}>
+                          {rival.last_score}
+                        </span>
+                      </span>
+                    ) : (
+                      <span className={cn('text-lg font-display font-semibold tabular-nums w-10', scoreColor(a.trust_score))}>{a.trust_score}</span>
+                    )}
                     <span className="text-sm text-foreground font-medium flex-1 min-w-0 truncate">{a.brand_name}</span>
                     <Delta value={d} since={prev?.created_at} />
                     <span className="hidden sm:block text-xs text-muted-foreground w-24 text-right">{formatDate(a.created_at)}</span>

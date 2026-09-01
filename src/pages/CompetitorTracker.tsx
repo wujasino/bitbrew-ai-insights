@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Trophy, Lock, ArrowRight, Plus, X, Loader2 } from 'lucide-react';
+import { Trophy, Lock, ArrowRight, Plus, X, Loader2, RefreshCw } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 import { usePlan, tierOf, useSessionUser } from '@/hooks/useAccountInfo';
@@ -19,7 +19,13 @@ interface TrackedCompetitor {
   id: string;
   brand_key: string;
   competitor_name: string;
+  last_score: number | null;
+  last_scanned_at: string | null;
+  last_scan_error: string | null;
 }
+
+const formatScanDate = (iso: string) =>
+  new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 
 const MAX_COMPETITORS_PER_BRAND = 10;
 
@@ -62,7 +68,7 @@ const CompetitorTracker = () => {
           .order('created_at', { ascending: false }),
         supabase
           .from('tracked_competitors')
-          .select('id, brand_key, competitor_name')
+          .select('id, brand_key, competitor_name, last_score, last_scanned_at, last_scan_error')
           .eq('user_id', userId),
       ]);
       if (compError) {
@@ -96,6 +102,11 @@ const CompetitorTracker = () => {
     [competitors, selectedBrand],
   );
 
+  // Most recent scan of the selected brand — the "you" side of the
+  // head-to-head. brandScans is already sorted newest-first (the query
+  // orders by created_at desc).
+  const yourScore = brandScans[0]?.trust_score ?? null;
+
   const mentionStats = useMemo(() => {
     return brandCompetitors.map((c) => {
       const needle = c.competitor_name.toLowerCase();
@@ -123,7 +134,7 @@ const CompetitorTracker = () => {
     const { data, error: insertError } = await supabase
       .from('tracked_competitors')
       .insert({ user_id: userId, brand_key: selectedBrand, competitor_name: name })
-      .select('id, brand_key, competitor_name')
+      .select('id, brand_key, competitor_name, last_score, last_scanned_at, last_scan_error')
       .single();
     if (insertError) {
       setError(insertError.code === '23505' ? 'Already tracking that competitor for this brand.' : 'Could not save competitor.');
@@ -137,6 +148,39 @@ const CompetitorTracker = () => {
   const removeCompetitor = async (id: string) => {
     setCompetitors((prev) => prev.filter((c) => c.id !== id));
     await supabase.from('tracked_competitors').delete().eq('id', id);
+  };
+
+  const [scanningId, setScanningId] = useState<string | null>(null);
+
+  // Runs the real scan pipeline (same one analyze.js uses) against this
+  // competitor's name via scan-competitor.js — a real, freshly-measured
+  // score, not an invented one. Costs actual model calls, so it's an
+  // explicit click, never triggered automatically on page load.
+  const scanCompetitor = async (id: string) => {
+    setScanningId(id);
+    setError(null);
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { setScanningId(null); return; }
+    try {
+      const res = await fetch('/.netlify/functions/scan-competitor', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ competitorId: id }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setCompetitors((prev) => prev.map((c) => (c.id === id ? { ...c, last_scan_error: data.error || 'Scan failed.' } : c)));
+      } else {
+        setCompetitors((prev) => prev.map((c) => (c.id === id ? { ...c, last_score: data.score, last_scanned_at: data.scannedAt, last_scan_error: null } : c)));
+      }
+    } catch {
+      setCompetitors((prev) => prev.map((c) => (c.id === id ? { ...c, last_scan_error: 'Scan failed. Please try again.' } : c)));
+    } finally {
+      setScanningId(null);
+    }
   };
 
   return (
@@ -202,35 +246,73 @@ const CompetitorTracker = () => {
               <p className="text-xs text-muted-foreground">No competitors tracked for this brand yet.</p>
             )}
             <div className="space-y-2">
-              {mentionStats.map((c) => (
-                <motion.div
-                  key={c.id}
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="flex items-center justify-between gap-3 rounded-lg border border-border bg-background/40 px-3 py-2.5"
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-foreground truncate">{c.competitor_name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      Mentioned by name in {c.mentionedIn} of {c.total} scan{c.total === 1 ? '' : 's'}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3 shrink-0">
-                    <div className="w-24 h-1.5 rounded-full bg-muted overflow-hidden">
-                      <div className="h-full bg-primary" style={{ width: `${c.pct}%` }} />
+              {mentionStats.map((c) => {
+                const isScanning = scanningId === c.id;
+                return (
+                  <motion.div
+                    key={c.id}
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="rounded-lg border border-border bg-background/40 px-3 py-2.5"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-foreground truncate">{c.competitor_name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          Mentioned by name in {c.mentionedIn} of {c.total} scan{c.total === 1 ? '' : 's'}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <div className="w-24 h-1.5 rounded-full bg-muted overflow-hidden">
+                          <div className="h-full bg-primary" style={{ width: `${c.pct}%` }} />
+                        </div>
+                        <span className="text-sm font-data font-semibold text-foreground w-10 text-right">{c.pct}%</span>
+                        <button
+                          type="button"
+                          onClick={() => removeCompetitor(c.id)}
+                          aria-label={`Stop tracking ${c.competitor_name}`}
+                          className="text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
-                    <span className="text-sm font-data font-semibold text-foreground w-10 text-right">{c.pct}%</span>
-                    <button
-                      type="button"
-                      onClick={() => removeCompetitor(c.id)}
-                      aria-label={`Stop tracking ${c.competitor_name}`}
-                      className="text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </motion.div>
-              ))}
+
+                    {/* Head-to-head: a real, freshly-scanned score for the
+                        competitor (scan-competitor.js runs the same pipeline
+                        analyze.js uses), never an invented number. */}
+                    <div className="mt-2.5 pt-2.5 border-t border-border/60 flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2 text-xs">
+                        <span className="font-data font-semibold text-foreground">{yourScore ?? '—'}</span>
+                        <span className="text-muted-foreground">you vs</span>
+                        <span className={cn(
+                          'font-data font-semibold',
+                          c.last_score === null ? 'text-muted-foreground' :
+                            yourScore !== null && c.last_score > yourScore ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'
+                        )}>
+                          {c.last_score ?? '—'}
+                        </span>
+                        <span className="text-muted-foreground truncate">{c.competitor_name}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => scanCompetitor(c.id)}
+                        disabled={isScanning}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium border border-border text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors disabled:opacity-50 shrink-0"
+                      >
+                        {isScanning ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+                        {c.last_score !== null ? 'Rescan' : 'Scan now'}
+                      </button>
+                    </div>
+                    {c.last_scanned_at && !c.last_scan_error && (
+                      <p className="mt-1 text-[11px] text-muted-foreground">Last checked {formatScanDate(c.last_scanned_at)}</p>
+                    )}
+                    {c.last_scan_error && (
+                      <p className="mt-1 text-[11px] text-red-600 dark:text-red-400">{c.last_scan_error}</p>
+                    )}
+                  </motion.div>
+                );
+              })}
             </div>
 
             {brandCompetitors.length < MAX_COMPETITORS_PER_BRAND && (
