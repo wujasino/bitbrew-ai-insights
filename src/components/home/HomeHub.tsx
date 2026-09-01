@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Search, Bot, FileText, ArrowRight, ArrowUpRight, ArrowUp, ArrowDown,
-  Lock, Sparkles, CalendarClock, ShieldCheck, Smile, Target, AtSign, Clock, RefreshCw, Plus, PauseCircle,
+  Lock, Sparkles, CalendarClock, ShieldCheck, Smile, Target, AtSign, Clock, RefreshCw, Plus, PauseCircle, AlertTriangle,
 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { supabase } from '@/lib/supabase';
@@ -27,6 +27,7 @@ interface Analysis {
   accuracy: number;
   created_at: string;
   sources: { model: string; sentiment: string; association: string; confidence: number }[] | null;
+  action_plan: { steps?: { title: string; priority?: string }[] } | null;
 }
 
 const formatDate = (iso: string) =>
@@ -209,7 +210,7 @@ const HomeHub = () => {
     setAnalysesLoading(true);
     supabase
       .from('analyses')
-      .select('id, brand_name, trust_score, authority, sentiment, recency, mentions, accuracy, created_at, sources')
+      .select('id, brand_name, trust_score, authority, sentiment, recency, mentions, accuracy, created_at, sources, action_plan')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .limit(10)
@@ -259,6 +260,45 @@ const HomeHub = () => {
     () => (latest ? visibleModels.filter(m => !latest.sources?.some(s => s.model === m.label)) : []),
     [latest, visibleModels]
   );
+
+  /**
+   * The single most urgent thing on the page, surfaced above the fold
+   * instead of waiting at the bottom in "Recent reports". Two real sources,
+   * checked in order — never a filler alert when nothing is actually wrong:
+   *
+   * 1. A real week-over-week confidence drop for one model, on the same
+   *    brand (same previousForLatest comparison the score card's delta
+   *    already uses) — the most concrete, current signal.
+   * 2. Otherwise, the highest-priority step of the most recent scan that
+   *    already has a generated AI action plan (never triggers generation
+   *    itself — only surfaces one that's already cached on the row).
+   */
+  const topAlert = useMemo(() => {
+    if (latest?.sources && previousForLatest?.sources) {
+      let worst: { model: string; drop: number } | null = null;
+      for (const s of latest.sources) {
+        const prevS = previousForLatest.sources.find(p => p.model === s.model);
+        if (!prevS) continue;
+        const drop = prevS.confidence - s.confidence;
+        if (drop > 0 && (!worst || drop > worst.drop)) worst = { model: s.model, drop };
+      }
+      if (worst && worst.drop >= 10) {
+        return {
+          id: latest.id,
+          text: `Your visibility on ${worst.model} dropped by ${Math.round(worst.drop)}% this week.`,
+        };
+      }
+    }
+    const withPlan = analyses.find(a => (a.action_plan?.steps?.length ?? 0) > 0);
+    if (withPlan?.action_plan?.steps) {
+      const step = withPlan.action_plan.steps.find(s => s.priority === 'high') ?? withPlan.action_plan.steps[0];
+      return {
+        id: withPlan.id,
+        text: `${step.title} — ${withPlan.brand_name} is losing ground in AI results.`,
+      };
+    }
+    return null;
+  }, [latest, previousForLatest, analyses]);
 
   const runScan = (raw: string) => {
     const v = raw.trim();
@@ -457,6 +497,25 @@ const HomeHub = () => {
               )}
             </motion.div>
           </div>
+        )}
+
+        {/* ── Recent alerts ────────────────────────────────────────
+            The most urgent thing on the page, above "Recent reports" —
+            those already existed but sat at the bottom of the screen with
+            no single item calling out what actually needs attention now. */}
+        {!loading && topAlert && (
+          <Link
+            to={`/brand-visibility?id=${topAlert.id}`}
+            className="mb-6 flex items-center gap-3 rounded-xl border border-amber-500/30 bg-amber-500/[0.06] px-4 py-3 hover:bg-amber-500/10 transition-colors group"
+          >
+            <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+            <span className="text-sm text-foreground flex-1 min-w-0 truncate">
+              <span className="font-semibold">Action required:</span> {topAlert.text}
+            </span>
+            <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700 dark:text-amber-300 shrink-0">
+              Fix this now <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+            </span>
+          </Link>
         )}
 
         {/* ── Recent reports ──────────────────────────────────────── */}
