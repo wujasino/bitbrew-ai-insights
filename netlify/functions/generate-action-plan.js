@@ -75,6 +75,18 @@ const DIMENSION_LABEL_PL = {
   accuracy: 'dokładność informacji',
 };
 
+// Short category tag shown as a badge next to each step — one per dimension,
+// so the deterministic fallback can label a step without inventing one.
+const DIMENSION_CATEGORY_PL = {
+  authority: 'Autorytet / PR',
+  sentiment: 'Opinie / Social proof',
+  recency: 'Świeżość treści',
+  mentions: 'Wzmianki / PR',
+  accuracy: 'SEO / Treść',
+};
+
+const PRIORITY_BY_RANK = ['high', 'medium', 'low'];
+
 const rankedDimensions = (analysis) =>
   ['authority', 'sentiment', 'recency', 'mentions', 'accuracy']
     .map((key) => ({ key, value: analysis[key] }))
@@ -88,9 +100,11 @@ const deterministicPlan = (analysis) => {
   const label = (k) => DIMENSION_LABEL_PL[k];
   return {
     whyIgnored: `Modele AI oceniają ${analysis.brand_name} najniżej w obszarach: ${weak.map((d) => label(d.key)).join(', ')} — to właśnie na tych sygnałach AI opiera rekomendacje w Twojej kategorii, a obecnie są one najsłabszym punktem audytu.`,
-    steps: weak.map((d) => ({
+    steps: weak.map((d, i) => ({
       title: `Wzmocnij ${label(d.key)}`,
       description: `${label(d.key)} to jeden z najniżej ocenionych wymiarów (${d.value}/100). Skup się na konkretnych, sprawdzalnych treściach i wzmiankach dotyczących ${analysis.brand_name}, które bezpośrednio adresują ten obszar.`,
+      priority: PRIORITY_BY_RANK[i] || 'low',
+      category: DIMENSION_CATEGORY_PL[d.key],
     })),
     quickWin: `Dodaj do strony głównej i sekcji „O nas” jedno jasne zdanie opisujące, czym dokładnie zajmuje się ${analysis.brand_name} — to najprostszy sygnał, po którym modele AI łączą markę z właściwą kategorią.`,
   };
@@ -118,11 +132,16 @@ Odpowiedz WYŁĄCZNIE obiektem JSON, bez znaczników markdown, dokładnie w tym 
 {
   "whyIgnored": "2-3 zdania po polsku wyjaśniające, dlaczego AI pomija tę markę — oparte wyłącznie na powyższych danych",
   "steps": [
-    { "title": "krótki, konkretny tytuł kroku po polsku", "description": "1-2 zdania po polsku, co dokładnie zrobić" }
+    {
+      "title": "krótki, konkretny tytuł kroku po polsku",
+      "description": "1-2 zdania po polsku, co dokładnie zrobić",
+      "priority": "high" | "medium" | "low",
+      "category": "krótki tag kategorii po polsku, np. 'SEO / Treść', 'Autorytet / PR', 'Opinie / Social proof'"
+    }
   ],
   "quickWin": "jedno bardzo proste zadanie do zrobienia od razu, po polsku"
 }
-Pole "steps" musi zawierać dokładnie 3 elementy, uporządkowane od najważniejszego.`;
+Pole "steps" musi zawierać dokładnie 3 elementy, uporządkowane od najważniejszego (pierwszy = "high"). Nie każdy krok musi mieć inny priorytet, ale kolejność ma odzwierciedlać realny wpływ.`;
 };
 
 const callClaude = async (prompt) => {
