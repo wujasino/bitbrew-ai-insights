@@ -14,6 +14,7 @@ import { CookiePanel } from '@/components/ui/cookie-banner-1';
 import { SalesChatWidget } from '@/components/ui/sales-chat-widget';
 import { NewsletterSignup } from '@/components/ui/newsletter-signup';
 import { GradientMeshBg } from '@/components/ui/gradient-mesh-bg';
+import { MouseSpotlight } from '@/components/ui/mouse-spotlight';
 import { FAQ_EN } from '@/lib/faq';
 import { PricingCards } from '@/components/ui/pricing-cards';
 import { PLANS } from '@/lib/plans';
@@ -90,7 +91,11 @@ const Landing = () => {
   const heroBgOpacity = useTransform(heroScrollProgress, [0, 1], [0.45, 0]);
 
   return (
-    <div className="min-h-screen bg-background font-landing">
+    <div className="min-h-screen bg-background font-landing relative">
+      {/* Cursor-follow glow — fixed + z-0, so it always paints behind the
+          z-10 content wrapper below regardless of DOM order. */}
+      <MouseSpotlight />
+      <div className="relative z-10">
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] focus:px-4 focus:py-2 focus:rounded-lg focus:bg-primary focus:text-primary-foreground focus:text-sm focus:font-medium"
@@ -718,6 +723,7 @@ const Landing = () => {
 
       <CookiePanel privacyHref="/polityka-prywatnosci" termsHref="/regulamin" />
       <SalesChatWidget />
+      </div>
     </div>
   );
 };
