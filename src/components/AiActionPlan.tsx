@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { ClipboardList, Loader2, Zap, ChevronDown, Lock } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
+import { isStepDone, setStepDone } from '@/lib/actionPlanProgress';
 
 type Priority = 'high' | 'medium' | 'low';
 
@@ -26,12 +27,22 @@ const PRIORITY_STYLE: Record<Priority, { label: string; className: string }> = {
   low: { label: 'Low priority', className: 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/25' },
 };
 
-const StepRow = ({ step, index }: { step: ActionStep; index: number }) => {
+const StepRow = ({ step, index, analysisId }: { step: ActionStep; index: number; analysisId: string }) => {
   const [expanded, setExpanded] = useState(false);
-  // Decorative only — local UI state, never persisted or sent anywhere.
-  // The strike-through on check is the psychological "done" cue the design
-  // asked for, not a real tracked task.
-  const [done, setDone] = useState(false);
+  // Persisted to localStorage (see lib/actionPlanProgress) so Home's "Tasks
+  // Status" tile can show a real completed count next to the dimension-
+  // health pie chart — still nothing sent to the backend, just remembered
+  // in this browser. The strike-through on check is the psychological
+  // "done" cue the original spec asked for.
+  const [done, setDone] = useState(() => isStepDone(analysisId, index));
+
+  const toggle = () => {
+    setDone((v) => {
+      const next = !v;
+      setStepDone(analysisId, index, next);
+      return next;
+    });
+  };
   const priority = step.priority && PRIORITY_STYLE[step.priority] ? step.priority : null;
 
   return (
@@ -40,7 +51,7 @@ const StepRow = ({ step, index }: { step: ActionStep; index: number }) => {
         <input
           type="checkbox"
           checked={done}
-          onChange={() => setDone((v) => !v)}
+          onChange={toggle}
           className="mt-0.5 w-3.5 h-3.5 shrink-0 rounded border-border accent-primary cursor-pointer"
         />
         <button
@@ -188,7 +199,7 @@ export const AiActionPlan = ({ analysisId, plan: accountPlan }: { analysisId: st
             </div>
             <ul className="space-y-2">
               {displayPlan.steps.map((step, i) => (
-                <StepRow key={i} step={step} index={i} />
+                <StepRow key={i} step={step} index={i} analysisId={analysisId} />
               ))}
             </ul>
           </div>
