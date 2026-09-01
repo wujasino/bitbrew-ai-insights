@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Navigate, Link } from 'react-router-dom';
-import { Loader2, CheckCircle2, AlertCircle, Power, Tag, Megaphone, ShieldAlert, UserCog, Search } from 'lucide-react';
+import { Loader2, CheckCircle2, AlertCircle, Power, Tag, Megaphone, ShieldAlert, UserCog, Search, Clock } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/lib/supabase';
 import { useIsAdmin } from '@/hooks/useAccountInfo';
@@ -25,6 +25,12 @@ type TargetUser = {
 type ScanDisableReason =
   | { source: 'manual' | 'auto'; at?: string; failures?: number; lastError?: string }
   | null;
+
+type TempGrant = {
+  granted_plan: string;
+  previous_plan: string;
+  expires_at: string;
+} | null;
 
 const AdminSettings = () => {
   const { data: isAdmin = false, isLoading } = useIsAdmin();
@@ -85,6 +91,12 @@ const AdminSettings = () => {
   const [planDraft, setPlanDraft] = useState('');
   const [creditsDraft, setCreditsDraft] = useState('');
 
+  // ── Temporary access (time-boxed plan grant) ───────────────────────
+  const [tempGrant, setTempGrant] = useState<TempGrant>(null);
+  const [tempDays, setTempDays] = useState('14');
+  const [tempStatus, setTempStatus] = useState<'idle' | 'loading' | 'saving' | 'error'>('idle');
+  const [tempMessage, setTempMessage] = useState('');
+
   const userFetch = useCallback(async (path: string, init?: RequestInit) => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) throw new Error('You must be signed in.');
@@ -107,17 +119,89 @@ const AdminSettings = () => {
     setCreditsDraft(String(u.credits ?? 0));
   };
 
+  const tempFetch = useCallback(async (path: string, init?: RequestInit) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw new Error('You must be signed in.');
+    const res = await fetch(`/.netlify/functions/admin-grant-temp-access${path}`, {
+      ...init,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.access_token}`,
+        ...(init?.headers || {}),
+      },
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(json.error || `Request failed (${res.status})`);
+    return json;
+  }, []);
+
   const lookup = async () => {
     setUserStatus('loading');
     setUserMessage('');
     setTarget(null);
+    setTempGrant(null);
+    setTempMessage('');
+    const email = lookupEmail.trim();
     try {
-      const json = await userFetch(`?email=${encodeURIComponent(lookupEmail.trim())}`);
+      const json = await userFetch(`?email=${encodeURIComponent(email)}`);
       applySnapshot(json.user);
       setUserStatus('idle');
     } catch (err) {
       setUserStatus('error');
       setUserMessage(err instanceof Error ? err.message : 'Lookup failed.');
+      return;
+    }
+    try {
+      const grantJson = await tempFetch(`?email=${encodeURIComponent(email)}`);
+      setTempGrant(grantJson.grant ?? null);
+    } catch {
+      // Non-fatal — the account lookup above already succeeded; the temp
+      // access panel just won't show an existing grant until the next
+      // successful lookup.
+    }
+  };
+
+  const grantTempAccess = async () => {
+    if (!target) return;
+    const days = Number(tempDays);
+    if (!Number.isInteger(days) || days < 1) {
+      setTempStatus('error');
+      setTempMessage('Enter a whole number of days (1 or more).');
+      return;
+    }
+    setTempStatus('saving');
+    setTempMessage('');
+    try {
+      const json = await tempFetch('', {
+        method: 'POST',
+        body: JSON.stringify({ email: target.email, plan: planDraft, days }),
+      });
+      applySnapshot(json.user);
+      setTempGrant(json.grant);
+      setTempStatus('idle');
+      setTempMessage(`Granted ${planDraft} until ${new Date(json.grant.expires_at).toLocaleString()}.`);
+    } catch (err) {
+      setTempStatus('error');
+      setTempMessage(err instanceof Error ? err.message : 'Grant failed.');
+    }
+  };
+
+  const revokeTempAccess = async () => {
+    if (!target) return;
+    setTempStatus('saving');
+    setTempMessage('');
+    try {
+      const json = await tempFetch('', {
+        method: 'POST',
+        body: JSON.stringify({ email: target.email, revoke: true }),
+      });
+      applySnapshot(json.user);
+      setTempGrant(null);
+      setTempStatus('idle');
+      setTempMessage(`Reverted to ${json.user.plan}.`);
+    } catch (err) {
+      setTempStatus('error');
+      setTempMessage(err instanceof Error ? err.message : 'Revoke failed.');
     }
   };
 
@@ -434,6 +518,61 @@ const AdminSettings = () => {
                 >
                   Reset monthly usage
                 </Button>
+              </div>
+
+              {/* ── Temporary access ─────────────────────────────────
+                  Grants the plan currently selected above for a fixed
+                  number of days — e.g. a trial for a prospect — without a
+                  real subscription. expire-temp-access.js (hourly)
+                  reverts it automatically; "Revoke now" ends it early. */}
+              <div className="rounded-xl border border-border bg-background/40 p-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <Clock className="w-4 h-4 text-primary" />
+                  <p className="text-sm font-medium text-foreground">Temporary access</p>
+                </div>
+                {tempGrant ? (
+                  <div className="text-xs text-muted-foreground mb-3">
+                    <span className="text-foreground font-medium">{tempGrant.granted_plan}</span> until{' '}
+                    <span className="text-foreground font-medium">{new Date(tempGrant.expires_at).toLocaleString()}</span>
+                    {' '}— reverts to <span className="text-foreground font-medium">{tempGrant.previous_plan}</span> automatically.
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground mb-3">
+                    Grants the plan selected above for a fixed number of days, then reverts to {target.plan} automatically.
+                  </p>
+                )}
+                <div className="flex flex-wrap items-end gap-2">
+                  <div>
+                    <label htmlFor="admin-temp-days" className="text-xs font-medium text-muted-foreground mb-1.5 block">Days</label>
+                    <Input
+                      id="admin-temp-days"
+                      name="tempDays"
+                      type="number"
+                      min="1"
+                      step="1"
+                      value={tempDays}
+                      onChange={(e) => setTempDays(e.target.value)}
+                      className="bg-background w-24"
+                    />
+                  </div>
+                  <Button onClick={grantTempAccess} disabled={tempStatus === 'saving'} className="gap-1.5">
+                    {tempStatus === 'saving' && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                    {tempGrant ? 'Extend / update' : 'Grant temporary access'}
+                  </Button>
+                  {tempGrant && (
+                    <Button variant="outline" onClick={revokeTempAccess} disabled={tempStatus === 'saving'}>
+                      Revoke now
+                    </Button>
+                  )}
+                </div>
+                {tempMessage && (
+                  <div className={`flex items-start gap-2 text-xs mt-2 ${tempStatus === 'error' ? 'text-destructive' : 'text-emerald-500'}`}>
+                    {tempStatus === 'error'
+                      ? <AlertCircle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                      : <CheckCircle2 className="w-3.5 h-3.5 mt-0.5 shrink-0" />}
+                    <span>{tempMessage}</span>
+                  </div>
+                )}
               </div>
             </>
           )}
