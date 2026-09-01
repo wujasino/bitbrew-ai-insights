@@ -38,6 +38,12 @@
 [functions."billing-status"]
   schedule = "0 9 15 * *" # CRON: Minuta(0) Godzina(9) DzieńMiesiąca(15) Miesiąc(*) DzieńTygodnia(*)
 
+# Reverts an admin-granted temporary plan (admin-grant-temp-access.js) once
+# its expiry passes. Grants are always whole-day windows, so hourly slack
+# past expiry is never user-visible.
+[functions."expire-temp-access"]
+  schedule = "@hourly"
+
 # ── Google OAuth proxy — ukrywa ID projektu Supabase ─────────────────────────
 [[redirects]]
   from   = "/auth/callback"
