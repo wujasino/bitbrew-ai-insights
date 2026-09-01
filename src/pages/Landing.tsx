@@ -723,11 +723,19 @@ const Landing = () => {
         <div className="max-w-xl mx-auto">
           <NewsletterSignup
             onSubmit={async (email) => {
-              await fetch('/.netlify/functions/newsletter', {
+              // fetch() only rejects on a network failure, never on a 4xx/5xx
+              // status — without this check, a rate-limited or failed signup
+              // (server logs it, nothing gets saved) still showed the success
+              // state + confetti to the visitor.
+              const res = await fetch('/.netlify/functions/newsletter', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email }),
               });
+              if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                throw new Error(data.error || `HTTP ${res.status}`);
+              }
             }}
           />
         </div>
