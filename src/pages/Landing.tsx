@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, useScroll, useTransform } from 'framer-motion';
-import { Zap, Eye, Shield, ChevronDown, HelpCircle, Mail, TrendingUp, ArrowRight, Globe, ShieldCheck, Clock, PenLine, Sparkles, MessageSquare, Tag } from 'lucide-react';
+import { Zap, Eye, Shield, ChevronDown, HelpCircle, Mail, ArrowRight, Globe, ShieldCheck, Clock, PenLine, Sparkles, MessageSquare, Tag } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
@@ -115,20 +115,7 @@ const Landing = () => {
       <Navbar showThemeToggle landingCta />
       <SectionNav sections={NAV_SECTIONS} />
 
-      {/* pt-16 clears the fixed h-16 navbar (mobile, where SectionNav is
-          hidden); md:pt-28 clears navbar + SectionNav stacked underneath it
-          (65px + 45px ≈ 109px). Without this the urgency strip below render
-          entirely behind that fixed chrome — not just visually dimmed by
-          its 80%-opacity blur, actually 0% on-screen on every breakpoint. */}
-      <main id="main-content" className="pt-16 md:pt-28">
-      {/* ── Urgency strip ─────────────────────────────────────────── */}
-      <div className="w-full bg-card border-b border-border px-4 py-2.5 flex items-center justify-center gap-2 text-center">
-        <TrendingUp className="w-3.5 h-3.5 text-primary shrink-0" />
-        <p className="text-xs text-foreground/90">
-          AI models are already shaping brand reputations. Is yours represented accurately?
-        </p>
-      </div>
-
+      <main id="main-content">
       {/* ── Hero + Why (shared animated background) ───────────────── */}
       <GradientMeshBg className="relative" variant="mono">
         <section
