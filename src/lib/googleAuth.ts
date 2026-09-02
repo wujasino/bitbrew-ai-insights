@@ -35,8 +35,16 @@ export async function signInWithGoogle(): Promise<void> {
   const codeVerifier = generateCodeVerifier();
   const codeChallenge = await generateCodeChallenge(codeVerifier);
 
-  sessionStorage.setItem('google_pkce_verifier', codeVerifier);
-
+  // The verifier used to go through sessionStorage, keyed by whatever origin
+  // the user was on when they clicked "Sign in with Google". That broke
+  // whenever the callback landed on a different origin than the one that
+  // started the flow (e.g. www.presora.app -> presora.app, since
+  // getGoogleRedirectUri() below prefers a fixed VITE_SITE_URL over
+  // window.location.origin) — sessionStorage is strictly origin-scoped, so
+  // the write on one host is invisible on the other, producing "Missing
+  // code verifier". Routing it through `state` instead makes it travel with
+  // the redirect itself (Google echoes `state` back verbatim), independent
+  // of any storage origin.
   const redirectUri = getGoogleRedirectUri();
 
   const params = new URLSearchParams({
@@ -47,6 +55,7 @@ export async function signInWithGoogle(): Promise<void> {
     code_challenge: codeChallenge,
     code_challenge_method: 'S256',
     prompt: 'select_account',
+    state: codeVerifier,
   });
 
   window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;

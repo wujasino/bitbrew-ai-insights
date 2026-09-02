@@ -34,7 +34,10 @@ export default function GoogleCallback() {
 
     const exchangeCode = async () => {
       try {
-        const codeVerifier = sessionStorage.getItem('google_pkce_verifier');
+        // Round-tripped via `state` (see googleAuth.ts) rather than
+        // sessionStorage, which broke whenever the callback landed on a
+        // different origin (www vs apex) than the one that started the flow.
+        const codeVerifier = params.get('state');
         const redirectUri = getGoogleRedirectUri();
 
         const res = await fetch('/.netlify/functions/google-token-exchange', {
@@ -57,7 +60,6 @@ export default function GoogleCallback() {
 
         if (supaErr) throw supaErr;
 
-        sessionStorage.removeItem('google_pkce_verifier');
         setStatus('success');
 
         // Route first-time Google sign-ups through the same onboarding wizard
