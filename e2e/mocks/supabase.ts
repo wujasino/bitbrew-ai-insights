@@ -195,7 +195,7 @@ export async function mockAnalyses(page: Page, analyses: AnalysisFixture[]) {
 }
 
 /** Empty-table mocks for the remaining REST reads Dashboard/Settings/Profile fire on mount. */
-export async function mockEmptyTables(page: Page, tables = ['brand_monitors', 'notifications', 'referrals']) {
+export async function mockEmptyTables(page: Page, tables = ['brand_monitors', 'notifications', 'referrals', 'tracked_competitors']) {
   for (const table of tables) {
     await page.route(`**/rest/v1/${table}*`, route => json(route, 200, []));
   }
